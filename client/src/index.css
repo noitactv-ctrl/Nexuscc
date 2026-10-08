@@ -260,11 +260,39 @@
 
 .spider-checkbox-label input,
 .spider-terms-consent input {
+  display: grid;
   width: 20px;
   height: 20px;
   margin: 0;
+  appearance: none;
+  place-items: center;
+  border: 1px solid #444;
+  border-radius: 5px;
+  background: #141414;
   accent-color: #e3222e;
   cursor: pointer;
+}
+
+.spider-checkbox-label input::before,
+.spider-terms-consent input::before {
+  content: "";
+  width: 10px;
+  height: 6px;
+  transform: rotate(-45deg) scale(0);
+  border-bottom: 2px solid white;
+  border-left: 2px solid white;
+  transition: transform .12s ease;
+}
+
+.spider-checkbox-label input:checked,
+.spider-terms-consent input:checked {
+  border-color: #e3222e;
+  background: #e3222e;
+}
+
+.spider-checkbox-label input:checked::before,
+.spider-terms-consent input:checked::before {
+  transform: rotate(-45deg) scale(1);
 }
 
 .spider-muted-link {

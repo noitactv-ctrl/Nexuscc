@@ -88,11 +88,11 @@ export function LegalPage({ kind }: { kind: "terms" | "privacy" }) {
         </div>
 
         <div className="spider-legal-actions">
-          <Link href="/auth?mode=register">
-            <a className="spider-primary-button">Back to Register</a>
+          <Link href="/auth?mode=register" className="spider-primary-button">
+            Back to Register
           </Link>
-          <Link href="/auth">
-            <a className="spider-secondary-button">Back to Login</a>
+          <Link href="/auth" className="spider-secondary-button">
+            Back to Login
           </Link>
         </div>
         <SpiderFooter className="spider-legal-footer" />

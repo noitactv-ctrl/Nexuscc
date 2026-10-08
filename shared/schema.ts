@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   role: text("role", { enum: ["user", "admin"] }).default("user").notNull(),
   isBanned: boolean("is_banned").default(false).notNull(),
   isWorker: boolean("is_worker").default(false).notNull(),
+  termsAcceptedAt: timestamp("terms_accepted_at"),
   balance: integer("balance").default(0).notNull(),
   protectedBalance: integer("protected_balance").default(0).notNull(),
   lastDailySpin: timestamp("last_daily_spin"),

@@ -117,13 +117,14 @@ export async function initializeApp(
     )
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire")`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at timestamp`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS password_reset_tokens (
       token_hash varchar(64) PRIMARY KEY,
       user_id integer NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      expires_at timestamp NOT NULL,
-      created_at timestamp NOT NULL DEFAULT NOW(),
-      consumed_at timestamp
+      expires_at timestamptz NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT NOW(),
+      consumed_at timestamptz
     )
   `);
   await pool.query(`

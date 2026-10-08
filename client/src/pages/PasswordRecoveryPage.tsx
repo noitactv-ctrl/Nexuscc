@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
 import { SpiderBrand, SpiderFooter } from "@/components/auth/AuthChrome";
+import { CaptchaChallenge, useCaptcha } from "@/components/auth/CaptchaChallenge";
 
 function RecoveryShell({ children }: { children: React.ReactNode }) {
   return (
@@ -20,9 +21,17 @@ export function ForgotPasswordPage() {
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [captchaInput, setCaptchaInput] = useState("");
+  const { code, tick, refresh } = useCaptcha();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (captchaInput.trim().toLowerCase() !== code.toLowerCase()) {
+      setError("The verification code does not match. Try again.");
+      refresh();
+      setCaptchaInput("");
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
@@ -76,8 +85,20 @@ export function ForgotPasswordPage() {
             />
           </div>
 
+          <CaptchaChallenge
+            code={code}
+            tick={tick}
+            value={captchaInput}
+            onChange={setCaptchaInput}
+            onRefresh={() => {
+              refresh();
+              setCaptchaInput("");
+            }}
+            disabled={submitting}
+          />
+
           {error && <p className="spider-form-error" role="alert">{error}</p>}
-          <button className="spider-primary-button" type="submit" disabled={submitting || !email.trim()}>
+          <button className="spider-primary-button" type="submit" disabled={submitting || !email.trim() || !captchaInput.trim()}>
             {submitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
             Send Reset Link
           </button>
@@ -85,7 +106,7 @@ export function ForgotPasswordPage() {
       )}
 
       <p className="spider-auth-switch spider-recovery-switch">
-        Remember your password? <Link href="/auth"><a>Back to sign in</a></Link>
+        Remember your password? <Link href="/auth">Back to sign in</Link>
       </p>
     </RecoveryShell>
   );

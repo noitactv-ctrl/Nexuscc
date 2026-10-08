@@ -225,6 +225,7 @@ export function setupAuth(app: Express) {
         loginCode: "",
         telegramUsername: "",
         role: "user",
+        termsAcceptedAt: new Date(),
       } as any);
 
       establishSession(req, user, next, res, 201);
@@ -269,11 +270,20 @@ export function setupAuth(app: Express) {
         );
 
         const configuredBaseUrl = process.env.PUBLIC_APP_URL?.trim();
-        const resetOrigin = configuredBaseUrl
-          ? new URL(configuredBaseUrl).origin
-          : process.env.NODE_ENV === "production"
-            ? "https://spidermarket.at"
-            : `${req.protocol}://${req.get("host")}`;
+        let resetOrigin: string;
+        if (configuredBaseUrl) {
+          const configuredUrl = new URL(configuredBaseUrl);
+          if (!["https:", ...(process.env.NODE_ENV === "production" ? [] : ["http:"])].includes(configuredUrl.protocol)) {
+            throw new Error("PUBLIC_APP_URL must use HTTPS");
+          }
+          resetOrigin = configuredUrl.origin;
+        } else if (process.env.NODE_ENV === "production") {
+          resetOrigin = "https://spidermarket.at";
+        } else {
+          const hostHeader = req.get("host");
+          if (!hostHeader) throw new Error("Unable to determine password reset host");
+          resetOrigin = new URL(`${req.protocol}://${hostHeader}`).origin;
+        }
         const resetUrl = new URL(`/reset-password?token=${rawToken}`, resetOrigin).toString();
         const transporter = nodemailer.createTransport({
           host,
