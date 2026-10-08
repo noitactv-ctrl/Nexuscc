@@ -16,7 +16,6 @@ import {
   MessageSquare,
   MoreVertical,
   Package,
-  Send,
   Settings,
   ShoppingBag,
   Ticket,
@@ -142,7 +141,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           entries: [
             ...(features?.cards !== false ? [{ href: "/cards", label: "Buy Cards", icon: CreditCard }] : []),
             ...(features?.logs !== false ? [{ href: "/shop", label: "Buy Logs", icon: FileText }] : []),
-            { href: "/cart", label: "Cart", icon: Package },
             ...(features?.reseller !== false ? [{ href: "/become-reseller", label: "Become a Seller", icon: BookOpen }] : []),
           ],
         },
@@ -157,9 +155,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           icon: Package,
           entries: [
             { href: "/orders", label: "All Orders", icon: Package },
-            ...(features?.cards === true || features?.checker === true
-              ? [{ href: "/orders?tab=cards", label: "My Card Orders", icon: CreditCard }]
-              : []),
             ...(features?.logs ? [{ href: "/orders?tab=logs", label: "My Log Orders", icon: FileText }] : []),
           ],
         },
@@ -186,7 +181,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           entries: [
             { href: "/support", label: "My Tickets", icon: Ticket },
             { href: "/support/create", label: "Create Ticket", icon: MessageSquare },
-            { href: "https://t.me/+3-lMkt-idutkOTIx", label: "Telegram Channel", icon: Send, external: true },
           ],
         },
       ],
