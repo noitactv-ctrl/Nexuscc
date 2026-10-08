@@ -129,7 +129,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       ],
       entries: [
         { href: "/redeem", label: "Redeem Code", icon: Gift },
-        ...(features?.ranks !== false ? [{ href: "/ranks", label: "VIP & Ranks", icon: Layers }] : []),
+        ...(features?.ranks !== false ? [{ href: "/ranks", label: "Ranks", icon: Layers }] : []),
       ],
     },
     {
