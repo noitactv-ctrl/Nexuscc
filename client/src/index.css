@@ -816,10 +816,23 @@
 }
 
 .nexus-drawer-brand {
+  width: fit-content;
   color: #f5f5f5;
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 700;
   line-height: 1.25;
+  letter-spacing: -.02em;
+  text-decoration: none;
+}
+
+.nexus-drawer-brand:hover {
+  color: #fff;
+}
+
+.nexus-drawer-brand:focus-visible {
+  outline: 2px solid #428fda;
+  outline-offset: 3px;
+  border-radius: 3px;
 }
 
 .nexus-drawer-greeting {

@@ -363,7 +363,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="nexus-drawer-header">
           <div className="nexus-drawer-user-mark"><CreditCard aria-hidden="true" /></div>
           <div className="nexus-drawer-user-copy">
-            <span className="nexus-drawer-brand">NexusCC</span>
+            <Link
+              href="/"
+              className="nexus-drawer-brand"
+              aria-label="NexusCC home"
+              onClick={() => {
+                setNavOpen(false);
+                setAccountOpen(false);
+              }}
+            >
+              NexusCC
+            </Link>
             <span className="nexus-drawer-greeting">{user?.username || "Welcome"} <span aria-hidden="true">👋</span></span>
           </div>
           <button
