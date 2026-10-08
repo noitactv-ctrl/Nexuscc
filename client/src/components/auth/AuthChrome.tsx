@@ -1,9 +1,11 @@
 import { Link } from "wouter";
+import { CreditCard } from "lucide-react";
 
 export function SpiderBrand() {
   return (
-    <Link href="/auth" className="spider-brand" aria-label="SpiderCC home">
-      <img src="/spidercc-logo.png" alt="spidercc.at" />
+    <Link href="/auth" className="nexus-brand" aria-label="NexusCC.xyz home">
+      <CreditCard aria-hidden="true" />
+      <span>NexusCC.xyz</span>
     </Link>
   );
 }

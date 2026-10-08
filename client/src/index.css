@@ -64,7 +64,7 @@
 
 .ticket-ui { zoom: 0.5; }
 
-/* Public SpiderCC sign-in and policy pages */
+/* Public NexusCC sign-in and policy pages */
 .spider-entry-page,
 .spider-recovery-page,
 .spider-legal-page {
@@ -119,21 +119,29 @@
   padding: 12px 0;
 }
 
-.spider-brand {
+.nexus-brand {
   display: flex;
   width: fit-content;
   min-height: 58px;
   margin: 0 auto 27px;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+  color: #f5f5f5;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -.035em;
   text-decoration: none;
 }
 
-.spider-brand img {
+.nexus-brand svg {
   display: block;
-  width: 190px;
-  height: 62px;
-  object-fit: contain;
+  width: 36px;
+  height: 36px;
+  color: #428fda;
+  stroke-width: 1.8;
+  filter: drop-shadow(0 0 10px rgba(55, 136, 215, .18));
 }
 
 .spider-auth-heading {
@@ -510,8 +518,8 @@
   flex-direction: column;
 }
 
-.spider-recovery-shell .spider-brand,
-.spider-legal-shell .spider-brand {
+.spider-recovery-shell .nexus-brand,
+.spider-legal-shell .nexus-brand {
   margin: 0 auto 30px;
 }
 
@@ -667,13 +675,13 @@
     border-radius: 22px;
   }
 
-  .spider-brand {
+  .nexus-brand {
     margin-bottom: 25px;
   }
 
-  .spider-brand img {
-    width: 180px;
-    height: 58px;
+  .nexus-brand svg {
+    width: 34px;
+    height: 34px;
   }
 
   .spider-auth-heading {
@@ -716,8 +724,8 @@
     min-height: calc(100svh - 40px);
   }
 
-  .spider-recovery-shell .spider-brand,
-  .spider-legal-shell .spider-brand {
+  .spider-recovery-shell .nexus-brand,
+  .spider-legal-shell .nexus-brand {
     margin-bottom: 39px;
   }
 
