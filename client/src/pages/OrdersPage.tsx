@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useOrders } from "@/hooks/use-orders";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { Download, Loader2, RefreshCw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -56,6 +56,7 @@ export default function OrdersPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const queryString = useSearch();
   const [tab, setTab] = useState<TabType>("all");
   const [search, setSearch] = useState("");
   const [isExporting, setIsExporting] = useState(false);
@@ -87,6 +88,14 @@ export default function OrdersPage() {
     }
   };
 
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(queryString).get("tab");
+    setTab(
+      requestedTab === "cards" || requestedTab === "ach" || requestedTab === "logs"
+        ? requestedTab
+        : "all",
+    );
+  }, [queryString]);
   const createVouch = useMutation({
     mutationFn: async (orderId: number) => {
       const response = await apiRequest("POST", "/api/vouches/create-token", { orderId });

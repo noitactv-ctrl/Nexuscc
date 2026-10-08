@@ -129,10 +129,10 @@ function Footer() {
   );
 }
 
-export default function SupportPage() {
+export default function SupportPage({ initialView = "list" }: { initialView?: "list" | "create" }) {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [view, setView] = useState<View>("list");
+  const [view, setView] = useState<View>(initialView);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [ticketType, setTicketType] = useState("Card Order");

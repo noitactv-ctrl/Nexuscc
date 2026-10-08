@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -210,6 +210,14 @@ export default function DepositPage() {
     : Math.max(0.01, minDeposits?.[selectedOption as ManualMethod] ?? 0.01);
 
   const recentDeposits = deposits?.slice(0, 15) ?? [];
+
+  useEffect(() => {
+    if (window.location.hash !== "#deposit-history") return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("deposit-history")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [recentDeposits.length]);
 
   /* ── Crypto mutation ── */
   const cryptoMutation = useMutation({
@@ -427,7 +435,7 @@ export default function DepositPage() {
 
         {/* ── History ── */}
         {recentDeposits.length > 0 && (
-          <div className="space-y-2 pt-2">
+          <div id="deposit-history" className="space-y-2 pt-2 scroll-mt-20">
             <div className="flex items-center justify-between">
               <p className="text-xs text-white/40">Deposit History</p>
               <button onClick={() => refetchDeposits()} className="text-white/20 hover:text-white/50 transition-colors" data-testid="btn-refresh-deposits">

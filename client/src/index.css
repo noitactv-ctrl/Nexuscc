@@ -664,6 +664,435 @@
   padding-top: 3px;
 }
 
+/* NexusCC dashboard shell */
+.nexus-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  background: #080808;
+}
+
+.nexus-menu-trigger,
+.nexus-drawer-close {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, .76);
+  transition: color .15s ease, background-color .15s ease;
+}
+
+.nexus-menu-trigger:hover,
+.nexus-drawer-close:hover {
+  background: rgba(255, 255, 255, .08);
+  color: #fff;
+}
+
+.nexus-menu-trigger svg {
+  width: 22px;
+  height: 22px;
+}
+
+.nexus-topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #f5f5f5;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.025em;
+  text-decoration: none;
+}
+
+.nexus-topbar-brand svg {
+  width: 21px;
+  height: 21px;
+  color: #428fda;
+  stroke-width: 1.9;
+}
+
+.nexus-topbar-avatar,
+.nexus-topbar-avatar-placeholder {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 50%;
+  background: #595959;
+  color: #111;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nexus-topbar-avatar:hover {
+  background: #737373;
+}
+
+.nexus-drawer-backdrop {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, .68);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.nexus-drawer-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nexus-drawer {
+  position: fixed;
+  z-index: 50;
+  inset: 0 auto 0 0;
+  display: flex;
+  width: min(86vw, 420px);
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+  border-right: 1px solid rgba(255, 255, 255, .1);
+  background: #171717;
+  box-shadow: 24px 0 80px rgba(0, 0, 0, .4);
+  transform: translateX(-102%);
+  transition: transform .24s cubic-bezier(.2, .7, .25, 1);
+  will-change: transform;
+}
+
+.nexus-drawer.is-open {
+  transform: translateX(0);
+}
+
+.nexus-drawer-header {
+  display: flex;
+  min-height: 90px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, .035);
+}
+
+.nexus-drawer-user-mark,
+.nexus-account-mark {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .035);
+  border-radius: 15px;
+  background: #262626;
+  color: #428fda;
+}
+
+.nexus-drawer-user-mark svg,
+.nexus-account-mark svg {
+  width: 25px;
+  height: 25px;
+  stroke-width: 1.6;
+}
+
+.nexus-drawer-user-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nexus-drawer-brand {
+  color: #f5f5f5;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.nexus-drawer-greeting {
+  overflow: hidden;
+  color: rgba(255, 255, 255, .52);
+  font-size: 14px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nexus-drawer-close {
+  width: 34px;
+  height: 34px;
+  color: rgba(255, 255, 255, .48);
+}
+
+.nexus-drawer-close svg {
+  width: 21px;
+  height: 21px;
+}
+
+.nexus-drawer-nav {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 17px 16px 24px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .16) transparent;
+}
+
+.nexus-nav-section {
+  margin-bottom: 28px;
+}
+
+.nexus-nav-section:last-child {
+  margin-bottom: 0;
+}
+
+.nexus-nav-section-title {
+  margin: 0 0 9px;
+  padding: 0 5px;
+  color: rgba(255, 255, 255, .39);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.nexus-nav-group {
+  margin-bottom: 3px;
+}
+
+.nexus-nav-group-trigger,
+.nexus-nav-link {
+  display: flex;
+  width: 100%;
+  min-height: 43px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: rgba(255, 255, 255, .89);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 450;
+  line-height: 1.35;
+  text-align: left;
+  text-decoration: none;
+  transition: background-color .15s ease, color .15s ease;
+  cursor: pointer;
+}
+
+.nexus-nav-group-trigger:hover,
+.nexus-nav-link:hover {
+  background: rgba(255, 255, 255, .055);
+  color: #fff;
+}
+
+.nexus-nav-group-trigger.is-active,
+.nexus-nav-link.is-active {
+  background: rgba(255, 255, 255, .09);
+  color: #fff;
+}
+
+.nexus-nav-group-trigger > svg:first-child,
+.nexus-nav-link > svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, .9);
+  stroke-width: 1.8;
+}
+
+.nexus-nav-group-trigger.is-active > svg:first-child,
+.nexus-nav-link.is-active > svg {
+  color: #f0f0f0;
+}
+
+.nexus-nav-group-trigger > span,
+.nexus-nav-link > span {
+  min-width: 0;
+  flex: 1;
+}
+
+.nexus-nav-chevron {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, .8);
+  transition: transform .17s ease;
+}
+
+.nexus-nav-chevron.is-expanded {
+  transform: rotate(180deg);
+}
+
+.nexus-nav-children {
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 8px 13px;
+  padding-left: 14px;
+  border-left: 1px solid rgba(255, 255, 255, .12);
+}
+
+.nexus-nav-children .nexus-nav-link {
+  min-height: 40px;
+  padding: 7px 10px 7px 12px;
+  font-size: 14px;
+}
+
+.nexus-nav-section-entries {
+  display: grid;
+  gap: 2px;
+}
+
+.nexus-account-dock {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 12px 16px calc(13px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, .045);
+  background: #171717;
+}
+
+.nexus-account-trigger {
+  display: flex;
+  width: 100%;
+  min-height: 62px;
+  align-items: center;
+  gap: 11px;
+  padding: 5px 7px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: white;
+  text-align: left;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+
+.nexus-account-trigger:hover,
+.nexus-account-trigger[aria-expanded="true"] {
+  border-color: rgba(255, 255, 255, .055);
+  background: rgba(255, 255, 255, .055);
+}
+
+.nexus-account-trigger .nexus-account-mark {
+  width: 48px;
+  height: 48px;
+}
+
+.nexus-account-trigger-copy,
+.nexus-account-popover-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nexus-account-trigger-copy span:first-child,
+.nexus-account-popover-copy span:first-child {
+  overflow: hidden;
+  color: #f5f5f5;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nexus-account-trigger-copy span:nth-child(2),
+.nexus-account-popover-copy span:nth-child(2) {
+  overflow: hidden;
+  color: rgba(255, 255, 255, .48);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nexus-account-more {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, .75);
+}
+
+.nexus-account-popover {
+  position: absolute;
+  right: 12px;
+  bottom: calc(100% + 7px);
+  left: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 16px;
+  background: #1a1a1a;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .5);
+}
+
+.nexus-account-popover-profile {
+  display: flex;
+  min-height: 78px;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 14px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.nexus-account-popover-profile:hover {
+  background: rgba(255, 255, 255, .04);
+}
+
+.nexus-account-balance {
+  margin-top: 4px;
+  color: #7daee0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.nexus-logout-button {
+  display: flex;
+  width: 100%;
+  min-height: 55px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 17px;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  color: rgba(255, 255, 255, .88);
+  font-size: 15px;
+  text-align: left;
+  transition: background-color .15s ease;
+}
+
+.nexus-logout-button:hover {
+  background: rgba(255, 255, 255, .06);
+}
+
+.nexus-logout-button svg {
+  width: 19px;
+  height: 19px;
+  color: rgba(255, 255, 255, .6);
+}
+
+@media (min-width: 700px) {
+  .nexus-drawer {
+    width: 350px;
+  }
+}
+
 @media (max-width: 560px) {
   .spider-entry-page {
     align-items: center;
