@@ -51,6 +51,10 @@ export function SecurityCheck({ onVerified }: SecurityCheckProps) {
       style={{ background: "#0a0a0a" }}
     >
       <div className="max-w-lg">
+        <p className="text-white/60 text-sm font-mono mb-8 tracking-wide">
+           NexusCC
+        </p>
+
         <h1 className="text-white text-3xl md:text-4xl font-extrabold mb-4 leading-tight">
           {clicked ? <>Performing security<br />verification</> : <>Security<br />verification</>}
         </h1>
@@ -143,7 +147,7 @@ export function SecurityCheck({ onVerified }: SecurityCheckProps) {
 
       <div className="absolute bottom-6 left-0 right-0 text-center">
         <p className="text-white/20 text-[11px]">
-           Ray ID: {rayId.current} · Protected by security service
+          Ray ID: {rayId.current} · Protected by NexusCC Security
         </p>
       </div>
     </div>

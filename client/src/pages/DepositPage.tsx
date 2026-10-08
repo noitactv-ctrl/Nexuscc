@@ -452,6 +452,7 @@ export default function DepositPage() {
           <span>TOS</span>
           <span>FAQs</span>
         </div>
+        <p className="text-xs text-white/25">© 2026 NexusCC. All rights reserved</p>
       </div>
     </div>
   );
