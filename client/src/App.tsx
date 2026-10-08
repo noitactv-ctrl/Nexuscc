@@ -117,7 +117,7 @@ function Router() {
         <Route path="/become-reseller" component={BecomeResellerPage} />
         <Route path="/profile" component={ProfilePage} />
         <Route path="/support/create">{() => <SupportPage initialView="create" />}</Route>
-        <Route path="/support" component={SupportPage} />
+        <Route path="/support">{() => <SupportPage />}</Route>
         <Route path="/admin">
           {() => <AdminPage />}
         </Route>

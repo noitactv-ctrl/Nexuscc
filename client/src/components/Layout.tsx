@@ -227,14 +227,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
   if (publicPaths.has(location)) return <>{children}</>;
 
   function isActive(href: string) {
-    const [path, query] = href.split("?");
-    if (location !== path) return false;
-    if (!query) {
-      return path !== "/orders" || !new URLSearchParams(search).has("tab");
-    }
-    const expected = new URLSearchParams(query);
+    const target = new URL(href, window.location.origin);
+    if (location !== target.pathname) return false;
+    if (target.hash) return window.location.hash === target.hash;
     const current = new URLSearchParams(search);
-    return [...expected.entries()].every(([key, value]) => current.get(key) === value);
+    if (target.searchParams.toString()) {
+      let matches = true;
+      target.searchParams.forEach((value, key) => {
+        if (current.get(key) !== value) matches = false;
+      });
+      return matches;
+    }
+    if (target.pathname === "/orders" && current.has("tab")) return false;
+    if (target.pathname === "/deposit" && window.location.hash) return false;
+    return true;
   }
 
   function renderEntry(entry: NavEntry) {
@@ -364,7 +370,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             type="button"
             className="nexus-drawer-close"
             aria-label="Close navigation"
-            onClick={() => setNavOpen(false)}
+            onClick={() => {
+              setNavOpen(false);
+              setAccountOpen(false);
+            }}
           >
             <X aria-hidden="true" />
           </button>
