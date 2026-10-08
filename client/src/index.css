@@ -1223,3 +1223,57 @@
     font-size: 13px;
   }
 }
+
+/* Compact dashboard navigation and account access screens to 80%. */
+.nexus-topbar {
+  height: 43px;
+  padding-right: 13px;
+  padding-left: 13px;
+}
+
+.nexus-topbar .nexus-menu-trigger {
+  width: 30px;
+  height: 30px;
+}
+
+.nexus-topbar .nexus-menu-trigger svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nexus-topbar-brand {
+  gap: 6px;
+  font-size: 12px;
+}
+
+.nexus-topbar-brand svg {
+  width: 17px;
+  height: 17px;
+}
+
+.nexus-topbar-avatar,
+.nexus-topbar-avatar-placeholder {
+  width: 29px;
+  height: 29px;
+  font-size: 10px;
+}
+
+.nexus-drawer {
+  inset: 0 auto auto 0;
+  height: 125vh;
+  height: 125svh;
+  zoom: .8;
+}
+
+.spider-entry-content {
+  zoom: .8;
+}
+
+.spider-recovery-shell > .nexus-brand,
+.spider-recovery-shell > .spider-recovery-heading,
+.spider-recovery-shell > .spider-form,
+.spider-recovery-shell > .spider-recovery-success,
+.spider-recovery-shell > .spider-auth-switch,
+.spider-recovery-shell > .spider-recovery-footer {
+  zoom: .8;
+}
