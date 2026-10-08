@@ -11,6 +11,8 @@ import { Loader2, RefreshCw } from "lucide-react";
 
 // Pages
 import AuthPage from "@/pages/AuthPage";
+import { LegalPage } from "@/pages/LegalPages";
+import { ForgotPasswordPage, ResetPasswordPage } from "@/pages/PasswordRecoveryPage";
 import LogsPage from "@/pages/LogsPage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import OrderDetailPageNew from "@/pages/OrderDetailPageNew";
@@ -64,9 +66,18 @@ function Router() {
   const { user, isLoading, isError, retryAuth } = useAuth();
   const [location, setLocation] = useLocation();
   useForebitPolling();
+  const publicPages = new Set([
+    "/auth",
+    "/forgot-password",
+    "/reset-password",
+    "/terms",
+    "/terms-of-service",
+    "/privacy",
+    "/privacy-policy",
+  ]);
 
   useEffect(() => {
-    if (!isLoading && !isError && !user && !["/auth", "/forgot-password"].includes(location)) {
+    if (!isLoading && !isError && !user && !publicPages.has(location)) {
       setLocation("/auth");
     }
   }, [user, isLoading, isError, location, setLocation]);
@@ -83,7 +94,12 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/auth" component={AuthPage} />
-        <Route path="/forgot-password" component={AuthPage} />
+        <Route path="/forgot-password" component={ForgotPasswordPage} />
+        <Route path="/reset-password" component={ResetPasswordPage} />
+        <Route path="/terms">{() => <LegalPage kind="terms" />}</Route>
+        <Route path="/terms-of-service">{() => <LegalPage kind="terms" />}</Route>
+        <Route path="/privacy">{() => <LegalPage kind="privacy" />}</Route>
+        <Route path="/privacy-policy">{() => <LegalPage kind="privacy" />}</Route>
         <Route path="/" component={CardsPage} />
         <Route path="/deposit" component={DepositPage} />
         <Route path="/shop" component={LogsPage} />

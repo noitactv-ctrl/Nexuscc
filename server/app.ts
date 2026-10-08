@@ -117,6 +117,19 @@ export async function initializeApp(
     )
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire")`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      token_hash varchar(64) PRIMARY KEY,
+      user_id integer NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      expires_at timestamp NOT NULL,
+      created_at timestamp NOT NULL DEFAULT NOW(),
+      consumed_at timestamp
+    )
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS password_reset_tokens_user_idx
+    ON password_reset_tokens (user_id, expires_at)
+  `);
   await pool.query(`ALTER TABLE "crypto_payments" ADD COLUMN IF NOT EXISTS "settled_at" timestamp`);
   await ensureVouchSchema();
   await ensureTelegramReferralSchema();

@@ -32,6 +32,7 @@ export const api = {
       input: z.object({
         email: z.string().email(),
         password: z.string().min(12),
+        agreedToTerms: z.literal(true),
       }),
       responses: {
         201: z.custom<typeof users.$inferSelect & { loginCode: string }>(),
@@ -44,6 +45,7 @@ export const api = {
       input: z.object({
         email: z.string().email(),
         password: z.string().min(1),
+        rememberMe: z.boolean().optional(),
       }),
       responses: {
         200: z.custom<typeof users.$inferSelect>(),

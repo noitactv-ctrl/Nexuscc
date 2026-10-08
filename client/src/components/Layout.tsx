@@ -103,8 +103,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }] : []),
   ];
 
-  const isEntryPage = location === "/auth" || location === "/forgot-password";
-  if (isEntryPage) return <>{children}</>;
+  const isPublicEntryPage = new Set([
+    "/auth",
+    "/forgot-password",
+    "/reset-password",
+    "/terms",
+    "/terms-of-service",
+    "/privacy",
+    "/privacy-policy",
+  ]).has(location);
+  if (isPublicEntryPage) return <>{children}</>;
 
   return (
     <div className="min-h-screen bg-background">
