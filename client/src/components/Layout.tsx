@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
-  CircleDot,
   ChevronDown,
   CreditCard,
   FileText,
@@ -96,7 +95,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     reseller: boolean;
     logs: boolean;
     cards: boolean;
-    plinko: boolean;
   }>({
     queryKey: ["/api/settings/features"],
     staleTime: 30000,
@@ -154,7 +152,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           icon: Package,
           entries: [
             { href: "/orders", label: "All Orders", icon: Package },
-            ...(features?.logs ? [{ href: "/orders?tab=logs", label: "My Log Orders", icon: FileText }] : []),
           ],
         },
       ],
@@ -188,15 +185,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       label: "Settings",
       entries: [{ href: "/profile", label: "Account Management", icon: UserRound }],
     },
-    ...(features?.plinko !== false ? [{
-      label: "Games",
-      groups: [{
-        id: "games",
-        label: "Games",
-        icon: CircleDot,
-        entries: [{ href: "/games/plinko", label: "Plinko", icon: CircleDot }],
-      }],
-    }] : []),
     ...((user?.role === "admin" || (user as any)?.isWorker)
       ? [{
           label: "Management",
