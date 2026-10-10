@@ -12,6 +12,7 @@
 - [Vercel health probe behavior](vercel-health-probe.md) — `/api/health` is a deployment-only routing probe; local Vite may serve the SPA there instead.
 - [Vercel nested API splat routing](vercel-nested-api-splat-routing.md) — plain Node functions need an explicit `/api/:path*` rewrite to `[...path]` or nested endpoints get platform 404s.
 - [Supabase migration verification](supabase-migration-verification.md) — verify recorded migrations and tables after an MCP output warning before retrying DDL.
+- [Database sync consent](database-sync-consent.md) — approval to delete unmatched data applied only to the 2026-10-10 DATABASE_URL sync; get fresh consent for future destructive pushes.
 - [Auth route registration order](auth-route-registration-order.md) — register routes using Passport helpers after auth middleware is mounted.
 - [Supabase runtime connection](supabase-runtime-connection.md) — the Supabase MCP connection enables agent inspection, but Drizzle still needs a direct PostgreSQL URL to use Supabase at runtime.
 - [Replit PostgreSQL bindings](replit-postgres-bindings.md) — workflows may expose PG* variables without DATABASE_URL; node-postgres can connect through those managed bindings.

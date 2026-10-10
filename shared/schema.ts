@@ -1,7 +1,7 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, real, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, real, uniqueIndex, index, bigserial, bigint, varchar, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // === USERS ===
 export const users = pgTable("users", {
@@ -467,4 +467,66 @@ export type CryptoAddress = typeof cryptoAddresses.$inferSelect;
 export const siteSettings = pgTable("site_settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
+});
+
+// === RUNTIME SESSION AND TELEGRAM TABLES ===
+// These tables are also used by connect-pg-simple and raw SQL in Telegram handlers.
+export const sessions = pgTable("session", {
+  sid: varchar("sid").primaryKey(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(),
+}, (table) => [
+  index("IDX_session_expire").on(table.expire),
+]);
+
+export const telegramLicenseDrops = pgTable("telegram_license_drops", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  licenseKey: text("license_key").notNull().unique(),
+  createdBy: integer("created_by").references(() => users.id),
+  createdByChatId: text("created_by_chat_id"),
+  claimedBy: integer("claimed_by").references(() => users.id),
+  claimedChatId: text("claimed_chat_id"),
+  claimedAt: timestamp("claimed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("telegram_license_drops_available_idx").on(table.id).where(sql`${table.claimedBy} IS NULL`),
+]);
+
+export const telegramLicenseClaims = pgTable("telegram_license_claims", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  chatId: text("chat_id").notNull(),
+  userId: integer("user_id").references(() => users.id),
+  dropId: bigint("drop_id", { mode: "number" }).notNull().unique().references(() => telegramLicenseDrops.id),
+  chatReferralBonusId: bigint("chat_referral_bonus_id", { mode: "number" }),
+  claimedAt: timestamp("claimed_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("telegram_license_claims_chat_hour_idx").on(table.chatId, table.claimedAt),
+]);
+
+export const telegramChatMembers = pgTable("telegram_chat_members", {
+  chatId: text("chat_id").primaryKey(),
+  telegramUsername: text("telegram_username"),
+  nameActive: boolean("name_active").default(false).notNull(),
+  pendingReferrerChatId: text("pending_referrer_chat_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const telegramChatReferrals = pgTable("telegram_chat_referrals", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  referrerChatId: text("referrer_chat_id").notNull(),
+  referredChatId: text("referred_chat_id").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const telegramChatReferralBonuses = pgTable("telegram_chat_referral_bonuses", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  referrerChatId: text("referrer_chat_id").notNull(),
+  referralId: bigint("referral_id", { mode: "number" }).notNull().unique().references(() => telegramChatReferrals.id),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const telegramSuspensions = pgTable("telegram_suspensions", {
+  chatId: text("chat_id").primaryKey(),
+  suspendedUntil: timestamp("suspended_until", { withTimezone: true }).notNull(),
 });
