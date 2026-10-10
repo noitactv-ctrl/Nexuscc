@@ -17,3 +17,4 @@
 - [Replit PostgreSQL bindings](replit-postgres-bindings.md) — workflows may expose PG* variables without DATABASE_URL; node-postgres can connect through those managed bindings.
 - [Crypto payment settlement](crypto-payment-settlement.md) — blockchain confirmations can race across webhooks, polling, and client status checks; settle idempotently and retry incomplete settlements.
 - [Card inventory diagnostics](card-inventory-diagnostics.md) — cards can appear empty when restored DB schema lags shared schema or every card is already marked sold.
+- [NexusCC frontend precedence](nexuscc-frontend-precedence.md) — resolve stale conflicts in favor of the user's current NexusCC design and removals.

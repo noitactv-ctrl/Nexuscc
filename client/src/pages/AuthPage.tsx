@@ -50,7 +50,7 @@ function LoginForm({ onRegister }: { onRegister: () => void }) {
       <div className="spider-login-options">
         <label className="spider-checkbox-label"><input type="checkbox" checked={rememberMe}
           onChange={(e) => setRememberMe(e.target.checked)} /><span>Remember me</span></label>
-        <Link href="/forgot-password"><a className="spider-muted-link">Forgot password</a></Link>
+        <Link href="/forgot-password" className="spider-muted-link">Forgot password</Link>
       </div>
       <CaptchaChallenge code={code} tick={tick} value={captchaInput} onChange={setCaptchaInput}
         onRefresh={() => { refresh(); setCaptchaInput(""); }} disabled={isLoggingIn} />
@@ -94,7 +94,7 @@ function RegisterForm({ onLogin }: { onLogin: () => void }) {
       <div className="spider-field"><label className="spider-field-label">Confirm Password <span>*</span></label>
         <PasswordField value={confirm} onChange={setConfirm} placeholder="Confirm your password" autoComplete="new-password" disabled={isRegistering} /></div>
       <label className="spider-terms-consent"><input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required />
-        <span>I accept <Link href="/terms"><a>Terms</a></Link> &amp; <Link href="/privacy"><a>Privacy</a></Link> *</span></label>
+        <span>I accept <Link href="/terms">Terms</Link> &amp; <Link href="/privacy">Privacy</Link> *</span></label>
       <CaptchaChallenge code={code} tick={tick} value={captchaInput} onChange={setCaptchaInput}
         onRefresh={() => { refresh(); setCaptchaInput(""); }} disabled={isRegistering} />
       <button className="spider-primary-button" type="submit" disabled={isRegistering || !email || !password || !confirm || !agreed || !captchaInput}>
