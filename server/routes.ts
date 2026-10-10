@@ -480,6 +480,7 @@ export async function registerRoutes(
 
       const cryptoDeposits = cryptoRows.map(p => ({
         id: `crypto_${p.id}`,
+        orderId: null,
         type: "crypto" as const,
         amount: p.amount,
         status: p.status,
@@ -490,6 +491,7 @@ export async function registerRoutes(
 
       const cashappDeposits = depositOnlyCashapp.map(o => ({
         id: `cashapp_${o.id}`,
+        orderId: o.orderId,
          type: (o.paymentMethod?.toLowerCase() ?? "cashapp") as "cashapp" | "venmo" | "chime" | "zelle",
         amount: o.total,
         status: o.status,

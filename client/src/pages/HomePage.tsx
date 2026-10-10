@@ -320,7 +320,7 @@ export default function HomePage() {
             <MetricCard label="Pending" value={currency(pendingAmount)} detail={`${pendingDeposits.length} pending`} icon={CircleAlert} emphasis="text-amber-400" />
             <MetricCard label="Average" value={currency(averageDeposit)} detail={`Largest ${currency(largestDeposit)}`} icon={Activity} />
           </div>
-          <Link href="/deposit#deposit-history" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-blue-500/60 hover:bg-blue-500/10">
+          <Link href="/my-deposits" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-blue-500/60 hover:bg-blue-500/10">
             View my deposits <ArrowUpRight className="h-4 w-4" />
           </Link>
           <ChartCard title="Monthly deposits" subtitle="Total vs paid amount" data={monthlyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#f59e0b" amountColor="#2563eb" />

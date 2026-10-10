@@ -122,7 +122,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           icon: WalletCards,
           entries: [
             { href: "/deposit", label: "Deposit Money", icon: CreditCard },
-            { href: "/deposit#deposit-history", label: "My Deposit", icon: FileText },
+            { href: "/my-deposits", label: "My Deposits", icon: FileText },
           ],
         },
       ],

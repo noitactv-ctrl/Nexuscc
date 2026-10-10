@@ -31,6 +31,7 @@ import SupportPage from "@/pages/SupportPage";
 import RedeemCodePage from "@/pages/RedeemCodePage";
 import PlinkoPage from "@/pages/PlinkoPage";
 import HomePage from "@/pages/HomePage";
+import MyDepositsPage from "@/pages/MyDepositsPage";
 
 function LoadingScreen() {
   return (
@@ -102,6 +103,7 @@ function Router() {
         <Route path="/privacy-policy">{() => <LegalPage kind="privacy" />}</Route>
         <Route path="/" component={HomePage} />
         <Route path="/deposit" component={DepositPage} />
+        <Route path="/my-deposits" component={MyDepositsPage} />
         <Route path="/shop" component={LogsPage} />
         <Route path="/redeem" component={RedeemCodePage} />
         <Route path="/product/:name" component={ProductDetailPage} />
