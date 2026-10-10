@@ -141,7 +141,7 @@ export default function MyDepositsPage() {
 
   return (
     <main className="min-h-[calc(100dvh-52px)] bg-[#090909] px-4 pb-12 pt-7 text-white sm:px-6 sm:pt-8 lg:px-8">
-      <div className="mx-auto w-full max-w-[1440px]">
+      <div className="mx-auto w-[125%] max-w-[1800px]" style={{ zoom: 0.8 }}>
         <header className="mb-12 sm:mb-14">
           <h1 className="text-[32px] font-bold leading-tight tracking-[-0.035em] sm:text-[38px]">My Deposits</h1>
           <p className="mt-3 text-base text-[#a3a3a3] sm:text-[20px]">View and manage your deposit history</p>

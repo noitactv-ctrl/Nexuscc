@@ -83,11 +83,7 @@
 }
 
 .spider-login-page {
-  background:
-    radial-gradient(ellipse at 12% 32%, rgba(41, 126, 166, .27), transparent 31%),
-    radial-gradient(ellipse at 90% 82%, rgba(42, 113, 152, .25), transparent 34%),
-    radial-gradient(ellipse at 83% 18%, rgba(34, 41, 79, .22), transparent 36%),
-    #10182d;
+  background: #070707;
 }
 
 .spider-register-page,
