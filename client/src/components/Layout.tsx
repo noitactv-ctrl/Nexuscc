@@ -16,6 +16,7 @@ import {
   MessageSquare,
   MoreVertical,
   Package,
+  Plus,
   Settings,
   ShoppingBag,
   Ticket,
@@ -302,40 +303,50 @@ export function Layout({ children }: { children: React.ReactNode }) {
       )}
 
       <header className="nexus-topbar">
-        <button
-          type="button"
-          onClick={() => {
-            setNavOpen(true);
-            setAccountOpen(false);
-          }}
-          className="nexus-menu-trigger"
-          data-testid="btn-menu"
-          aria-label="Open navigation"
-          aria-expanded={navOpen}
-        >
-          <Menu aria-hidden="true" />
-        </button>
-
-        <Link href="/" className="nexus-topbar-brand" aria-label="NexusCC home">
-          <CreditCard aria-hidden="true" />
-          <span>NexusCC</span>
-        </Link>
-
-        {user ? (
+        <div className="nexus-topbar-leading">
           <button
             type="button"
-            className="nexus-topbar-avatar"
-            aria-label="Open account menu"
             onClick={() => {
               setNavOpen(true);
-              setAccountOpen(true);
+              setAccountOpen(false);
             }}
+            className="nexus-menu-trigger"
+            data-testid="btn-menu"
+            aria-label="Open navigation"
+            aria-expanded={navOpen}
           >
-            {initials(userLabel)}
+            <Menu aria-hidden="true" />
           </button>
-        ) : (
-          <span className="nexus-topbar-avatar-placeholder" />
-        )}
+
+          <Link href="/" className="nexus-topbar-brand" aria-label="NexusCC home">
+            <CreditCard aria-hidden="true" />
+            <span>NexusCC</span>
+          </Link>
+        </div>
+
+        <div className="nexus-topbar-trailing">
+          {user && (
+            <Link href="/deposit" className="nexus-topbar-balance" aria-label={`Balance $${balanceDollars}. Add funds`}>
+              <span>${balanceDollars}</span>
+              <Plus aria-hidden="true" />
+            </Link>
+          )}
+          {user ? (
+            <button
+              type="button"
+              className="nexus-topbar-avatar"
+              aria-label="Open account menu"
+              onClick={() => {
+                setNavOpen(true);
+                setAccountOpen(true);
+              }}
+            >
+              {initials(userLabel)}
+            </button>
+          ) : (
+            <span className="nexus-topbar-avatar-placeholder" />
+          )}
+        </div>
       </header>
 
       <button

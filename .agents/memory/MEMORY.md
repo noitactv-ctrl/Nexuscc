@@ -1,4 +1,5 @@
 - [Order fee/discount model](order-fee-discount-model.md) — cashapp/crypto checkout must go through createPendingOrder with server-side fee+discount calc; never trust client-computed totals.
+- [Prepaid card product](prepaid-card-product.md) — the user clarified that cards sold through this project are prepaids.
 - [Storage interface removal pitfall](storage-interface-removal.md) — bulk removal from IStorage can silently drop closing `}`, causing esbuild failure in prod while tsx dev stays happy.
 - [Auth-gated screenshot testing](auth-gated-screenshot-testing.md) — login requires a captcha, so the screenshot tool can't get past sign-in to visually verify pages behind auth.
 - [Replit preview proxy](replit-preview-proxy.md) — trust one proxy in all environments so preview login rate limiting accepts forwarded client IPs.

@@ -1,22 +1,60 @@
-import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Search, ShoppingCart, ChevronDown, X, Loader2, SlidersHorizontal } from "lucide-react";
-import { useLocation, Redirect } from "wouter";
+import {
+  Check,
+  ChevronDown,
+  Columns3,
+  Info,
+  Loader2,
+  Search,
+  ShoppingCart,
+  SlidersHorizontal,
+} from "lucide-react";
+import { Redirect, useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  CardFiltersSheet,
+  createEmptyCardFilters,
+  type CardFilterKey,
+  type CardFilters,
+} from "@/components/cards/CardFiltersSheet";
+import { CardDetailsDialog, type CardDetails } from "@/components/cards/CardDetailsDialog";
+
+type CatalogCard = any;
+
+const COLUMNS = [
+  { id: "number", label: "Number" },
+  { id: "bin", label: "BIN" },
+  { id: "brand", label: "Brand" },
+  { id: "type", label: "Type" },
+  { id: "level", label: "Level" },
+  { id: "issuer", label: "Issuer" },
+  { id: "country", label: "Country" },
+  { id: "city", label: "City" },
+  { id: "state", label: "State" },
+  { id: "zip", label: "ZIP" },
+  { id: "base", label: "BaseName" },
+  { id: "price", label: "PricePerCard" },
+] as const;
+
+type ColumnId = (typeof COLUMNS)[number]["id"];
+
+const DATA_FILTERS = ["email", "phone", "name", "address", "dob", "ssn", "ip", "userAgent"] as const;
 
 function countryFlag(code: string): string {
   if (!code || code.length !== 2) return "";
-  const upper = code.toUpperCase();
-  return String.fromCodePoint(...upper.split("").map(c => 0x1F1E6 - 65 + c.charCodeAt(0)));
+  return String.fromCodePoint(...code.toUpperCase().split("").map((c) => 0x1f1e6 - 65 + c.charCodeAt(0)));
 }
 
-const countryDisplayNames = typeof Intl !== "undefined" && (Intl as any).DisplayNames
-  ? new (Intl as any).DisplayNames(["en"], { type: "region" })
-  : null;
+const countryDisplayNames =
+  typeof Intl !== "undefined" && (Intl as any).DisplayNames
+    ? new (Intl as any).DisplayNames(["en"], { type: "region" })
+    : null;
 
 function countryName(code: string): string {
-  if (!code || code.length !== 2) return "";
+  if (!code) return "";
+  if (code.length !== 2) return code;
   try {
     return countryDisplayNames?.of(code.toUpperCase()) || code.toUpperCase();
   } catch {
@@ -30,47 +68,31 @@ function extractBin(cardNumber: string): string {
 
 function extractZip(extras: string): string {
   if (!extras) return "";
-  const tokens = extras.split(/[|\t:;,\s]+/).map(t => t.trim()).filter(Boolean);
+  const tokens = extras.split(/[|\t:;,\s]+/).map((token) => token.trim()).filter(Boolean);
   for (const token of tokens) {
-    const zipMatch = token.match(/^(\d{5})(?:-\d{4})?$/);
-    if (zipMatch) {
-      const num = parseInt(zipMatch[1], 10);
-      if (num >= 501 && num <= 99950 && !(num >= 1900 && num <= 2100)) return zipMatch[1];
-    }
-  }
-  for (const token of tokens) {
-    const digits = token.replace(/\D/g, "");
-    if (digits.length >= 13) continue;
-    const m = token.match(/\b(\d{5})(?:-\d{4})?\b/);
-    if (m) {
-      const num = parseInt(m[1], 10);
-      if (num >= 501 && num <= 99950 && !(num >= 1900 && num <= 2100)) return m[1];
+    const match = token.match(/^(\d{5})(?:-\d{4})?$/);
+    if (match) {
+      const number = Number.parseInt(match[1], 10);
+      if (number >= 501 && number <= 99950 && !(number >= 1900 && number <= 2100)) return match[1];
     }
   }
   return "";
 }
 
 const US_STATES = new Set([
-  "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY",
-  "LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND",
-  "OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC",
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY",
+  "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND",
+  "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
 ]);
 
 function extractCity(extras: string): string {
-  if (!extras) return "";
-  const parts = extras.split(/[|\t]/);
-  // Find state abbreviation index, city is typically just before it
-  for (let i = 1; i < parts.length; i++) {
-    const t = parts[i].trim();
-    if (US_STATES.has(t)) {
-      // city is the token before the state (skip blanks)
-      for (let j = i - 1; j >= 0; j--) {
-        const c = parts[j].trim();
-        if (c && c.length > 1 && !/^\d/.test(c) && !c.includes("@") && !c.includes(".") && !/^\d{1,3}\.\d{1,3}/.test(c)) {
-          return c.length > 20 ? c.substring(0, 18) + "…" : c;
-        }
-      }
-      break;
+  const parts = (extras ?? "").split(/[|\t]/);
+  const stateIndex = parts.findIndex((part) => US_STATES.has(part.trim()));
+  if (stateIndex < 1) return "";
+  for (let index = stateIndex - 1; index >= 0; index--) {
+    const city = parts[index].trim();
+    if (city && city.length > 1 && !/^\d/.test(city) && !city.includes("@") && !city.includes(".")) {
+      return city.length > 22 ? `${city.slice(0, 20)}…` : city;
     }
   }
   return "";
@@ -91,33 +113,64 @@ function extractState(extras: string): string {
 function hasBilling(extras: string): boolean {
   return (extras ?? "").split(/[|\t]/).length >= 5;
 }
-
-function formatType(binData: any): string {
-  if (!binData) return "";
-  const t = binData.type?.toUpperCase();
-  return t || "";
+function hasFeature(card: CatalogCard, feature: string): boolean {
+  const extras = String(card.extras ?? "");
+  const tokens = extras.split(/[|\t]/).map((part: string) => part.trim()).filter(Boolean);
+  switch (feature) {
+    case "email": return /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(extras);
+    case "phone": return /\b(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b/.test(extras);
+    case "name": return /\b[A-Z][a-z]{1,}\s+[A-Z][a-z]{1,}\b/.test(extras);
+    case "address": return tokens.length >= 5;
+    case "dob": return /\b(?:0?[1-9]|1[0-2])[/-](?:0?[1-9]|[12]\d|3[01])[/-](?:\d{2}|\d{4})\b/.test(extras);
+    case "ssn": return /\b\d{3}-?\d{2}-?\d{4}\b/.test(extras);
+    case "ip": return /\b(?:\d{1,3}\.){3}\d{1,3}\b/.test(extras);
+    case "userAgent": return /\b(?:Mozilla|Chrome|Safari|Firefox|Android|iPhone|Windows)\b/i.test(extras);
+    default: return false;
+  }
 }
 
-function formatBank(binData: any): string {
-  if (!binData) return "";
-  const b = binData.bank;
-  if (!b || b === "Unknown") return "";
-  return b.length > 18 ? b.substring(0, 16) + "..." : b;
+function formatCardNumber(card: CatalogCard): string {
+  const digits = String(card.maskedCard ?? card.cardNumber ?? "").replace(/\D/g, "");
+  return `•••• ${digits.slice(-4) || "••••"}`;
+}
+
+function toCardDetails(card: CatalogCard): CardDetails {
+  const countryCode = String(card.binData?.countryCode ?? "");
+  return {
+    id: card.id,
+    maskedNumber: formatCardNumber(card),
+    bin: extractBin(card.cardNumber),
+    city: extractCity(card.extras ?? ""),
+    state: extractState(card.extras ?? ""),
+    zip: extractZip(card.extras ?? ""),
+    brand: card.binData?.brand || card.binData?.scheme || "",
+    type: card.binData?.type || "",
+    level: card.binData?.level || card.level || "",
+    issuer: card.binData?.bank || "",
+    country: countryName(card.binData?.country || countryCode),
+    base: card.baseName || "",
+    price: Number(card.price) || 0,
+    extras: String(card.extras ?? ""),
+  };
+}
+
+function matchesAvailability(card: CatalogCard, key: string, value: string): boolean {
+  if (!value) return true;
+  const available = hasFeature(card, key);
+  return value === "available" ? available : !available;
 }
 
 export default function CardsPage() {
   const [search, setSearch] = useState("");
-  const [zipSearch, setZipSearch] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedBase, setSelectedBase] = useState<number | null>(null);
   const [showBaseDropdown, setShowBaseDropdown] = useState(false);
-  const [selectedBank, setSelectedBank] = useState("");
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const [priceMin, setPriceMin] = useState("");
-  const [priceMax, setPriceMax] = useState("");
-  const [cartCardIds, setCartCardIds] = useState<Set<number>>(new Set());
-  const [cartPurchasing, setCartPurchasing] = useState<{ current: number; total: number; done: boolean } | null>(null);
-
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<CardFilters>(createEmptyCardFilters);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [columnsOpen, setColumnsOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(COLUMNS.map((column) => column.id));
+  const [details, setDetails] = useState<CardDetails | null>(null);
+  const [purchasing, setPurchasing] = useState<{ current: number; total: number } | null>(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -125,11 +178,11 @@ export default function CardsPage() {
     queryKey: ["/api/settings/features"],
     staleTime: 30000,
   });
-
   const { data: bases } = useQuery<any[]>({
     queryKey: ["/api/card-bases"],
     refetchInterval: 30000,
   });
+/*
 
   if (features && features.cards === false) return <Redirect to="/" />;
 
@@ -146,305 +199,351 @@ export default function CardsPage() {
         throw new Error("Cards request returned an invalid response.");
       }
       return payload;
+*/
+  const { data: cards, isLoading } = useQuery<CatalogCard[]>({
+    queryKey: ["/api/cards", selectedBase],
+    queryFn: async () => {
+      const response = await fetch(selectedBase ? `/api/cards?baseId=${selectedBase}` : "/api/cards", { credentials: "include" });
+      if (!response.ok) throw new Error("Could not load prepaid cards");
+      return response.json();
     },
+    enabled: features?.cards !== false,
     refetchInterval: 20000,
   });
 
-  const availableBanks = useMemo(() => {
-    if (!cards) return [];
-    const set = new Set<string>();
-    cards.forEach((c: any) => { const b = c.binData?.bank; if (b && b !== "Unknown") set.add(b); });
-    return Array.from(set).sort();
-  }, [cards]);
-
-  const availableCountries = useMemo(() => {
-    if (!cards) return [];
-    const set = new Set<string>();
-    cards.forEach((c: any) => { const code = c.binData?.countryCode; if (code) set.add(code.toUpperCase()); });
-    return Array.from(set).sort();
+  const filterOptions = useMemo(() => {
+    const list = cards ?? [];
+    const countryCodes = Array.from(new Set(list.map((card) => String(card.binData?.countryCode ?? "").toUpperCase()).filter(Boolean))).sort();
+    const states = Array.from(new Set(list.map((card) => extractState(card.extras ?? "")).filter(Boolean))).sort();
+    const brands = Array.from(new Set(list.map((card) => String(card.binData?.brand || card.binData?.scheme || "")).filter(Boolean))).sort();
+    const banks = Array.from(new Set(list.map((card) => String(card.binData?.bank ?? "")).filter((bank) => bank && bank !== "Unknown"))).sort();
+    return {
+      countries: countryCodes.map((code) => ({ value: code, label: countryName(code) })),
+      states,
+      brands,
+      banks,
+    };
   }, [cards]);
 
   const filteredCards = useMemo(() => {
-    if (!cards) return [];
-    return cards.filter((card: any) => {
-      const q = search.toLowerCase();
-      const matchSearch = !search
-        || extractBin(card.cardNumber).includes(q)
-        || (card.baseName ?? "").toLowerCase().includes(q)
-        || (card.binData?.scheme ?? "").toLowerCase().includes(q)
-        || (card.binData?.type ?? "").toLowerCase().includes(q)
-        || (card.binData?.brand ?? "").toLowerCase().includes(q);
-      const matchZip = !zipSearch || extractZip(card.extras ?? "").startsWith(zipSearch.trim());
-      const cardPrice = card.price / 100;
-      const matchMin = !priceMin || cardPrice >= parseFloat(priceMin);
-      const matchMax = !priceMax || cardPrice <= parseFloat(priceMax);
-      const matchBank = !selectedBank || (card.binData?.bank === selectedBank);
-      const matchCountry = !selectedCountry || ((card.binData?.countryCode ?? "").toUpperCase() === selectedCountry);
-      return matchSearch && matchZip && matchMin && matchMax && matchBank && matchCountry;
+    const list = cards ?? [];
+    const q = search.trim().toLowerCase();
+    return list.filter((card) => {
+      const bin = extractBin(card.cardNumber);
+      const brand = String(card.binData?.brand || card.binData?.scheme || "");
+      const bank = String(card.binData?.bank ?? "");
+      const countryCode = String(card.binData?.countryCode ?? "").toUpperCase();
+      const zip = extractZip(card.extras ?? "");
+      const state = extractState(card.extras ?? "");
+      const price = Number(card.price ?? 0) / 100;
+      const matchesSearch = !q || [bin, card.baseName, brand, card.binData?.type, bank, countryName(countryCode)]
+        .some((value) => String(value ?? "").toLowerCase().includes(q));
+      const matchesFields =
+        (!filters.country || countryCode === filters.country) &&
+        (!filters.state || state === filters.state) &&
+        (!filters.zip || zip.startsWith(filters.zip.trim())) &&
+        (!filters.bin || bin.includes(filters.bin.replace(/\D/g, ""))) &&
+        (!filters.brand || brand === filters.brand) &&
+        (!filters.bank || bank === filters.bank) &&
+        (!filters.minPrice || price >= Number(filters.minPrice)) &&
+        (!filters.maxPrice || price <= Number(filters.maxPrice)) &&
+        DATA_FILTERS.every((key) => matchesAvailability(card, key, filters[key]));
+      return matchesSearch && matchesFields;
     });
-  }, [cards, search, zipSearch, priceMin, priceMax, selectedBank, selectedCountry]);
+  }, [cards, search, filters]);
 
-  const cartCards = useMemo(() => (cards ?? []).filter((c: any) => cartCardIds.has(c.id)), [cards, cartCardIds]);
-  const cartTotal = cartCards.reduce((s: number, c: any) => s + c.price, 0);
+  const selectedCards = useMemo(
+    () => (cards ?? []).filter((card) => selectedIds.has(card.id)),
+    [cards, selectedIds],
+  );
+  const selectedTotal = selectedCards.reduce((sum, card) => sum + Number(card.price ?? 0), 0);
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  const allVisibleSelected = filteredCards.length > 0 && filteredCards.every((card) => selectedIds.has(card.id));
 
-  const toggleCart = (card: any) => {
-    setCartCardIds(prev => {
-      const next = new Set(prev);
-      if (next.has(card.id)) next.delete(card.id); else next.add(card.id);
+  useEffect(() => {
+    if (!showFilters && !details) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowFilters(false);
+        setDetails(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showFilters, details]);
+
+  const toggleSelection = (card: CatalogCard) => {
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(card.id)) next.delete(card.id);
+      else next.add(card.id);
       return next;
     });
   };
 
-  const toggleAll = () => {
-    if (cartCardIds.size === filteredCards.length) {
-      setCartCardIds(new Set());
-    } else {
-      setCartCardIds(new Set(filteredCards.map((c: any) => c.id)));
-    }
+  const toggleAllVisible = () => {
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      if (allVisibleSelected) filteredCards.forEach((card) => next.delete(card.id));
+      else filteredCards.forEach((card) => next.add(card.id));
+      return next;
+    });
   };
 
-  const purchaseCart = async () => {
-    if (cartCards.length === 0) return;
-    setCartPurchasing({ current: 0, total: cartCards.length, done: false });
-    let ok = 0;
-    for (let i = 0; i < cartCards.length; i++) {
-      setCartPurchasing({ current: i + 1, total: cartCards.length, done: false });
+  const updateFilter = (key: CardFilterKey, value: string) => {
+    setFilters((previous) => ({ ...previous, [key]: value }));
+  };
+
+  const purchaseSelected = async () => {
+    if (!selectedCards.length || purchasing) return;
+    setPurchasing({ current: 0, total: selectedCards.length });
+    let successful = 0;
+    for (let index = 0; index < selectedCards.length; index++) {
+      setPurchasing({ current: index + 1, total: selectedCards.length });
       try {
-        const res = await apiRequest("POST", `/api/cards/${cartCards[i].id}/purchase`, {});
-        if (!res.ok) { const err = await res.json().catch(() => ({})); toast({ title: `Card ${i + 1} failed`, description: err.message, variant: "destructive" }); }
-        else ok++;
-      } catch { toast({ title: `Card ${i + 1} failed`, variant: "destructive" }); }
+        const response = await apiRequest("POST", `/api/cards/${selectedCards[index].id}/purchase`, {});
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          toast({ title: `Card ${index + 1} failed`, description: error.message, variant: "destructive" });
+        } else successful++;
+      } catch {
+        toast({ title: `Card ${index + 1} failed`, variant: "destructive" });
+      }
     }
-    setCartPurchasing({ current: cartCards.length, total: cartCards.length, done: true });
     queryClient.invalidateQueries({ queryKey: ["/api/cards"] });
     queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-    setCartCardIds(new Set());
-    setTimeout(() => {
-      setCartPurchasing(null);
-      if (ok > 0) { toast({ title: `${ok} card${ok > 1 ? "s" : ""} purchased` }); setLocation("/orders"); }
-    }, 800);
+    setSelectedIds(new Set());
+    setPurchasing(null);
+    if (successful) {
+      toast({ title: `${successful} prepaid card${successful === 1 ? "" : "s"} purchased` });
+      setLocation("/orders");
+    }
   };
 
-  const activeFilters = (zipSearch ? 1 : 0) + (priceMin ? 1 : 0) + (priceMax ? 1 : 0) + (selectedBank ? 1 : 0) + (selectedCountry ? 1 : 0);
-  const clearFilters = () => { setZipSearch(""); setPriceMin(""); setPriceMax(""); setSelectedBank(""); setSelectedCountry(""); };
+  const toggleColumn = (id: ColumnId) => {
+    setVisibleColumns((previous) => {
+      if (previous.includes(id)) return previous.length > 1 ? previous.filter((column) => column !== id) : previous;
+      return [...previous, id];
+    });
+  };
+
+  const getColumnValue = (card: CatalogCard, id: ColumnId) => {
+    const countryCode = String(card.binData?.countryCode ?? "");
+    switch (id) {
+      case "number": return formatCardNumber(card);
+      case "bin": return extractBin(card.cardNumber) || "—";
+      case "brand": return card.binData?.brand || card.binData?.scheme || "—";
+      case "type": return card.binData?.type || "—";
+      case "level": return card.binData?.level || card.level || "—";
+      case "issuer": return card.binData?.bank || "—";
+      case "country": return `${countryFlag(countryCode)} ${countryName(card.binData?.country || countryCode)}`.trim() || "—";
+      case "city": return extractCity(card.extras ?? "") || "—";
+      case "state": return extractState(card.extras ?? "") || "—";
+      case "zip": return extractZip(card.extras ?? "") || "—";
+      case "base": return card.baseName || "—";
+      case "price": return `$${(Number(card.price ?? 0) / 100).toFixed(2)}`;
+    }
+  };
+
+  if (features && features.cards === false) return <Redirect to="/" />;
 
   return (
-    <div className="max-w-2xl lg:max-w-5xl xl:max-w-6xl mx-auto">
+    <main className="mx-auto w-full max-w-[1280px] px-3 pb-12 sm:px-5">
+      <section className="pb-4 pt-5 sm:pt-7">
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Buy Cards</h1>
+        <p className="mt-2 text-sm text-white/55 sm:text-base">Purchase prepaid cards from available bases</p>
+      </section>
 
-
-      {/* Bases + Search + controls */}
-      <div className="px-3 pt-3 pb-2 space-y-2.5 bg-background sticky top-[52px] z-30 border-b border-white/[0.05]">
-
-        {/* Search bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/35" />
+      <section className="space-y-3 pb-4">
+        <label className="relative block">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/45" aria-hidden="true" />
           <input
-            type="text"
-            placeholder="Search by card type, category, keywords..."
+            type="search"
             value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full h-10 bg-[#111] border border-white/10 rounded-2xl pl-9 pr-3 text-xs text-white/90 placeholder:text-white/35 outline-none focus:border-white/20 transition-colors"
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search cards, base name, BIN, brand..."
+            className="h-12 w-full rounded-xl border border-white/15 bg-[#141414] pl-12 pr-4 text-sm text-white outline-none placeholder:text-white/45 focus:border-white/30 sm:text-base"
             data-testid="input-search"
           />
-        </div>
+        </label>
 
-        {/* Base dropdown + Filters button */}
-        <div className="flex gap-1.5">
-          {/* Base dropdown */}
-          <div className="relative flex-1">
+        <div className="grid grid-cols-[1fr_auto] gap-2">
+          <div className="relative min-w-0">
             <button
-              onClick={() => setShowBaseDropdown(d => !d)}
-              className="w-full flex items-center justify-between bg-[#0d0d0d] border border-white/10 rounded-lg px-2.5 h-8 text-[11px] text-white/60 hover:text-white/80 transition-colors"
+              type="button"
+              onClick={() => setShowBaseDropdown((open) => !open)}
+              className="flex h-12 w-full items-center justify-between rounded-xl border border-white/15 bg-[#141414] px-4 text-left text-sm text-white/90 sm:text-base"
               data-testid="btn-base-dropdown"
             >
               <span className="truncate">
                 {selectedBase === null
-                  ? `All Bases · ${(bases ?? []).reduce((s: number, b: any) => s + (b.count ?? 0), 0)}`
-                  : (() => { const b = (bases ?? []).find((b: any) => b.id === selectedBase); return b ? `${b.name} · ${b.count ?? 0}` : "All Bases"; })()
-                }
+                  ? `All Bases${bases ? ` (${bases.reduce((sum: number, base: any) => sum + (base.count ?? 0), 0)})` : ""}`
+                  : (bases ?? []).find((base: any) => base.id === selectedBase)?.name ?? "Selected base"}
               </span>
-              <ChevronDown className={`h-3 w-3 text-white/30 ml-1 flex-shrink-0 transition-transform ${showBaseDropdown ? "rotate-180" : ""}`} />
+              <ChevronDown className={`ml-3 h-4 w-4 shrink-0 text-white/55 transition-transform ${showBaseDropdown ? "rotate-180" : ""}`} />
             </button>
             {showBaseDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-[#111] border border-white/10 rounded-xl shadow-lg z-50 overflow-hidden max-h-48 overflow-y-auto">
+              <div className="absolute left-0 right-0 top-full z-40 mt-2 max-h-72 overflow-y-auto rounded-xl border border-white/15 bg-[#171717] p-1 shadow-2xl">
                 <button
+                  type="button"
                   onClick={() => { setSelectedBase(null); setShowBaseDropdown(false); }}
-                  className={`w-full text-left px-3 py-2 text-[11px] flex justify-between transition-colors hover:bg-[#0d0d0d] ${selectedBase === null ? "font-semibold text-white" : "text-white/55"}`}
-                  data-testid="btn-base-all"
+                  className="flex w-full items-center justify-between rounded-lg px-3 py-3 text-left text-sm text-white hover:bg-white/8"
                 >
                   <span>All Bases</span>
-                  <span className="text-white/30 font-mono">{(bases ?? []).reduce((s: number, b: any) => s + (b.count ?? 0), 0)}</span>
+                  {selectedBase === null && <Check className="h-4 w-4" />}
                 </button>
-                {(bases ?? []).map((b: any) => (
+                {(bases ?? []).map((base: any) => (
                   <button
-                    key={b.id}
-                    onClick={() => { setSelectedBase(b.id); setShowBaseDropdown(false); }}
-                    className={`w-full text-left px-3 py-2 text-[11px] flex justify-between border-t border-white/[0.06] transition-colors hover:bg-[#0d0d0d] ${selectedBase === b.id ? "font-semibold text-white" : "text-white/55"}`}
-                    data-testid={`btn-base-${b.id}`}
+                    key={base.id}
+                    type="button"
+                    onClick={() => { setSelectedBase(base.id); setShowBaseDropdown(false); }}
+                    className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-3 text-left text-sm text-white hover:bg-white/8"
                   >
-                    <span className="truncate pr-2">{b.name}</span>
-                    <span className="text-white/30 font-mono shrink-0">{b.count ?? 0}</span>
+                    <span className="truncate">{base.name} ({base.count ?? 0} cards)</span>
+                    {selectedBase === base.id && <Check className="h-4 w-4 shrink-0" />}
                   </button>
                 ))}
               </div>
             )}
           </div>
-
-          {/* Filters button */}
           <button
-            onClick={() => setShowFilters(f => !f)}
-            className={`flex items-center gap-1.5 px-3 h-8 rounded-lg border text-[11px] font-medium transition-colors ${
-              showFilters || activeFilters > 0
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-[#0d0d0d] border-white/10 text-white/50 hover:text-white/70"
+            type="button"
+            onClick={() => setShowFilters(true)}
+            className={`inline-flex h-12 items-center gap-2 rounded-xl border px-3 text-sm font-medium transition-colors sm:px-4 ${
+              activeFilterCount ? "border-white/30 bg-white/10 text-white" : "border-white/15 bg-[#141414] text-white/80"
             }`}
             data-testid="btn-toggle-filters"
           >
-            <SlidersHorizontal className="h-3 w-3" />
-            Filters{activeFilters > 0 ? ` (${activeFilters})` : ""}
+            <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+            Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
           </button>
         </div>
+      </section>
 
-        {/* Filter panel */}
-        {showFilters && (
-          <div className="space-y-2 bg-[#0d0d0d] border border-white/10 rounded-xl p-2.5">
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-white/35 mb-1">ZIP Code</p>
-              <input
-                type="text"
-                placeholder="Enter ZIP..."
-                value={zipSearch}
-                onChange={e => setZipSearch(e.target.value)}
-                className="w-full h-7 bg-[#111] border border-white/10 rounded-lg px-2.5 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:border-white/15"
-                data-testid="input-zip"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-widest text-white/35 mb-1">Bank</p>
-                <select
-                  value={selectedBank}
-                  onChange={e => setSelectedBank(e.target.value)}
-                  className="w-full h-7 bg-[#111] border border-white/10 rounded-lg px-2 text-[11px] text-white/70 outline-none"
-                >
-                  <option value="">All Banks</option>
-                  {availableBanks.map(b => <option key={b} value={b}>{b}</option>)}
-                </select>
-              </div>
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-widest text-white/35 mb-1">Country</p>
-                <select
-                  value={selectedCountry}
-                  onChange={e => setSelectedCountry(e.target.value)}
-                  className="w-full h-7 bg-[#111] border border-white/10 rounded-lg px-2 text-[11px] text-white/70 outline-none"
-                >
-                  <option value="">All</option>
-                  {availableCountries.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="flex gap-1.5 items-center">
-              <input type="number" step="0.01" placeholder="Min $" value={priceMin} onChange={e => setPriceMin(e.target.value)}
-                className="flex-1 h-7 bg-[#111] border border-white/10 rounded-lg px-2.5 text-[11px] text-white/90 placeholder:text-white/35 outline-none"
-                data-testid="input-price-min"
-              />
-              <span className="text-white/30 text-[11px] shrink-0">—</span>
-              <input type="number" step="0.01" placeholder="Max $" value={priceMax} onChange={e => setPriceMax(e.target.value)}
-                className="flex-1 h-7 bg-[#111] border border-white/10 rounded-lg px-2.5 text-[11px] text-white/90 placeholder:text-white/35 outline-none"
-                data-testid="input-price-max"
-              />
-            </div>
-            {activeFilters > 0 && (
-              <button onClick={clearFilters} className="flex items-center gap-1 text-[10px] text-red-400/70 hover:text-red-400 transition-colors">
-                <X className="h-3 w-3" /> Clear all filters
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Buy Selected button */}
+      <section className="sticky top-[43px] z-30 space-y-4 border-b border-white/10 bg-background pb-4 pt-2">
         <button
-          onClick={purchaseCart}
-          disabled={cartCardIds.size === 0 || !!cartPurchasing}
-          className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg border text-[11px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            background: cartCardIds.size > 0 ? "hsl(112 45% 42% / 0.08)" : "rgba(255,255,255,0.03)",
-            borderColor: cartCardIds.size > 0 ? "hsl(112 45% 42% / 0.3)" : "rgba(255,255,255,0.08)",
-            color: cartCardIds.size > 0 ? "hsl(112 45% 42%)" : "rgba(255,255,255,0.25)",
-          }}
+          type="button"
+          onClick={purchaseSelected}
+          disabled={selectedCards.length === 0 || !!purchasing}
+          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#8b1c22] text-base font-semibold text-black transition-colors hover:bg-[#f32936] disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg"
           data-testid="btn-add-selected"
         >
-          {cartPurchasing && !cartPurchasing.done ? (
-            <>
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Purchasing {cartPurchasing.current}/{cartPurchasing.total}...
-            </>
-          ) : (
-            <>
-              <ShoppingCart className="h-3 w-3" />
-              Buy Selected ({cartCardIds.size}){cartCardIds.size > 0 ? ` · $${(cartTotal / 100).toFixed(2)}` : ""}
-            </>
-          )}
+          {purchasing ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />}
+          {purchasing ? `Purchasing ${purchasing.current}/${purchasing.total}…` : `Buy Selected (${selectedCards.length})`}
+          {selectedCards.length > 0 && <span className="text-sm">${(selectedTotal / 100).toFixed(2)}</span>}
         </button>
-      </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto bg-[#0a0a0a]">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-4 w-4 animate-spin text-white/30" />
-          </div>
-        ) : isError ? (
-          <div className="py-12 text-center text-xs text-red-300/80">
-            Unable to load cards: {error instanceof Error ? error.message : "Please try again."}
-          </div>
-        ) : filteredCards.length === 0 ? (
-          <div className="py-12 text-center text-xs text-white/35">No cards available</div>
-        ) : (
-           <table className="w-full text-xs border-collapse" style={{ minWidth: "980px" }}>
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="w-8 px-2.5 py-2 text-left">
+        <div className="relative">
+          <p className="mb-2 text-sm font-medium text-white/90">Column Visibility</p>
+          <button
+            type="button"
+            onClick={() => setColumnsOpen((open) => !open)}
+            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-white/20 bg-[#141414] text-sm text-white sm:text-base"
+            aria-expanded={columnsOpen}
+          >
+            <Columns3 className="h-4 w-4 text-white/60" aria-hidden="true" />
+            Columns
+            <ChevronDown className={`h-4 w-4 text-white/65 transition-transform ${columnsOpen ? "rotate-180" : ""}`} />
+          </button>
+          {columnsOpen && (
+            <div className="absolute right-0 top-full z-50 mt-2 max-h-[65vh] w-64 overflow-y-auto rounded-xl border border-white/15 bg-[#171717] p-2 shadow-2xl">
+              {COLUMNS.map((column) => (
+                <label key={column.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white hover:bg-white/8">
                   <input
                     type="checkbox"
-                    checked={filteredCards.length > 0 && cartCardIds.size === filteredCards.length}
-                    onChange={toggleAll}
-                    className="w-3.5 h-3.5 rounded border-white/15 cursor-pointer accent-red-500"
+                    checked={visibleColumns.includes(column.id)}
+                    onChange={() => toggleColumn(column.id)}
+                    className="h-4 w-4 accent-white"
+                  />
+                  {column.label}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <div className="mt-2 overflow-x-auto rounded-xl border border-white/15 bg-[#090909]">
+        {isLoading ? (
+          <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>
+        ) : filteredCards.length === 0 ? (
+          <div className="px-5 py-16 text-center text-sm text-white/50">No prepaid cards match these filters.</div>
+        ) : (
+          <table className="w-full border-collapse text-sm" style={{ minWidth: "1120px" }}>
+            <thead>
+              <tr className="border-b border-white/15 text-white/80">
+                <th className="w-12 px-3 py-4 text-left">
+                  <input
+                    type="checkbox"
+                    checked={allVisibleSelected}
+                    onChange={toggleAllVisible}
+                    aria-label="Select all visible cards"
+                    className="h-4 w-4 accent-[#f32936]"
                     data-testid="checkbox-all"
                   />
                 </th>
-                <th className="px-2.5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white/35">BIN</th>
-                 <th className="px-2.5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white/35">BRAND</th>
-                <th className="px-2.5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white/35">TYPE</th>
-                 <th className="px-2.5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white/35">ISSUER</th>
-                 <th className="px-2.5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white/35">STATE</th>
-                <th className="px-2.5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white/35">ZIP</th>
-                 <th className="px-2.5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white/35">COUNTRY</th>
-                 <th className="px-2.5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white/35">BASE</th>
-                 <th className="px-2.5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white/35">VALIDATION</th>
-                 <th className="px-2.5 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white/35">REFUNDABLE</th>
-                <th className="px-2.5 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-white/35">$</th>
-                <th className="px-2.5 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-white/35">BUY</th>
+                {COLUMNS.filter((column) => visibleColumns.includes(column.id)).map((column) => (
+                  <th key={column.id} className="whitespace-nowrap px-4 py-4 text-left font-medium">{column.label}</th>
+                ))}
+                <th className="sticky right-0 bg-[#090909] px-4 py-4 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredCards.map((card: any) => (
-                <CardTableRow
+              {filteredCards.map((card) => (
+                <tr
                   key={card.id}
-                  card={card}
-                  inCart={cartCardIds.has(card.id)}
-                  onToggleCart={toggleCart}
-                />
+                  className={`border-b border-white/15 transition-colors ${selectedIds.has(card.id) ? "bg-white/[0.06]" : "hover:bg-white/[0.025]"}`}
+                  data-testid={`card-row-${card.id}`}
+                >
+                  <td className="px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(card.id)}
+                      onChange={() => toggleSelection(card)}
+                      aria-label={`Select prepaid card ending ${formatCardNumber(card).slice(-4)}`}
+                      className="h-4 w-4 accent-[#f32936]"
+                      data-testid={`checkbox-card-${card.id}`}
+                    />
+                  </td>
+                  {COLUMNS.filter((column) => visibleColumns.includes(column.id)).map((column) => (
+                    <td key={column.id} className="max-w-56 whitespace-nowrap px-4 py-3.5 text-white/85">
+                      <span className={column.id === "number" || column.id === "bin" ? "font-mono text-sky-400" : ""}>
+                        {getColumnValue(card, column.id)}
+                      </span>
+                    </td>
+                  ))}
+                  <td className="sticky right-0 bg-[#090909] px-3 py-2.5">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDetails(toCardDetails(card))}
+                        aria-label="View card details"
+                        className="grid h-10 w-10 place-items-center rounded-xl border border-white/15 bg-[#141414] text-white/80 hover:bg-white/10"
+                      >
+                        <Info className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleSelection(card)}
+                        aria-label={selectedIds.has(card.id) ? "Remove from selection" : "Add to selection"}
+                        className={`grid h-10 w-10 place-items-center rounded-xl transition-colors ${
+                          selectedIds.has(card.id) ? "bg-white/15 text-white" : "bg-[#f32936] text-black hover:bg-[#ff4651]"
+                        }`}
+                      >
+                        <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
-    </div>
-  );
-}
+      <p className="py-3 text-right text-xs text-white/40">{filteredCards.length.toLocaleString()} available prepaid cards</p>
 
+{/* 
 function CardTableRow({ card, inCart, onToggleCart }: { card: any; inCart: boolean; onToggleCart: (c: any) => void }) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -538,5 +637,29 @@ function CardTableRow({ card, inCart, onToggleCart }: { card: any; inCart: boole
         </button>
       </td>
     </tr>
+*/}
+      {showFilters && (
+        <CardFiltersSheet
+          filters={filters}
+          options={filterOptions}
+          resultCount={filteredCards.length}
+          activeFilterCount={activeFilterCount}
+          onChange={updateFilter}
+          onClear={() => setFilters(createEmptyCardFilters())}
+          onClose={() => setShowFilters(false)}
+        />
+      )}
+      {details && (
+        <CardDetailsDialog
+          card={details}
+          selected={selectedIds.has(details.id)}
+          onClose={() => setDetails(null)}
+          onToggleSelection={() => {
+            const card = (cards ?? []).find((item) => item.id === details.id);
+            if (card) toggleSelection(card);
+          }}
+        />
+      )}
+    </main>
   );
 }
