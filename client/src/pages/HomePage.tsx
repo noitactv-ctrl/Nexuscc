@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrders } from "@/hooks/use-orders";
 import {
-  Activity, ArrowUpRight, CheckCircle2, CircleAlert, CreditCard, Crown, MessageSquare,
+  Activity, ArrowUpRight, CheckCircle2, CircleAlert, CreditCard, MessageSquare,
   Package, ShoppingBag, Wallet, WalletCards,
 } from "lucide-react";
 import {
@@ -250,10 +250,7 @@ export default function HomePage() {
           <Link href="/cards" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-blue-500/60 hover:bg-blue-500/10 sm:h-12 sm:text-base">
             <CreditCard className="h-4 w-4" />Buy cards
           </Link>
-          <Link href="/ranks" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-blue-500/60 hover:bg-blue-500/10 sm:h-12 sm:text-base">
-            <Crown className="h-4 w-4" />VIP
-          </Link>
-          <Link href="/support" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-blue-500/60 hover:bg-blue-500/10 sm:h-12 sm:text-base">
+          <Link href="/support" className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-blue-500/60 hover:bg-blue-500/10 sm:h-12 sm:text-base">
             <MessageSquare className="h-4 w-4" />Support
           </Link>
         </div>

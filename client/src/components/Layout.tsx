@@ -94,7 +94,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { data: features } = useQuery<{
     checker: boolean;
     reseller: boolean;
-    ranks: boolean;
     logs: boolean;
     cards: boolean;
     plinko: boolean;
@@ -129,7 +128,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       ],
       entries: [
         { href: "/redeem", label: "Redeem Code", icon: Gift },
-        ...(features?.ranks !== false ? [{ href: "/ranks", label: "Ranks", icon: Layers }] : []),
       ],
     },
     {

@@ -22,7 +22,6 @@ import DepositPage from "@/pages/DepositPage";
 import OrdersPage from "@/pages/OrdersPage";
 import MyCodePage from "@/pages/MyCodePage";
 import CartPage from "@/pages/CartPage";
-import RanksPage from "@/pages/RanksPage";
 import WorkerDashboardPage from "@/pages/WorkerDashboardPage";
 import CardsPage from "@/pages/CardsPage";
 import CheckerPage from "@/pages/CheckerPage";
@@ -110,7 +109,6 @@ function Router() {
         <Route path="/orders" component={OrdersPage} />
         <Route path="/my-code" component={MyCodePage} />
         <Route path="/cart" component={CartPage} />
-        <Route path="/ranks" component={RanksPage} />
         <Route path="/worker" component={WorkerDashboardPage} />
         <Route path="/cards" component={CardsPage} />
         <Route path="/games/plinko" component={PlinkoPage} />
