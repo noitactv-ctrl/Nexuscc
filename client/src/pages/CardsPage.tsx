@@ -24,18 +24,18 @@ import { CardDetailsDialog, type CardDetails } from "@/components/cards/CardDeta
 type CatalogCard = any;
 
 const COLUMNS = [
-  { id: "number", label: "Number" },
-  { id: "bin", label: "BIN" },
-  { id: "brand", label: "Brand" },
-  { id: "type", label: "Type" },
-  { id: "level", label: "Level" },
-  { id: "issuer", label: "Issuer" },
-  { id: "country", label: "Country" },
-  { id: "city", label: "City" },
-  { id: "state", label: "State" },
-  { id: "zip", label: "ZIP" },
-  { id: "base", label: "BaseName" },
-  { id: "price", label: "PricePerCard" },
+  { id: "number", label: "Number", width: 140 },
+  { id: "bin", label: "BIN", width: 80 },
+  { id: "brand", label: "Brand", width: 90 },
+  { id: "type", label: "Type", width: 90 },
+  { id: "level", label: "Level", width: 110 },
+  { id: "issuer", label: "Issuer", width: 150 },
+  { id: "country", label: "Country", width: 105 },
+  { id: "city", label: "City", width: 125 },
+  { id: "state", label: "State", width: 80 },
+  { id: "zip", label: "ZIP", width: 80 },
+  { id: "base", label: "BaseName", width: 140 },
+  { id: "price", label: "PricePerCard", width: 110 },
 ] as const;
 
 type ColumnId = (typeof COLUMNS)[number]["id"];
@@ -348,6 +348,10 @@ export default function CardsPage() {
 
   if (features && features.cards === false) return <Redirect to="/" />;
 
+  const visibleColumnDefinitions = COLUMNS.filter((column) => visibleColumns.includes(column.id));
+  const cardTableMinWidth =
+    48 + 128 + visibleColumnDefinitions.reduce((width, column) => width + column.width, 0);
+
   return (
     <main className="mx-auto w-full max-w-[1280px] px-3 pb-12 sm:px-5">
       <section className="pb-4 pt-5 sm:pt-7">
@@ -470,7 +474,14 @@ export default function CardsPage() {
         ) : filteredCards.length === 0 ? (
           <div className="px-5 py-16 text-center text-sm text-white/50">No prepaid cards match these filters.</div>
         ) : (
-          <table className="w-full border-collapse text-sm" style={{ minWidth: "1120px" }}>
+          <table className="w-full table-fixed border-collapse text-sm" style={{ minWidth: `${cardTableMinWidth}px` }}>
+            <colgroup>
+              <col style={{ width: "48px" }} />
+              {visibleColumnDefinitions.map((column) => (
+                <col key={column.id} style={{ width: `${column.width}px` }} />
+              ))}
+              <col style={{ width: "128px" }} />
+            </colgroup>
             <thead>
               <tr className="border-b border-white/15 text-white/80">
                 <th className="w-12 px-3 py-4 text-left">
@@ -483,10 +494,10 @@ export default function CardsPage() {
                     data-testid="checkbox-all"
                   />
                 </th>
-                {COLUMNS.filter((column) => visibleColumns.includes(column.id)).map((column) => (
+                {visibleColumnDefinitions.map((column) => (
                   <th key={column.id} className="whitespace-nowrap px-4 py-4 text-left font-medium">{column.label}</th>
                 ))}
-                <th className="sticky right-0 bg-[#090909] px-4 py-4 text-right font-medium">Actions</th>
+                <th className="whitespace-nowrap px-3 py-4 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -506,14 +517,20 @@ export default function CardsPage() {
                       data-testid={`checkbox-card-${card.id}`}
                     />
                   </td>
-                  {COLUMNS.filter((column) => visibleColumns.includes(column.id)).map((column) => (
-                    <td key={column.id} className="max-w-56 whitespace-nowrap px-4 py-3.5 text-white/85">
-                      <span className={column.id === "number" || column.id === "bin" ? "font-mono text-sky-400" : ""}>
-                        {getColumnValue(card, column.id)}
-                      </span>
-                    </td>
-                  ))}
-                  <td className="sticky right-0 bg-[#090909] px-3 py-2.5">
+                  {visibleColumnDefinitions.map((column) => {
+                    const value = getColumnValue(card, column.id);
+                    return (
+                      <td key={column.id} className="overflow-hidden px-3 py-3.5 text-white/85">
+                        <span
+                          title={String(value)}
+                          className={`block truncate ${column.id === "number" || column.id === "bin" ? "font-mono text-sky-400" : ""}`}
+                        >
+                          {value}
+                        </span>
+                      </td>
+                    );
+                  })}
+                  <td className="px-3 py-2.5">
                     <div className="flex justify-end gap-2">
                       <button
                         type="button"
