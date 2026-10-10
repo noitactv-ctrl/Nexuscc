@@ -11,19 +11,19 @@
   --card-foreground: 0 0% 95%;
   --popover: 0 0% 8%;
   --popover-foreground: 0 0% 95%;
-  --primary: 187 100% 50%;
+  --primary: 221 83% 53%;
   --primary-foreground: 0 0% 100%;
   --secondary: 0 0% 12%;
   --secondary-foreground: 0 0% 80%;
   --muted: 0 0% 12%;
   --muted-foreground: 0 0% 52%;
-  --accent: 187 85% 55%;
-  --accent-foreground: 190 40% 8%;
+  --accent: 221 83% 53%;
+  --accent-foreground: 0 0% 100%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 98%;
   --border: 0 0% 16%;
   --input: 0 0% 9%;
-  --ring: 187 100% 50%;
+  --ring: 221 83% 53%;
   --radius: 0.625rem;
   --font-display: 'Space Grotesk', sans-serif;
   --font-body: 'Inter', sans-serif;
@@ -36,15 +36,15 @@
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-body);
     background-image:
-      radial-gradient(circle at 85% -10%, hsl(187 100% 50% / 0.1), transparent 32rem),
-      radial-gradient(circle at -10% 40%, hsl(187 85% 55% / 0.06), transparent 28rem);
+      radial-gradient(circle at 85% -10%, hsl(221 83% 53% / 0.1), transparent 32rem),
+      radial-gradient(circle at -10% 40%, hsl(221 83% 53% / 0.06), transparent 28rem);
   }
   h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); }
 }
 
 @layer components {
   .btn-pro { @apply h-9 px-4 text-xs font-semibold transition-all hover:scale-[0.98] active:scale-[0.95]; }
-  .btn-buy { @apply bg-accent hover:bg-[hsl(187_85%_48%)] text-accent-foreground font-bold text-xs transition-all hover:scale-[0.98] active:scale-[0.95]; }
+  .btn-buy { @apply bg-accent hover:bg-[hsl(221_83%_48%)] text-accent-foreground font-bold text-xs transition-all hover:scale-[0.98] active:scale-[0.95]; }
   .mono { font-family: var(--font-mono); }
 }
 
@@ -277,7 +277,7 @@
   border: 1px solid #444;
   border-radius: 5px;
   background: #141414;
-  accent-color: #e3222e;
+  accent-color: #2563eb;
   cursor: pointer;
 }
 
@@ -294,8 +294,8 @@
 
 .spider-checkbox-label input:checked,
 .spider-terms-consent input:checked {
-  border-color: #e3222e;
-  background: #e3222e;
+  border-color: #2563eb;
+  background: #2563eb;
 }
 
 .spider-checkbox-label input:checked::before,
@@ -386,11 +386,11 @@
 }
 
 .spider-primary-button {
-  background: #881a21;
+  background: #2563eb;
 }
 
 .spider-primary-button:hover:not(:disabled) {
-  background: #a7212a;
+  background: #1d4ed8;
 }
 
 .spider-primary-button:active:not(:disabled) {
@@ -403,14 +403,14 @@
 }
 
 .spider-secondary-button {
-  border-color: #3c3c3c;
-  background: #171717;
-  color: #f2f2f2;
+  border-color: #3b82f6;
+  background: #172554;
+  color: #eff6ff;
 }
 
 .spider-secondary-button:hover {
-  border-color: #636363;
-  background: #202020;
+  border-color: #60a5fa;
+  background: #1e3a8a;
 }
 
 .spider-auth-switch {
@@ -497,12 +497,12 @@
 
 .spider-register-page .spider-primary-button,
 .spider-legal-actions .spider-primary-button {
-  background: #f32936;
+  background: #2563eb;
 }
 
 .spider-register-page .spider-primary-button:hover:not(:disabled),
 .spider-legal-actions .spider-primary-button:hover {
-  background: #ff3c48;
+  background: #1d4ed8;
 }
 
 .spider-recovery-page,
