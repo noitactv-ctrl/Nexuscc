@@ -32,16 +32,6 @@
 
 @layer base {
   * { @apply border-border; }
-  button,
-  [role="button"],
-  input[type="button"],
-  input[type="submit"],
-  input[type="reset"],
-  .app-button,
-  .spider-primary-button,
-  .spider-secondary-button {
-    zoom: 0.75;
-  }
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-body);
