@@ -32,6 +32,7 @@ import RedeemCodePage from "@/pages/RedeemCodePage";
 import PlinkoPage from "@/pages/PlinkoPage";
 import HomePage from "@/pages/HomePage";
 import MyDepositsPage from "@/pages/MyDepositsPage";
+import CryptoPaymentPage from "@/pages/CryptoPaymentPage";
 
 function LoadingScreen() {
   return (
@@ -104,6 +105,7 @@ function Router() {
         <Route path="/" component={HomePage} />
         <Route path="/deposit" component={DepositPage} />
         <Route path="/my-deposits" component={MyDepositsPage} />
+        <Route path="/crypto-payment/:paymentId" component={CryptoPaymentPage} />
         <Route path="/shop" component={LogsPage} />
         <Route path="/redeem" component={RedeemCodePage} />
         <Route path="/product/:name" component={ProductDetailPage} />

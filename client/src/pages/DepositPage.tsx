@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useCryptoCurrencies } from "@/hooks/use-crypto-currencies";
 import { apiRequest } from "@/lib/queryClient";
 import {
   Loader2, Copy, Check, Clock, CheckCircle2, XCircle, AlertTriangle,
@@ -39,15 +41,6 @@ const BONUS_TIERS = [
   { min: 2500, max: 4999, bonus: "+25%", example: "$2,500 → $3,125" },
   { min: 5000, max: null, bonus: "+30%", example: "$5,000 → $6,500" },
 ];
-
-const CRYPTO_COINS = ["Bitcoin", "Ethereum", "Litecoin", "Solana", "Tether"];
-const CRYPTO_NETWORKS: Record<string, string[]> = {
-  Bitcoin: ["Bitcoin"],
-  Ethereum: ["ERC20"],
-  Litecoin: ["Litecoin"],
-  Solana: ["Solana"],
-  Tether: ["ERC20", "TRC20", "BEP20"],
-};
 
 function methodColor(type: string) {
   if (type === "cashapp") return "#00D632";
@@ -171,12 +164,13 @@ export default function DepositPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const [selectedOption, setSelectedOption] = useState<string | null>("crypto");
   const [amountInput, setAmountInput] = useState("");
-  const [cryptoCoin, setCryptoCoin] = useState("");
-  const [cryptoNetwork, setCryptoNetwork] = useState("");
+  const [cryptoCurrency, setCryptoCurrency] = useState("");
   const [manualResult, setManualResult] = useState<ManualResult | null>(null);
+  const cryptoCurrencies = useCryptoCurrencies();
 
   const { data: paymentMethods } = useQuery<Record<string, boolean>>({
     queryKey: ["/api/payment-methods"],
@@ -225,19 +219,23 @@ export default function DepositPage() {
       const amount = parsedAmount;
       const cryptoMin = Math.max(1, minDeposits?.crypto ?? 0);
       if (!amount || amount < cryptoMin) throw new Error(`Minimum deposit is $${cryptoMin.toFixed(2)}`);
+      if (!cryptoCurrency) throw new Error("Choose a supported cryptocurrency.");
       const res = await apiRequest("POST", "/api/payments/crypto/create", {
         amount: String(Math.round(amount * 100)),
         purpose: "deposit",
+        payCurrency: cryptoCurrency,
       });
-      return res.json();
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Unable to create crypto payment.");
+      }
+      return res.json() as Promise<{ paymentId: string }>;
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["/api/deposits"] });
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        toast({ title: "Error", description: "Payment provider did not return a checkout link.", variant: "destructive" });
-      }
+      sessionStorage.setItem("lastCryptoPaymentId", data.paymentId);
+      sessionStorage.setItem("lastCryptoPurpose", "deposit");
+      setLocation(`/crypto-payment/${encodeURIComponent(data.paymentId)}`);
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
@@ -280,7 +278,7 @@ export default function DepositPage() {
   }
 
   const paymentOptions = [
-    { id: "crypto", label: "Crypto", sub: "BTC · ETH · LTC · SOL · USDT", Icon: SiBitcoin, color: "#F7931A", fee: "0% fee" },
+    { id: "crypto", label: "Crypto", sub: cryptoCurrencies.data?.slice(0, 5).map(currency => currency.toUpperCase()).join(" · ") || "Provider-supported coins", Icon: SiBitcoin, color: "#F7931A", fee: "0% fee" },
     ...(cashappEnabled ? [{ id: "cashapp", label: "CashApp", sub: "instant", Icon: SiCashapp, color: "#00D632", fee: feeLabel(manualMethods?.cashapp?.fee) }] : []),
     ...(venmoEnabled ? [{ id: "venmo", label: "Venmo", sub: "instant", Icon: (props: any) => <LetterIcon {...props} letter="V" />, color: "#3D95CE", fee: feeLabel(manualMethods?.venmo?.fee) }] : []),
     ...(zelleEnabled ? [{ id: "zelle", label: "Zelle", sub: "instant", Icon: (props: any) => <LetterIcon {...props} letter="Z" />, color: "#9B59E8", fee: feeLabel(manualMethods?.zelle?.fee) }] : []),
@@ -325,10 +323,7 @@ export default function DepositPage() {
                     key={opt.id}
                     onClick={() => {
                       setSelectedOption(opt.id);
-                      if (opt.id !== "crypto") {
-                        setCryptoCoin("");
-                        setCryptoNetwork("");
-                      }
+                      if (opt.id !== "crypto") setCryptoCurrency("");
                     }}
                     className={`min-h-10 flex items-center justify-center gap-2 rounded-lg border px-2 text-xs sm:text-sm font-semibold transition-all ${
                       isActive
@@ -350,40 +345,31 @@ export default function DepositPage() {
 
             {isSelectedCrypto && (
               <>
-                {/* ── Coin ── */}
+                {/* Live provider-supported currencies */}
                 <label className="block space-y-1">
-                  <span className="text-sm font-medium text-white">Coin</span>
+                  <span className="text-sm font-medium text-white">Coin / network</span>
                   <span className="relative block">
                     <select
-                      value={cryptoCoin}
-                      onChange={e => { setCryptoCoin(e.target.value); setCryptoNetwork(""); }}
+                      value={cryptoCurrency}
+                      onChange={e => setCryptoCurrency(e.target.value)}
                       className="appearance-none w-full h-10 rounded-lg border border-white/15 bg-[#202020] px-3 pr-8 text-sm text-white outline-none focus:border-white/40 transition-colors"
-                      data-testid="select-crypto-coin"
+                      data-testid="select-crypto-currency"
                     >
-                      <option value="">Select coin...</option>
-                      {CRYPTO_COINS.map(coin => <option key={coin} value={coin}>{coin}</option>)}
+                      <option value="">
+                        {cryptoCurrencies.isLoading ? "Loading supported currencies..." : "Select coin / network..."}
+                      </option>
+                      {(cryptoCurrencies.data ?? []).map(currency => (
+                        <option key={currency} value={currency}>{currency.toUpperCase()}</option>
+                      ))}
                     </select>
                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
                   </span>
                 </label>
-
-                {/* ── Network ── */}
-                <label className="block space-y-1">
-                  <span className="text-sm font-medium text-white">Network</span>
-                  <span className="relative block">
-                    <select
-                      value={cryptoNetwork}
-                      onChange={e => setCryptoNetwork(e.target.value)}
-                      disabled={!cryptoCoin}
-                      className="appearance-none w-full h-10 rounded-lg border border-white/15 bg-[#202020] px-3 pr-8 text-sm text-white outline-none focus:border-white/40 transition-colors disabled:text-white/35 disabled:cursor-not-allowed"
-                      data-testid="select-crypto-network"
-                    >
-                      <option value="">Select network...</option>
-                      {(CRYPTO_NETWORKS[cryptoCoin] ?? []).map(network => <option key={network} value={network}>{network}</option>)}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
-                  </span>
-                </label>
+                {cryptoCurrencies.isError && (
+                  <p className="text-xs text-red-400" role="alert">
+                    {cryptoCurrencies.error.message}
+                  </p>
+                )}
               </>
             )}
 

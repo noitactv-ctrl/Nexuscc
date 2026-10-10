@@ -9,6 +9,7 @@ import { SiCashapp, SiBitcoin } from "react-icons/si";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { api } from "@shared/routes";
+import { useCryptoCurrencies } from "@/hooks/use-crypto-currencies";
 
 type PaymentMethod = "balance" | "cashapp" | "crypto";
 
@@ -106,7 +107,9 @@ export default function CartPage() {
   const [couponCode, setCouponCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("cashapp");
+  const [cryptoCurrency, setCryptoCurrency] = useState("");
   const [cashappModal, setCashappModal] = useState<{ orderId: string; total: number; paymentNote: string; cashappTag: string } | null>(null);
+  const cryptoCurrencies = useCryptoCurrencies();
 
   const cartTotal = total();
   const discountAmount = appliedDiscount?.discountAmount ?? 0;
@@ -230,6 +233,7 @@ export default function CartPage() {
       const res = await apiRequest("POST", "/api/orders/crypto", {
         items: cartItems,
         discountCodeId: appliedDiscount?.id ?? null,
+        payCurrency: cryptoCurrency,
       });
       if (!res.ok) {
         const err = await res.json();
@@ -239,9 +243,10 @@ export default function CartPage() {
     },
     onSuccess: (data) => {
       clearCart();
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      }
+      sessionStorage.setItem("lastCryptoPaymentId", data.paymentId);
+      sessionStorage.setItem("lastCryptoPurpose", "order");
+      if (data.order?.id) sessionStorage.setItem("lastCryptoOrderId", String(data.order.id));
+      setLocation(`/crypto-payment/${encodeURIComponent(data.paymentId)}`);
     },
     onError: (e: any) => {
       toast({ title: "Checkout failed", description: e.message || "Could not create order.", variant: "destructive" });
@@ -252,6 +257,10 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (!user) return setLocation("/auth");
+    if (selectedMethod === "crypto" && !cryptoCurrency) {
+      toast({ title: "Choose a cryptocurrency", description: "Select a supported coin/network before continuing.", variant: "destructive" });
+      return;
+    }
     if (selectedMethod === "balance") {
       if (!hasEnoughBalance) {
         toast({ title: "Insufficient balance", description: `You need $${(finalTotal / 100).toFixed(2)} but have $${(userBalance / 100).toFixed(2)}.`, variant: "destructive" });
@@ -484,6 +493,22 @@ export default function CartPage() {
             )}
           </div>
         </div>
+
+        {selectedMethod === "crypto" && (
+          <label className="block space-y-1.5">
+            <span className="text-xs font-semibold text-white/60">Coin / network</span>
+            <select
+              value={cryptoCurrency}
+              onChange={event => setCryptoCurrency(event.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm text-white"
+              data-testid="select-cart-crypto-currency"
+            >
+              <option value="">{cryptoCurrencies.isLoading ? "Loading supported currencies..." : "Select coin / network"}</option>
+              {(cryptoCurrencies.data ?? []).map(currency => <option key={currency} value={currency}>{currency.toUpperCase()}</option>)}
+            </select>
+            {cryptoCurrencies.isError && <span className="text-xs text-red-400">{cryptoCurrencies.error.message}</span>}
+          </label>
+        )}
 
         {/* Proceed to Payment */}
         <button

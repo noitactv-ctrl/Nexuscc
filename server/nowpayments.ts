@@ -16,27 +16,57 @@ export interface NowPaymentsInvoice {
   [key: string]: any;
 }
 
-export async function createNowPaymentsInvoice(params: {
+export interface NowPaymentsPayment {
+  payment_id: number | string;
+  payment_status: string;
+  pay_address: string;
+  pay_amount: number | string;
+  pay_currency: string;
+  price_amount: number | string;
+  price_currency: string;
+  network?: string;
+  payin_extra_id?: string | null;
+  expiration_estimate_date?: string;
+  [key: string]: any;
+}
+
+export async function getNowPaymentsCurrencies(): Promise<string[]> {
+  const response = await fetch(`${NOWPAYMENTS_API_BASE}/currencies`, {
+    headers: { "x-api-key": getApiKey() },
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`NOWPayments currencies error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  const currencies = Array.isArray(data) ? data : data.currencies;
+  if (!Array.isArray(currencies)) throw new Error("NOWPayments returned an invalid currency list");
+  return currencies
+    .map((entry: unknown) => typeof entry === "string" ? entry : (entry as any)?.code ?? (entry as any)?.currency)
+    .filter((currency: unknown): currency is string => typeof currency === "string" && currency.length > 0)
+    .map((currency: string) => currency.toLowerCase());
+}
+
+export async function createNowPaymentsPayment(params: {
   amount: number;       // in USD
+  payCurrency: string;
   orderId?: string;
-  successUrl?: string;
-  cancelUrl?: string;
   ipnCallbackUrl?: string;
-}): Promise<NowPaymentsInvoice> {
+}): Promise<NowPaymentsPayment> {
   const apiKey = getApiKey();
 
-  const body: Record<string, any> = {
+  const body: Record<string, unknown> = {
     price_amount: params.amount,
     price_currency: "usd",
+    pay_currency: params.payCurrency.toLowerCase(),
     order_id: params.orderId || `order-${Date.now()}`,
-    order_description: "NexusCC deposit",
+    order_description: "NexusCC payment",
   };
 
-  if (params.successUrl)     body.success_url     = params.successUrl;
-  if (params.cancelUrl)      body.cancel_url      = params.cancelUrl;
   if (params.ipnCallbackUrl) body.ipn_callback_url = params.ipnCallbackUrl;
 
-  const response = await fetch(`${NOWPAYMENTS_API_BASE}/invoice`, {
+  const response = await fetch(`${NOWPAYMENTS_API_BASE}/payment`, {
     method: "POST",
     headers: {
       "x-api-key": apiKey,
@@ -51,34 +81,27 @@ export async function createNowPaymentsInvoice(params: {
     throw new Error(`NOWPayments API error: ${response.status} - ${errorText}`);
   }
 
-  const data = await response.json();
-  console.log("NOWPayments create invoice response:", JSON.stringify(data, null, 2));
-
-  const invoiceId = String(data.id);
-  const invoiceUrl = data.invoice_url || data.url || "";
-
-  if (!invoiceId) throw new Error("NOWPayments returned no invoice ID");
-  if (!invoiceUrl) throw new Error("NOWPayments returned no invoice URL");
-
-  return { ...data, id: invoiceId, url: invoiceUrl };
+  const data = await response.json() as NowPaymentsPayment;
+  if (!data.payment_id || !data.pay_address || !data.pay_amount || !data.pay_currency) {
+    throw new Error("NOWPayments returned incomplete payment instructions");
+  }
+  return data;
 }
 
-export async function getNowPaymentsInvoice(invoiceId: string): Promise<NowPaymentsInvoice> {
+export async function getNowPaymentsPayment(paymentId: string): Promise<NowPaymentsPayment> {
   const apiKey = getApiKey();
 
-  const response = await fetch(`${NOWPAYMENTS_API_BASE}/invoice/${invoiceId}`, {
+  const response = await fetch(`${NOWPAYMENTS_API_BASE}/payment/${encodeURIComponent(paymentId)}`, {
     method: "GET",
     headers: { "x-api-key": apiKey },
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`NOWPayments API error: ${response.status} - ${errorText}`);
+    throw new Error(`NOWPayments payment status error: ${response.status} - ${errorText}`);
   }
 
-  const data = await response.json();
-  console.log("NOWPayments get invoice response:", JSON.stringify(data, null, 2));
-  return data;
+  return await response.json() as NowPaymentsPayment;
 }
 
 /** Verify the IPN webhook signature (HMAC-SHA512 of sorted JSON body) */

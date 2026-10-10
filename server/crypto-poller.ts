@@ -1,7 +1,7 @@
 import { db } from "./db.js";
 import { cryptoPayments } from "../shared/schema.js";
 import { eq, and, inArray, isNull, or } from "drizzle-orm";
-import { getNowPaymentsInvoice, mapNowPaymentsStatus } from "./nowpayments.js";
+import { getNowPaymentsPayment, mapNowPaymentsStatus } from "./nowpayments.js";
 import { settleCryptoPayment } from "./crypto-settlement.js";
 import { storage } from "./storage.js";
 import { log } from "./logger.js";
@@ -22,8 +22,8 @@ export async function pollPendingCryptoPayments() {
 
     for (const payment of pending) {
       try {
-        const invoice = await getNowPaymentsInvoice(payment.forebitPaymentId);
-        const newStatus = mapNowPaymentsStatus(invoice.payment_status || invoice.status || "");
+        const providerPayment = await getNowPaymentsPayment(payment.forebitPaymentId);
+        const newStatus = mapNowPaymentsStatus(providerPayment.payment_status || "");
 
         if (newStatus === payment.status && !(payment.status === "completed" && !payment.settledAt)) continue;
 

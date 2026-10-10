@@ -6,7 +6,7 @@ import { setupAuth, MIN_PASSWORD_LENGTH, passwordChangeLimiter } from "./auth.js
 import { api } from "../shared/routes.js";
 import { z } from "zod";
 import { scrypt, randomBytes, randomInt, timingSafeEqual } from "crypto";
-import { createNowPaymentsInvoice, getNowPaymentsInvoice, mapNowPaymentsStatus, verifyNowPaymentsWebhook } from "./nowpayments.js";
+import { createNowPaymentsPayment, getNowPaymentsCurrencies, getNowPaymentsPayment, mapNowPaymentsStatus, verifyNowPaymentsWebhook } from "./nowpayments.js";
 import { settleCryptoPayment } from "./crypto-settlement.js";
 import { hashPassword, comparePassword } from "./auth.js";
 import { cryptoPayments, orders, orderItems, verifications, variants, userIps, users, mails, mailReads, discountCodes, transactions, stockItems, cards, cardBases, achs, products, insertAnnouncementSchema } from "../shared/schema.js";
@@ -1995,7 +1995,10 @@ export async function registerRoutes(
     let pendingOrderId: number | null = null;
     try {
       const userId = (req.user as any).id;
-      const { items, cardIds, discountCodeId } = req.body;
+      const { items, cardIds, discountCodeId, payCurrency } = req.body;
+      if (typeof payCurrency !== "string" || !payCurrency.trim()) {
+        return res.status(400).json({ message: "Choose a supported cryptocurrency." });
+      }
       const productItems = (items || []).filter((i: any) => !i.cardId && i.variantId > 0);
       const cardIdList: number[] = cardIds || [];
 
@@ -2004,39 +2007,29 @@ export async function registerRoutes(
 
       const totalWithFee = order.total;
       const amountUsd = totalWithFee / 100;
-
-      const origin = (req.headers.origin as string) || `https://${req.headers.host}`;
-      const invoice = await createNowPaymentsInvoice({
+      const payment = await createNowPaymentsPayment({
         amount: amountUsd,
+        payCurrency,
         orderId: `order-${order.id}`,
-        successUrl: `${origin}/profile?tab=orders`,
-        cancelUrl: `${origin}/profile?tab=orders`,
-        ipnCallbackUrl: `${origin}/api/webhooks/nowpayments`,
+        ipnCallbackUrl: `${req.protocol}://${req.get("host")}/api/webhooks/nowpayments`,
       });
-
-      if (!invoice.id || !invoice.url) {
-        await storage.cancelPendingOrder(order.id);
-        pendingOrderId = null;
-        return res.status(502).json({ message: "Payment provider error. Please try again." });
-      }
 
       await db.insert(cryptoPayments).values({
         userId,
-        forebitPaymentId: invoice.id,
+        forebitPaymentId: String(payment.payment_id),
         amount: totalWithFee,
         currency: "USD",
         status: "pending",
         purpose: "order",
         orderId: order.id,
-        checkoutUrl: invoice.url,
-        metadata: null,
+        checkoutUrl: null,
+        metadata: JSON.stringify({ payment }),
       });
 
       pendingOrderId = null;
       res.status(201).json({
         order,
-        paymentId: invoice.id,
-        checkoutUrl: invoice.url,
+        paymentId: String(payment.payment_id),
       });
     } catch (e: any) {
       console.error("Crypto order creation failed:", e);
@@ -2047,14 +2040,27 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/payments/crypto/currencies", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    try {
+      res.json({ currencies: await getNowPaymentsCurrencies() });
+    } catch (error) {
+      console.error("NOWPayments currency list failed:", error);
+      res.status(502).json({ message: "Unable to load supported cryptocurrencies." });
+    }
+  });
+
   app.post("/api/payments/crypto/create", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
 
     try {
-      const { amount, purpose, orderId } = req.body;
+      const { amount, purpose, orderId, payCurrency } = req.body;
       // amount arrives in cents from the frontend (e.g. 500 = $5.00)
       const amountUsd = parseFloat(amount) / 100;
 
+      if (typeof payCurrency !== "string" || !payCurrency.trim()) {
+        return res.status(400).json({ message: "Choose a supported cryptocurrency." });
+      }
       if (!amountUsd || amountUsd < 1) {
         return res.status(400).json({ message: "Minimum deposit is $1" });
       }
@@ -2063,42 +2069,72 @@ export async function registerRoutes(
       }
 
       const userId = (req.user as any).id;
-      const baseUrl = `${req.protocol}://${req.get("host")}`;
-      const successUrl = purpose === "order" ? `${baseUrl}/orders` : `${baseUrl}/deposit`;
-
-      const invoice = await createNowPaymentsInvoice({
+      const payment = await createNowPaymentsPayment({
         amount: amountUsd,
+        payCurrency,
         orderId: orderId ? `order-${orderId}` : `deposit-${userId}-${Date.now()}`,
-        successUrl,
-        cancelUrl: successUrl,
-        ipnCallbackUrl: `${baseUrl}/api/webhooks/nowpayments`,
+        ipnCallbackUrl: `${req.protocol}://${req.get("host")}/api/webhooks/nowpayments`,
       });
-
-      if (!invoice.id || !invoice.url) {
-        return res.status(502).json({ message: "Payment provider returned an invalid response. Please try again." });
-      }
 
       await db.insert(cryptoPayments).values({
         userId,
-        forebitPaymentId: invoice.id,
+        forebitPaymentId: String(payment.payment_id),
         amount: Math.round(amountUsd * 100),
         currency: "USD",
         status: "pending",
         purpose: purpose || "deposit",
         orderId: orderId ? Number(orderId) : null,
-        checkoutUrl: invoice.url,
-        metadata: JSON.stringify({ nowpaymentsResponse: invoice }),
+        checkoutUrl: null,
+        metadata: JSON.stringify({ payment }),
       });
 
-      res.json({ paymentId: invoice.id, checkoutUrl: invoice.url });
+      res.json({ paymentId: String(payment.payment_id) });
     } catch (error: any) {
-      console.error("NOWPayments invoice creation failed:", error);
+      console.error("NOWPayments payment creation failed:", error);
       res.status(500).json({ message: "Failed to create payment. Please try again later." });
     }
   });
 
   // Keep legacy alias so any in-flight links still resolve
   app.post("/api/payments/forebit/create", (req, res) => res.redirect(307, "/api/payments/crypto/create"));
+
+  app.get("/api/payments/crypto/:paymentId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+
+    try {
+      const [record] = await db
+        .select()
+        .from(cryptoPayments)
+        .where(eq(cryptoPayments.forebitPaymentId, req.params.paymentId))
+        .limit(1);
+      if (!record || record.userId !== (req.user as any).id) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+
+      const stored = record.metadata ? JSON.parse(record.metadata) : {};
+      const payment = stored.payment;
+      if (!payment?.pay_address || !payment?.pay_amount || !payment?.pay_currency) {
+        return res.status(410).json({ message: "Payment instructions are no longer available." });
+      }
+
+      res.json({
+        paymentId: record.forebitPaymentId,
+        amount: record.amount,
+        currency: record.currency,
+        purpose: record.purpose,
+        status: record.status,
+        payAddress: payment.pay_address,
+        payAmount: String(payment.pay_amount),
+        payCurrency: payment.pay_currency,
+        network: payment.network || null,
+        payinExtraId: payment.payin_extra_id || null,
+        expiresAt: payment.expiration_estimate_date || null,
+      });
+    } catch (error) {
+      console.error("Crypto payment details lookup failed:", error);
+      res.status(500).json({ message: "Unable to load payment instructions." });
+    }
+  });
 
   app.get("/api/payments/crypto/:paymentId/status", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
@@ -2122,8 +2158,8 @@ export async function registerRoutes(
       }
 
       try {
-        const invoice = await getNowPaymentsInvoice(paymentId);
-        const newStatus = mapNowPaymentsStatus(invoice.payment_status || invoice.status || "");
+        const payment = await getNowPaymentsPayment(paymentId);
+        const newStatus = mapNowPaymentsStatus(payment.payment_status || "");
 
         if (newStatus !== localPayment.status) {
           const [updated] = await db
@@ -2174,8 +2210,8 @@ export async function registerRoutes(
         return res.status(200).json({ received: true });
       }
 
-      // IPN body contains invoice_id and payment_status
-      const invoiceId = String(body.invoice_id || body.id || "");
+      // NOWPayments payment IPNs identify the payment with payment_id.
+      const invoiceId = String(body.payment_id || body.invoice_id || body.id || "");
       const status = body.payment_status || body.status || "";
 
       if (!invoiceId) {
