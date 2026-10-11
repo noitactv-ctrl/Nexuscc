@@ -715,16 +715,12 @@ function registerDropHandlers(bot: Bot, token: string) {
       await ctx.reply(`Keep ${NAME_KEYWORD} in your first or last name before sharing a reward link.`);
       return;
     }
-    const linked = await pool.query(
-      `SELECT 1 FROM telegram_daily_reward_accounts WHERE chat_id = $1`,
-      [getChatId(ctx)],
-    );
-    if (!linked.rows[0]) {
-      await ctx.reply("Link your NexusCC account first using a one-time code from your profile.");
-      return;
-    }
+    const chatId = getChatId(ctx);
     const info = await bot.api.getMe();
-    await ctx.reply(`Invite a friend to earn $0.10/day while they qualify. They also earn an extra $0.10/day.\n\nhttps://t.me/${info.username}?start=daily_${getChatId(ctx)}`);
+    await ctx.reply(
+      `Share this referral link now—even before linking your NexusCC account:\nhttps://t.me/${info.username}?start=daily_${chatId}\n\n` +
+      `You and your referred friend can earn an extra $0.10/day while eligible. Link your account with /link CODE to receive rewards.`,
+    );
   });
   bot.callbackQuery("daily_reward", async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -742,16 +738,12 @@ function registerDropHandlers(bot: Bot, token: string) {
       return;
     }
     const chatId = getChatId(ctx);
-    const linked = await pool.query(
-      `SELECT 1 FROM telegram_daily_reward_accounts WHERE chat_id = $1`,
-      [chatId],
-    );
-    if (!linked.rows[0]) {
-      await ctx.reply("Link your NexusCC account first using a one-time code from your profile.");
-      return;
-    }
     const info = await bot.api.getMe();
-    await ctx.reply(`Your daily-rewards referral link:\nhttps://t.me/${info.username}?start=daily_${chatId}`);
+    await ctx.reply(
+      `Your daily-rewards referral link (you can share it before linking your account):\n` +
+      `https://t.me/${info.username}?start=daily_${chatId}\n\n` +
+      `Link your account with /link CODE to receive eligible daily rewards and referral payouts.`,
+    );
   });
   bot.callbackQuery("daily_check_join", async (ctx) => {
     await ctx.answerCallbackQuery();
