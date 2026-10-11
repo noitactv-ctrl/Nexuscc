@@ -13,6 +13,7 @@ type VercelResponse = {
 };
 
 let bot: ReturnType<typeof createTelegramBot> | undefined;
+let botInitialization: Promise<void> | undefined;
 
 function headerValue(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -48,6 +49,11 @@ export default async function telegramWebhookHandler(req: VercelRequest, res: Ve
   }
 
   try {
+    botInitialization ??= bot.init().catch((error) => {
+      botInitialization = undefined;
+      throw error;
+    });
+    await botInitialization;
     await bot.handleUpdate(req.body as any);
     res.status(200).json({ ok: true });
   } catch (error) {
