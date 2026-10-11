@@ -30,8 +30,13 @@ application, then redeploy:
 | `NOWPAYMENTS_API_KEY` | For crypto payments | NOWPayments API access |
 | `NOWPAYMENTS_IPN_SECRET` | For crypto payments | NOWPayments webhook verification |
 | `TELEGRAM_BOT_TOKEN` | For Telegram | Bot token from BotFather |
-| `TELEGRAM_GROUP_ID` | For Telegram join gate | Numeric group/channel ID, including the `-100` prefix |
-| `TELEGRAM_JOIN_URL` | For Telegram join gate | Invite URL shown by the join button |
+| `DAILY_REWARDS_CHANNEL_ID` | For daily rewards | Numeric channel ID, including the `-100` prefix |
+| `DAILY_REWARDS_JOIN_URL` | For daily rewards | Invite URL shown by the join button |
+| `CRON_SECRET` | For daily rewards | Secret used to authorize Vercel's scheduled payout sweep |
+| `TELEGRAM_WEBHOOK_URL` | For Telegram | Full production webhook URL, ending in `/api/telegram` |
+| `TELEGRAM_WEBHOOK_SECRET` | Recommended for Telegram | Secret used to verify incoming Telegram webhook requests |
+| `TELEGRAM_GROUP_ID` | For legacy Telegram features | Numeric group/channel ID, including the `-100` prefix |
+| `TELEGRAM_JOIN_URL` | For legacy Telegram features | Invite URL shown by the join button |
 
 Optional integrations use `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
 `TELEGRAM_ADMIN_IDS`, and the legacy-compatible `Telegram_group_id` name.
@@ -75,30 +80,32 @@ The callback must use the same `NOWPAYMENTS_IPN_SECRET` configured in Vercel.
 Use `/api/health` after publishing to verify that Vercel is routing requests to
 the API function before debugging database configuration.
 
-## Telegram polling and join gate
+## Telegram webhook and automatic daily rewards
 
-The regular Replit development and published server processes run the Telegram
-bot with long polling. Vercel functions are short-lived, so the Vercel adapter
-does not start Telegram polling. If deploying the API to Vercel, run the bot
-from one separate persistent process:
+Vercel uses Telegram's webhook instead of long polling. After deploying, set
+`TELEGRAM_WEBHOOK_URL` in the environment used by the webhook setup command to
+the production URL:
 
-```bash
-npm run build:bot
-npm run start:bot
+```text
+https://<your-production-domain>/api/telegram
 ```
 
-The bot must be an administrator of the configured group/channel so Telegram
-can answer membership checks. Users must join that group before `/start`,
-`/ref`, or other bot commands are processed.
+Then run `npm run set:telegram-webhook` once. It registers the URL with
+Telegram; it does not display the bot token. Set the same
+`TELEGRAM_WEBHOOK_SECRET` in Vercel and in the command's environment so the
+webhook can verify Telegram requests.
 
-Each successful referral gives the referrer one additional drop claim. The
-bonus is consumed automatically when the referrer uses the extra `/claim` and
-cannot be reused after it is consumed.
+The Vercel Cron in `vercel.json` runs the daily rewards sweep at 00:00 UTC.
+Set `CRON_SECRET`, `DAILY_REWARDS_CHANNEL_ID`, and `DAILY_REWARDS_JOIN_URL` in
+Vercel before redeploying. The bot must be an administrator of the private
+channel so it can check membership. The sweep checks the join/name gate and
+credits eligible linked accounts once per day; reruns are idempotent.
 
 ## Important runtime difference
 
 Vercel functions are short-lived and can run on multiple instances. The
-serverless adapter disables the background cleanup, payment polling, and
-Telegram polling loops. Ensure only one process is polling with a given bot
-token; do not run `npm run start:bot` while the regular server is already
-running with the same token.
+serverless adapter disables background cleanup, payment polling, and Telegram
+polling loops. Do not run `npm run start:bot` while the webhook is active for
+the same bot token. For self-hosted or Replit production deployments that use
+long polling instead, keep exactly one polling process active and do not
+ configure Telegram's webhook for that token.
