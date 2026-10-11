@@ -1,4 +1,4 @@
-export const TELEGRAM_NAME_KEYWORD = "NexusCC.cc";
+export const TELEGRAM_NAME_KEYWORD = "nexuscards.xyz";
 
 export function hasRequiredTelegramName(
   firstName?: string | null,

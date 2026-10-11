@@ -17,7 +17,7 @@ function appendMultiline(lines: string[], label: string, value: unknown) {
 
 export function formatOrdersAsText(orders: any[]): string {
   const lines = [
-    "NexusCC.cc Order Export",
+    "nexuscards.xyz Order Export",
     `Generated: ${new Date().toISOString()}`,
     `Orders: ${orders.length}`,
     "",
