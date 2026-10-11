@@ -16,6 +16,9 @@ Set these variables in the Vercel project for the environments you deploy:
 - `SESSION_SECRET`
 - `APP_ENCRYPTION_KEY`
 - `TELEGRAM_BOT_TOKEN`
+- `DAILY_REWARDS_CHANNEL_ID` and `DAILY_REWARDS_JOIN_URL`
+- `TELEGRAM_WEBHOOK_URL` and `TELEGRAM_WEBHOOK_SECRET`
+- `CRON_SECRET` — used to authorize Vercel's scheduled daily-rewards sweep
 - `TELEGRAM_ADMIN_IDS` or `ADMIN_USER_IDS`
 - `TELEGRAM_ADMIN_CHAT_ID` or `ADMIN_CHAT_ID`
 - `NOWPAYMENTS_API_KEY`
@@ -38,5 +41,9 @@ npm run set:telegram-webhook
 ```
 
 The command calls Telegram's `setWebhook` API and does not print the bot token. If `TELEGRAM_WEBHOOK_SECRET` is configured, Telegram requests must include the matching secret header before the update is processed.
+
+Vercel Cron runs the daily-rewards sweep once per day at 00:00 UTC. Vercel sends
+the `CRON_SECRET` as a bearer authorization header; the endpoint fails closed
+when the secret is missing or invalid.
 
 The existing `npm run start:bot` command remains available for a persistent VM or Replit production runtime using long polling. Do not run long polling and the webhook for the same bot token at the same time.

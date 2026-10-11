@@ -232,7 +232,7 @@ function isDailyGateMember(status: string, isMember?: boolean) {
     (status === "restricted" && isMember === true);
 }
 
-async function runDailyRewardSweep(bot: Bot) {
+export async function runDailyRewardSweep(bot: Bot) {
   const lockClient = await pool.connect();
   let lockAcquired = false;
   try {
