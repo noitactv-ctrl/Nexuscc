@@ -1,9 +1,11 @@
 import { Bot, InlineKeyboard, type Context } from "grammy";
+import { createHash } from "crypto";
 import { pool } from "./db.js";
 import { log } from "./logger.js";
 import { CLAIM_LIMIT_PER_WINDOW, getClaimAccess } from "./reward-claim-policy.js";
 import { MAX_LICENSE_FILE_BYTES, parseLicenseKeyFile } from "./license-key-file.js";
 import { hasRequiredTelegramName, TELEGRAM_NAME_KEYWORD as NAME_KEYWORD } from "./telegram-name-policy.js";
+import { ensureTelegramReferralSchema } from "./telegram-referrals.js";
 
 const BROADCAST_MAX_CHARS = 1_000;
 const BROADCAST_MAX_RECIPIENTS = 500;
@@ -22,6 +24,14 @@ function getGroupId() {
 
 function getJoinUrl() {
   return process.env.TELEGRAM_JOIN_URL ?? "https://t.me/+3-lMkt-idutkOTIx";
+}
+
+function getDailyJoinUrl() {
+  return process.env.DAILY_REWARDS_JOIN_URL ?? "";
+}
+
+function getDailyChannelId() {
+  return process.env.DAILY_REWARDS_CHANNEL_ID ?? "";
 }
 
 function getAdminIds() {
@@ -47,10 +57,193 @@ function hasKeyword(ctx: Context) {
 
 function botKeyboard() {
   return new InlineKeyboard()
+    .text("💸 Daily reward", "daily_reward")
+    .text("🔗 Daily referrals", "daily_referrals")
+    .row()
     .text("🎁 Claim free credit", "claim_reward")
     .text("👤 Credit status", "account_status")
     .row()
-    .url("📣 Join our channel", getJoinUrl());
+    .url("📣 Join our channel", getDailyJoinUrl() || getJoinUrl());
+}
+
+async function dailyGate(ctx: Context, bot: Bot) {
+  const channelId = getDailyChannelId();
+  const joinUrl = getDailyJoinUrl();
+  const userId = ctx.from?.id;
+  if (!channelId || !userId) {
+    await ctx.reply("Daily rewards are not configured yet. Please try again later.");
+    return false;
+  }
+  try {
+    const member = await bot.api.getChatMember(channelId, userId);
+    const joined = member.status === "creator" || member.status === "administrator" ||
+      member.status === "member" || (member.status === "restricted" && member.is_member);
+    if (joined) return true;
+  } catch (error: any) {
+    console.error("[telegram] daily rewards membership check failed:", error?.message ?? error);
+  }
+  const keyboard = new InlineKeyboard();
+  if (joinUrl) keyboard.url("📣 Join the channel", joinUrl).row();
+  keyboard.text("✅ I've joined — check again", "daily_check_join");
+  await ctx.reply("🔒 Join the NexusCC channel before using daily rewards, then tap the button below to verify.", { reply_markup: keyboard });
+  return false;
+}
+
+async function linkDailyRewards(ctx: Context, bot: Bot) {
+  if (ctx.chat?.type !== "private") {
+    await ctx.reply("For account security, link your NexusCC account with the bot in a private chat.");
+    return;
+  }
+  if (!(await dailyGate(ctx, bot))) return;
+  if (!hasKeyword(ctx)) {
+    await ctx.reply(`Add ${NAME_KEYWORD} to your first or last name before linking your account.`);
+    return;
+  }
+  const code = getMatch(ctx).replace(/\s+/g, "").toUpperCase();
+  if (!/^[A-F0-9]{10}$/.test(code)) {
+    await ctx.reply("Use the one-time code from your NexusCC profile: /link CODE");
+    return;
+  }
+  const codeHash = createHash("sha256").update(code).digest("hex");
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`daily-link:${ctx.from!.id}`]);
+    const result = await client.query(
+      `SELECT user_id FROM telegram_daily_reward_link_codes
+       WHERE code_hash = $1 AND consumed_at IS NULL AND expires_at > NOW() FOR UPDATE`,
+      [codeHash],
+    );
+    const userId = result.rows[0]?.user_id;
+    if (!userId) {
+      await client.query("ROLLBACK");
+      await ctx.reply("That code is invalid or expired. Generate a new one in your NexusCC profile.");
+      return;
+    }
+    const alreadyLinked = await client.query(
+      `SELECT 1 FROM telegram_daily_reward_accounts
+       WHERE chat_id = $1 OR user_id = $2 LIMIT 1`,
+      [String(ctx.from!.id), userId],
+    );
+    if (alreadyLinked.rows[0]) {
+      await client.query("ROLLBACK");
+      await ctx.reply("This Telegram account or NexusCC account is already linked.");
+      return;
+    }
+    await client.query(
+      `INSERT INTO telegram_daily_reward_accounts (chat_id, user_id) VALUES ($1, $2)`,
+      [String(ctx.from!.id), userId],
+    );
+    await client.query(
+      `UPDATE telegram_daily_reward_link_codes SET consumed_at = NOW() WHERE code_hash = $1`,
+      [codeHash],
+    );
+    await client.query("COMMIT");
+    await ctx.reply("✅ Your NexusCC account is securely linked. Use /daily to claim your reward.");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error("[telegram] daily rewards account linking failed:", error);
+    await ctx.reply("Could not link your account right now. Please generate a new code and try again.");
+  } finally {
+    client.release();
+  }
+}
+
+async function claimDailyReward(ctx: Context, bot: Bot) {
+  if (ctx.chat?.type !== "private") {
+    await ctx.reply("Claim daily rewards in a private chat with the bot.");
+    return;
+  }
+  if (!(await dailyGate(ctx, bot))) return;
+  if (!hasKeyword(ctx)) {
+    await ctx.reply(`Keep ${NAME_KEYWORD} in your first or last name to earn the daily reward.`);
+    return;
+  }
+  const chatId = String(ctx.from?.id ?? "");
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`daily-reward:${chatId}`]);
+    const account = await client.query(
+      `SELECT a.user_id, u.is_banned
+       FROM telegram_daily_reward_accounts a JOIN users u ON u.id = a.user_id
+       WHERE a.chat_id = $1 FOR UPDATE OF a`,
+      [chatId],
+    );
+    const userId = account.rows[0]?.user_id;
+    if (!userId) {
+      await client.query("ROLLBACK");
+      await ctx.reply("Link your NexusCC account first. Open your profile settings, create a daily-rewards code, then send /link CODE here.");
+      return;
+    }
+    if (account.rows[0].is_banned) {
+      await client.query("ROLLBACK");
+      await ctx.reply("This account is not eligible for daily rewards.");
+      return;
+    }
+    const previous = await client.query(
+      `SELECT amount_cents FROM telegram_daily_reward_claims
+       WHERE chat_id = $1 AND reward_date = CURRENT_DATE`,
+      [chatId],
+    );
+    if (previous.rows[0]) {
+      await client.query("ROLLBACK");
+      await ctx.reply(`You've already claimed today's $${(Number(previous.rows[0].amount_cents) / 100).toFixed(2)} reward. Come back tomorrow.`);
+      return;
+    }
+    const referral = await client.query(
+      `SELECT r.id
+       FROM telegram_daily_reward_referrals r
+       JOIN telegram_daily_reward_accounts referrer ON referrer.chat_id = r.referrer_chat_id
+       WHERE r.referred_chat_id = $1`,
+      [chatId],
+    );
+    const amountCents = 25 + (referral.rows[0] ? 10 : 0);
+    await client.query(
+      `INSERT INTO telegram_daily_reward_claims (chat_id, user_id, amount_cents)
+       VALUES ($1, $2, $3)`,
+      [chatId, userId, amountCents],
+    );
+    await client.query(`UPDATE users SET balance = balance + $1 WHERE id = $2`, [amountCents, userId]);
+    await client.query(
+      `INSERT INTO transactions (user_id, amount, type, description)
+       VALUES ($1, $2, 'daily_reward', 'Telegram daily reward')`,
+      [userId, amountCents],
+    );
+
+    const referralPayouts = await client.query(
+      `INSERT INTO telegram_daily_referral_payouts
+         (referral_id, reward_date, referrer_user_id, referred_user_id, amount_cents)
+       SELECT r.id, CURRENT_DATE, referrer.user_id, $2, 10
+       FROM telegram_daily_reward_referrals r
+       JOIN telegram_daily_reward_accounts referrer ON referrer.chat_id = r.referrer_chat_id
+       JOIN users referrer_user ON referrer_user.id = referrer.user_id AND referrer_user.is_banned = FALSE
+       WHERE r.referred_chat_id = $1
+       ON CONFLICT (referral_id, reward_date) DO NOTHING
+       RETURNING referrer_user_id, referral_id`,
+      [chatId, userId],
+    );
+    for (const payout of referralPayouts.rows) {
+      await client.query(`UPDATE users SET balance = balance + 10 WHERE id = $1`, [payout.referrer_user_id]);
+      await client.query(
+        `INSERT INTO transactions (user_id, amount, type, description)
+         VALUES ($1, 10, 'daily_referral_reward', 'Daily reward from an active referral')`,
+        [payout.referrer_user_id],
+      );
+    }
+    await client.query("COMMIT");
+    await ctx.reply(
+      `✅ Daily reward added to your NexusCC balance: $${(amountCents / 100).toFixed(2)}.\n\n` +
+      (referralPayouts.rowCount ? `Your referrer also earned $0.10 today because you qualified.` : "") +
+      `\nUse /dailyref to share your referral link.`,
+    );
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error("[telegram] daily reward claim failed:", error);
+    await ctx.reply("Your reward could not be processed. Please try again.");
+  } finally {
+    client.release();
+  }
 }
 
 async function ensureDropSchema() {
@@ -372,7 +565,7 @@ async function uploadDrops(ctx: Context, bot: Bot, token: string) {
 }
 
 function registerDropHandlers(bot: Bot, token: string) {
-  const schemaReady = ensureDropSchema().catch((error) => {
+  const schemaReady = Promise.all([ensureDropSchema(), ensureTelegramReferralSchema()]).catch((error) => {
     console.error("[telegram] free-credit schema setup failed:", error);
   });
   bot.use(async (_ctx, next) => {
@@ -382,6 +575,11 @@ function registerDropHandlers(bot: Bot, token: string) {
   bot.use(async (ctx, next) => {
     const groupId = getGroupId();
     const userId = ctx.from?.id;
+    const text = (ctx.message as { text?: string } | undefined)?.text ?? "";
+    const callback = ctx.callbackQuery?.data ?? "";
+    const dailyFlow = text.startsWith("/start") || text.startsWith("/daily") || text.startsWith("/link") ||
+      callback.startsWith("daily_");
+    if (dailyFlow) return next();
     if (!groupId || !userId) return next();
     try {
       const member = await ctx.api.getChatMember(groupId, userId);
@@ -406,12 +604,77 @@ function registerDropHandlers(bot: Bot, token: string) {
     if (isNew && match.startsWith("ref_")) {
       await confirmReferral(match.slice(4).trim(), chatId, bot);
     }
+    if (match.startsWith("daily_")) {
+      const referrerChatId = match.slice(6).trim();
+      if (/^\d+$/.test(referrerChatId) && referrerChatId !== chatId) {
+        await pool.query(
+          `INSERT INTO telegram_daily_reward_referrals (referrer_chat_id, referred_chat_id)
+           VALUES ($1, $2) ON CONFLICT (referred_chat_id) DO NOTHING`,
+          [referrerChatId, chatId],
+        );
+      }
+    }
     await ctx.reply(
-      `👋 Welcome to the free-credit bot!\n\n` +
-      `Add *${NAME_KEYWORD}* to your Telegram name, then use /claim when credits are available.\n\n` +
-      `/claim — claim free credit\n/status — check your allowance\n/ref — get a referral link`,
+      `👋 Welcome to NexusCC rewards!\n\n` +
+      `Join our channel, keep *${NAME_KEYWORD}* in your Telegram first or last name, and link your NexusCC account to earn $0.25 each day.\n\n` +
+      `/daily — claim today's reward\n/dailyref — get your daily-rewards referral link\n/link CODE — link your NexusCC account\n\n` +
+      `The original free-credit drops are still available with /claim.`,
       { ...MD, reply_markup: botKeyboard() },
     );
+  });
+  bot.command("link", (ctx) => linkDailyRewards(ctx, bot));
+  bot.command("daily", (ctx) => claimDailyReward(ctx, bot));
+  bot.command("dailyref", async (ctx) => {
+    if (ctx.chat?.type !== "private") {
+      await ctx.reply("Request your referral link in a private chat with the bot.");
+      return;
+    }
+    if (!(await dailyGate(ctx, bot))) return;
+    if (!hasKeyword(ctx)) {
+      await ctx.reply(`Keep ${NAME_KEYWORD} in your first or last name before sharing a reward link.`);
+      return;
+    }
+    const linked = await pool.query(
+      `SELECT 1 FROM telegram_daily_reward_accounts WHERE chat_id = $1`,
+      [getChatId(ctx)],
+    );
+    if (!linked.rows[0]) {
+      await ctx.reply("Link your NexusCC account first using a one-time code from your profile.");
+      return;
+    }
+    const info = await bot.api.getMe();
+    await ctx.reply(`Invite a friend to earn $0.10/day while they qualify. They also earn an extra $0.10/day.\n\nhttps://t.me/${info.username}?start=daily_${getChatId(ctx)}`);
+  });
+  bot.callbackQuery("daily_reward", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await claimDailyReward(ctx, bot);
+  });
+  bot.callbackQuery("daily_referrals", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    if (ctx.chat?.type !== "private") {
+      await ctx.reply("Request your referral link in a private chat with the bot.");
+      return;
+    }
+    if (!(await dailyGate(ctx, bot))) return;
+    if (!hasKeyword(ctx)) {
+      await ctx.reply(`Keep ${NAME_KEYWORD} in your Telegram first or last name before sharing your link.`);
+      return;
+    }
+    const chatId = getChatId(ctx);
+    const linked = await pool.query(
+      `SELECT 1 FROM telegram_daily_reward_accounts WHERE chat_id = $1`,
+      [chatId],
+    );
+    if (!linked.rows[0]) {
+      await ctx.reply("Link your NexusCC account first using a one-time code from your profile.");
+      return;
+    }
+    const info = await bot.api.getMe();
+    await ctx.reply(`Your daily-rewards referral link:\nhttps://t.me/${info.username}?start=daily_${chatId}`);
+  });
+  bot.callbackQuery("daily_check_join", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await claimDailyReward(ctx, bot);
   });
   bot.command("claim", sendClaim);
   bot.command("status", sendStatus);
@@ -457,6 +720,9 @@ export function startTelegramBot() {
   if (!bot) return null;
   bot.api.setMyCommands([
     { command: "start", description: "Open the free-credit menu" },
+    { command: "daily", description: "Claim today's NexusCC daily reward" },
+    { command: "dailyref", description: "Get your daily reward referral link" },
+    { command: "link", description: "Link your NexusCC account with a one-time code" },
     { command: "claim", description: "Claim free credit" },
     { command: "status", description: "View credit status" },
     { command: "ref", description: "Get a referral link" },

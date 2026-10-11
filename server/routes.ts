@@ -5,12 +5,12 @@ import { storage } from "./storage.js";
 import { setupAuth, MIN_PASSWORD_LENGTH, passwordChangeLimiter } from "./auth.js";
 import { api } from "../shared/routes.js";
 import { z } from "zod";
-import { scrypt, randomBytes, randomInt, timingSafeEqual } from "crypto";
+import { scrypt, randomBytes, randomInt, timingSafeEqual, createHash } from "crypto";
 import { createNowPaymentsPayment, getNowPaymentsCurrencies, getNowPaymentsPayment, mapNowPaymentsStatus, verifyNowPaymentsWebhook } from "./nowpayments.js";
 import { settleCryptoPayment } from "./crypto-settlement.js";
 import { hashPassword, comparePassword } from "./auth.js";
 import { cryptoPayments, orders, orderItems, verifications, variants, userIps, users, mails, mailReads, discountCodes, transactions, stockItems, cards, cardBases, achs, products, insertAnnouncementSchema } from "../shared/schema.js";
-import { db } from "./db.js";
+import { db, pool } from "./db.js";
 import { eq, and, ne, desc, sql } from "drizzle-orm";
 import { MAX_LICENSE_FILE_BYTES, parseLicenseKeyFile } from "./license-key-file.js";
 import { formatOrdersAsText } from "./order-export.js";
@@ -797,6 +797,28 @@ export async function registerRoutes(
       res.json(user);
     } catch (e: any) {
       res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/telegram/daily-rewards/link-code", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+    const code = randomBytes(5).toString("hex").toUpperCase();
+    const codeHash = createHash("sha256").update(code).digest("hex");
+    const userId = Number((req.user as any).id);
+    try {
+      await pool.query(
+        `DELETE FROM telegram_daily_reward_link_codes WHERE user_id = $1 AND consumed_at IS NULL`,
+        [userId],
+      );
+      await pool.query(
+        `INSERT INTO telegram_daily_reward_link_codes (code_hash, user_id, expires_at)
+         VALUES ($1, $2, NOW() + INTERVAL '15 minutes')`,
+        [codeHash, userId],
+      );
+      res.json({ code, expiresInMinutes: 15 });
+    } catch (error) {
+      console.error("Daily reward Telegram link code failed:", error);
+      res.status(503).json({ message: "Daily rewards linking is temporarily unavailable." });
     }
   });
 

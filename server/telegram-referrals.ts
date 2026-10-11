@@ -40,4 +40,52 @@ export async function ensureTelegramReferralSchema() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS telegram_daily_reward_accounts (
+      chat_id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      linked_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS telegram_daily_reward_link_codes (
+      code_hash TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      expires_at TIMESTAMPTZ NOT NULL,
+      consumed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS telegram_daily_reward_claims (
+      id BIGSERIAL PRIMARY KEY,
+      chat_id TEXT NOT NULL,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      reward_date DATE NOT NULL DEFAULT CURRENT_DATE,
+      amount_cents INTEGER NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE(chat_id, reward_date)
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS telegram_daily_reward_referrals (
+      id BIGSERIAL PRIMARY KEY,
+      referrer_chat_id TEXT NOT NULL,
+      referred_chat_id TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK (referrer_chat_id <> referred_chat_id)
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS telegram_daily_referral_payouts (
+      id BIGSERIAL PRIMARY KEY,
+      referral_id BIGINT NOT NULL REFERENCES telegram_daily_reward_referrals(id) ON DELETE CASCADE,
+      reward_date DATE NOT NULL DEFAULT CURRENT_DATE,
+      referrer_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      referred_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      amount_cents INTEGER NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE(referral_id, reward_date)
+    )
+  `);
 }

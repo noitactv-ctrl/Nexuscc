@@ -135,7 +135,27 @@ function SettingsTab({ user }: { user: any }) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
+  const [dailyRewardCode, setDailyRewardCode] = useState("");
+  const [dailyRewardCodeLoading, setDailyRewardCodeLoading] = useState(false);
   const { toast } = useToast();
+
+  const createDailyRewardCode = async () => {
+    setDailyRewardCodeLoading(true);
+    try {
+      const response = await fetch("/api/telegram/daily-rewards/link-code", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Could not create a link code");
+      setDailyRewardCode(data.code);
+      toast({ title: "One-time code created", description: "Send /link followed by this code to the NexusCC Telegram bot." });
+    } catch (error: any) {
+      toast({ title: "Could not create code", description: error.message, variant: "destructive" });
+    } finally {
+      setDailyRewardCodeLoading(false);
+    }
+  };
 
   const handleUpdateTelegram = async () => {
     try {
@@ -193,6 +213,27 @@ function SettingsTab({ user }: { user: any }) {
 
   return (
     <div className="space-y-6">
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-foreground text-lg">Telegram Daily Rewards</CardTitle>
+          <CardDescription>Link your account securely to receive daily rewards in your NexusCC balance.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Button onClick={createDailyRewardCode} disabled={dailyRewardCodeLoading}>
+            {dailyRewardCodeLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Link2 className="h-4 w-4 mr-2" />}
+            Create one-time link code
+          </Button>
+          {dailyRewardCode && (
+            <div className="space-y-2">
+              <div className="font-mono text-xl tracking-widest">{dailyRewardCode}</div>
+              <p className="text-sm text-muted-foreground">In Telegram, send <span className="font-mono">/link {dailyRewardCode}</span>. It expires in 15 minutes and can only be used once.</p>
+              <Button variant="outline" onClick={() => navigator.clipboard.writeText(dailyRewardCode).then(() => toast({ title: "Code copied" }))}>
+                Copy code
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
       <Card className="bg-card border-border">
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-3 text-sm">
