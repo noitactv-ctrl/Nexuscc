@@ -1,90 +1,60 @@
 import { useProducts } from "@/hooks/use-products";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ShieldX, Search, ChevronDown, FileText } from "lucide-react";
+import { Loader2, ShieldX, Search, FileText, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 
-function seededShuffle<T>(items: T[], seed: number): T[] {
-  const result = [...items];
-  let value = seed;
-  const random = () => {
-    value = (value * 9301 + 49297) % 233280;
-    return value / 233280;
-  };
+const COUNTRY_OPTIONS = [
+  { code: "US", label: "USA", flag: "🇺🇸", match: /\b(?:US|USA|UNITED STATES)\b/i },
+  { code: "GB", label: "UK", flag: "🇬🇧", match: /\b(?:UK|GB|GREAT BRITAIN|UNITED KINGDOM)\b/i },
+  { code: "CA", label: "CA", flag: "🇨🇦", match: /\b(?:CA|CANADA)\b/i },
+  { code: "AU", label: "AUS", flag: "🇦🇺", match: /\b(?:AU|AUS|AUSTRALIA)\b/i },
+] as const;
 
-  for (let i = result.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
+function getProductCountry(product: any) {
+  const searchable = [
+    product.name,
+    product.description,
+    ...(product.variants ?? []).map((variant: any) => variant.name),
+  ].join(" ");
+  return COUNTRY_OPTIONS.find((country) => country.match.test(searchable));
 }
 
-const PLACEHOLDER_GRADIENTS = [
-  "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)",
-  "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)",
-  "linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)",
-  "linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)",
-  "linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%)",
-  "linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)",
-  "linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%)",
-  "linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%)",
-];
-
-function placeholderGradient(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i += 1) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  return PLACEHOLDER_GRADIENTS[hash % PLACEHOLDER_GRADIENTS.length];
-}
-
-function LogProductCard({ product, rank }: { product: any; rank: number }) {
+function LogProductCard({ product }: { product: any }) {
   const lowestVariant = product.variants?.length
     ? product.variants.reduce((lowest: any, variant: any) => lowest.price < variant.price ? lowest : variant)
     : null;
   const lowestPrice = lowestVariant?.price ?? 0;
-  const isTopProduct = rank === 0 || rank === 1;
+  const country = getProductCountry(product);
 
   return (
     <Link href={`/product/${encodeURIComponent(product.name)}`}>
       <div
-        className="h-full cursor-pointer overflow-hidden rounded-2xl border bg-[#111] transition-all hover:scale-[1.02] hover:shadow-lg active:scale-[0.99]"
-        style={{
-          borderColor: isTopProduct ? "hsl(38 95% 55% / 0.3)" : "rgba(255,255,255,0.1)",
-          boxShadow: rank === 0 ? "0 4px 16px hsl(38 95% 55% / 0.15)" : "none",
-        }}
+        className="group h-full cursor-pointer overflow-hidden rounded-2xl border border-white/15 bg-[#252525] p-2.5 transition-all hover:border-white/30 hover:bg-[#2b2b2b] active:scale-[0.99]"
         data-testid={`card-log-product-${product.id}`}
       >
         <div
-          className="relative flex h-[110px] w-full items-center justify-center overflow-hidden"
-          style={{ background: product.image ? "#f9fafb" : placeholderGradient(product.name) }}
+          className="relative flex aspect-[16/9] w-full items-center justify-center overflow-hidden rounded-xl bg-black"
         >
           {product.image ? (
             <img
               src={product.image}
               alt={product.name}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }}
             />
           ) : (
-            <span className="select-none text-3xl font-black uppercase tracking-widest text-black/10">
-              {product.name.slice(0, 2)}
-            </span>
-          )}
-          {rank === 0 && (
-            <span className="absolute left-2 top-2 rounded-lg bg-primary px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary-foreground shadow-sm">
-              Top 1
-            </span>
-          )}
-          {rank === 1 && (
-            <span className="absolute left-2 top-2 rounded-lg border border-primary/30 bg-primary/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary">
-              Top 2
-            </span>
+            <FileText className="h-10 w-10 text-white/20" aria-hidden="true" />
           )}
         </div>
-        <div className="space-y-2.5 px-3 pb-3 pt-2.5">
-          <p className="line-clamp-2 text-sm font-semibold leading-tight text-white">{product.name}</p>
-          <div className="w-full rounded bg-primary py-2 text-center text-xs font-semibold text-primary-foreground transition-colors hover:opacity-90">
-            Purchase · {lowestPrice > 0 ? `$${(lowestPrice / 100).toFixed(2)}` : "Free"}
+        <div className="space-y-3 px-1 pb-1 pt-3">
+          <p className="line-clamp-2 min-h-6 text-center text-base font-bold tracking-wide text-white">{product.name}</p>
+          <div className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#999] px-3 text-center text-sm font-bold tracking-wide text-white transition-colors group-hover:bg-[#b0b0b0]">
+            {country && <span aria-label={country.label}>{country.flag}</span>}
+            <span>Purchase</span>
+            <span aria-hidden="true">|</span>
+            <span>{lowestPrice > 0 ? `$${(lowestPrice / 100).toFixed(2)}` : "Free"}</span>
           </div>
         </div>
       </div>
@@ -95,38 +65,44 @@ function LogProductCard({ product, rank }: { product: any; rank: number }) {
 export default function LogsPage() {
   const { user } = useAuth();
   const { data: products, isLoading, isError } = useProducts();
-  const { data: topProducts } = useQuery<any[]>({
-    queryKey: ["/api/products/top-selling"],
-    refetchInterval: 60 * 60 * 1000,
-  });
   const { data: features } = useQuery<{ logs: boolean }>({
     queryKey: ["/api/settings/features"],
   });
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [shuffleSeed] = useState(() => Math.random() * 233280);
-
-  const topIds = useMemo(() => (topProducts ?? []).map((product: any) => product.id), [topProducts]);
-  const sortedProducts = useMemo(() => {
-    if (!products) return [];
-    const shuffled = seededShuffle([...products], shuffleSeed);
-    const top = topIds
-      .map((id) => shuffled.find((product: any) => product.id === id))
-      .filter(Boolean);
-    const rest = shuffled.filter((product: any) => !topIds.includes(product.id));
-    return [...top, ...rest];
-  }, [products, shuffleSeed, topIds]);
+  const [activeCountry, setActiveCountry] = useState("all");
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
+  const countryOptions = useMemo(() => {
+    const available = new Set((products ?? []).map((product: any) => getProductCountry(product)?.code));
+    return COUNTRY_OPTIONS.filter((country) => available.has(country.code));
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
-    let result = sortedProducts;
-    if (activeFilter !== "all") result = result.filter((product: any) => product.name === activeFilter);
+    let result = products ?? [];
+    if (activeCountry !== "all") {
+      result = result.filter((product: any) => getProductCountry(product)?.code === activeCountry);
+    }
     const query = search.trim().toLowerCase();
     if (!query) return result;
     return result.filter((product: any) =>
       product.name.toLowerCase().includes(query) ||
-      product.description?.toLowerCase().includes(query),
+      product.description?.toLowerCase().includes(query) ||
+      product.variants?.some((variant: any) => variant.name.toLowerCase().includes(query)) ||
+      getProductCountry(product)?.label.toLowerCase().includes(query),
     );
-  }, [sortedProducts, activeFilter, search]);
+  }, [products, activeCountry, search]);
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const visibleProducts = filteredProducts.slice((page - 1) * pageSize, page * pageSize);
+
+  const changeSearch = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const changeCountry = (value: string) => {
+    setActiveCountry(value);
+    setPage(1);
+  };
 
   if (isLoading) {
     return <div className="flex h-[50vh] items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-white/30" /></div>;
@@ -159,50 +135,112 @@ export default function LogsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-8 lg:max-w-5xl xl:max-w-6xl">
-      <div className="space-y-1 pb-6 pt-8 text-center">
-        <h1 className="text-3xl font-black uppercase tracking-wide text-primary sm:text-4xl">Logs shop</h1>
-        <p className="text-sm text-white/50">Browse available products and choose a log package.</p>
-      </div>
+    <div className="mx-auto max-w-6xl px-4 pb-12 pt-5 sm:px-6">
+      <section
+        className="relative mb-7 overflow-hidden rounded-2xl border border-white/10 bg-[#101114] px-6 py-8 sm:px-9 sm:py-10"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 82% 24%, rgba(68, 122, 255, .18), transparent 25%), radial-gradient(circle at 14% 80%, rgba(40, 95, 220, .12), transparent 34%), linear-gradient(125deg, #0a0b0d, #17191e 58%, #090a0c)",
+        }}
+      >
+        <div className="pointer-events-none absolute inset-0 opacity-40" aria-hidden="true">
+          <div className="absolute inset-0 bg-[radial-gradient(1px_1px_at_12%_20%,white_50%,transparent),radial-gradient(1px_1px_at_80%_36%,white_50%,transparent),radial-gradient(1px_1px_at_62%_82%,white_50%,transparent),radial-gradient(1px_1px_at_34%_66%,white_50%,transparent)]" />
+        </div>
+        <div className="relative max-w-xl">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-blue-300">nexuscards.xyz</p>
+          <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Logs shop</h1>
+          <p className="mt-2 text-sm text-white/65 sm:text-base">Browse available log packages from the current inventory.</p>
+          <a
+            href="#log-products"
+            className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground transition hover:brightness-110"
+          >
+            <FileText className="h-4 w-4" aria-hidden="true" />
+            Browse logs
+            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+          </a>
+        </div>
+      </section>
 
-      <div className="relative mb-3">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+      <div className="relative mb-6">
+        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/45" aria-hidden="true" />
         <input
-          type="text"
+          type="search"
           placeholder="Search for a product"
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          className="h-11 w-full rounded border border-white/12 bg-[#111] pl-10 pr-4 text-sm text-white/90 outline-none transition-colors placeholder:text-white/35 focus:border-primary/40"
+          onChange={(event) => changeSearch(event.target.value)}
+          className="h-14 w-full rounded-xl border border-white/15 bg-[#111] pl-12 pr-4 text-base text-white outline-none transition placeholder:text-white/45 focus:border-primary/70"
           data-testid="input-search-logs"
+          aria-label="Search logs"
         />
       </div>
 
-      <div className="relative mb-6 flex h-11 items-center gap-2 rounded border border-white/12 bg-[#111] px-3">
-        <div className="grid flex-shrink-0 grid-cols-2 gap-0.5">
-          {[0, 1, 2, 3].map((item) => <span key={item} className="block h-1.5 w-1.5 rounded-sm bg-primary" />)}
-        </div>
-        <select
-          value={activeFilter}
-          onChange={(event) => setActiveFilter(event.target.value)}
-          className="flex-1 cursor-pointer appearance-none bg-transparent text-sm text-white/80 outline-none"
-          data-testid="filter-select-logs"
+      <div className="mb-8 flex flex-wrap justify-center gap-x-5 gap-y-4 sm:gap-x-9" aria-label="Filter logs by country">
+        <button
+          type="button"
+          onClick={() => changeCountry("all")}
+          className={`flex min-w-[76px] flex-col items-center gap-1.5 rounded-xl px-3 py-2 transition ${activeCountry === "all" ? "text-primary" : "text-white hover:bg-white/5"}`}
+          aria-pressed={activeCountry === "all"}
         >
-          <option value="all">All</option>
-          {sortedProducts.map((product: any) => <option key={product.id} value={product.name}>{product.name}</option>)}
-        </select>
-        <ChevronDown className="h-4 w-4 flex-shrink-0 text-white/40" />
+          <span className="text-4xl leading-none" aria-hidden="true">🌐</span>
+          <span className="text-sm font-bold">All</span>
+        </button>
+        {countryOptions.map((country) => (
+          <button
+            key={country.code}
+            type="button"
+            onClick={() => changeCountry(country.code)}
+            className={`flex min-w-[76px] flex-col items-center gap-1.5 rounded-xl px-3 py-2 transition ${activeCountry === country.code ? "text-primary" : "text-white hover:bg-white/5"}`}
+            aria-pressed={activeCountry === country.code}
+          >
+            <span className="text-4xl leading-none" aria-hidden="true">{country.flag}</span>
+            <span className="text-sm font-bold">{country.label}</span>
+          </button>
+        ))}
       </div>
 
-      <h2 className="mb-4 text-center text-base font-bold text-white">Available logs</h2>
-      {filteredProducts.length === 0 ? (
-        <div className="py-20 text-center text-sm text-white/40">No products found</div>
+      <section id="log-products" aria-live="polite">
+        <h2 className="mb-8 text-center text-2xl font-bold text-white">Total found: {filteredProducts.length}</h2>
+        {filteredProducts.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-[#111] px-6 py-16 text-center">
+            <FileText className="mx-auto h-9 w-9 text-white/25" aria-hidden="true" />
+            <p className="mt-3 text-base font-semibold text-white/75">No logs found</p>
+            <p className="mt-1 text-sm text-white/45">Try another search or check back when inventory is available.</p>
+          </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProducts.map((product: any) => (
-            <LogProductCard key={product.id} product={product} rank={!search.trim() ? topIds.indexOf(product.id) : -1} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleProducts.map((product: any) => (
+              <LogProductCard key={product.id} product={product} />
+            ))}
+          </div>
+          {filteredProducts.length > 0 && (
+            <nav className="mt-10 flex items-center justify-center gap-3" aria-label="Product pages">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={page === 1}
+                className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-white/15 bg-[#222] px-4 text-sm font-semibold text-white transition hover:bg-[#333] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                Back
+              </button>
+              <span className="flex h-11 min-w-11 items-center justify-center rounded-lg bg-white px-3 text-sm font-bold text-black">
+                {page}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                disabled={page === totalPages}
+                className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-white/15 bg-[#222] px-4 text-sm font-semibold text-white transition hover:bg-[#333] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </nav>
+          )}
+        </>
       )}
+      </section>
     </div>
   );
 }
