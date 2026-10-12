@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, Package, Clock, Gift, Mail, Key, User, Calendar, Link2, LogOut } from "lucide-react";
+import { Loader2, Package, Clock, Gift, Mail, Key, User, Calendar, Link2, LogOut, Copy } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState(() => {
     if (tabParam === "orders") return "orders";
     if (tabParam === "balance") return "balance";
+    if (tabParam === "daily-rewards") return "daily-rewards";
     return "dashboard";
   });
 
@@ -36,6 +37,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (tabParam === "orders") setActiveTab("orders");
     else if (tabParam === "balance") setActiveTab("balance");
+    else if (tabParam === "daily-rewards") setActiveTab("daily-rewards");
   }, [tabParam]);
 
   useEffect(() => {
@@ -68,6 +70,9 @@ export default function ProfilePage() {
           <TabsTrigger value="balance" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-medium">
             Balance
           </TabsTrigger>
+          <TabsTrigger value="daily-rewards" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-medium">
+            Daily Rewards
+          </TabsTrigger>
           <TabsTrigger value="settings" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-medium">
             Settings
           </TabsTrigger>
@@ -83,6 +88,10 @@ export default function ProfilePage() {
 
         <TabsContent value="balance" className="pt-6">
           <BalanceTab user={user} />
+        </TabsContent>
+
+        <TabsContent value="daily-rewards" className="pt-6">
+          <DailyRewardsTab />
         </TabsContent>
 
         <TabsContent value="settings" className="pt-6">
@@ -127,14 +136,7 @@ function DashboardTab({ user, logout }: { user: any; logout: () => void }) {
   );
 }
 
-function SettingsTab({ user }: { user: any }) {
-  const { logout } = useAuth();
-  const [newTelegram, setNewTelegram] = useState(user.telegramUsername || "");
-  const [newEmail, setNewEmail] = useState(user.email || "");
-  const [confirmEmail, setConfirmEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
+function DailyRewardsTab() {
   const [dailyRewardCode, setDailyRewardCode] = useState("");
   const [dailyRewardCodeLoading, setDailyRewardCodeLoading] = useState(false);
   const { toast } = useToast();
@@ -156,6 +158,67 @@ function SettingsTab({ user }: { user: any }) {
       setDailyRewardCodeLoading(false);
     }
   };
+
+  const copyLinkCommand = async () => {
+    try {
+      await navigator.clipboard.writeText(`/link ${dailyRewardCode}`);
+      toast({ title: "Telegram command copied", description: "Paste it into your private chat with the NexusCC bot." });
+    } catch {
+      toast({ title: "Could not copy command", description: "Select the code and copy it manually.", variant: "destructive" });
+    }
+  };
+
+  return (
+    <div className="max-w-3xl space-y-5">
+      <Card className="border-primary/30 bg-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <Gift className="h-5 w-5 text-primary" />
+            Link Telegram for Daily Rewards
+          </CardTitle>
+          <CardDescription>
+            Create a one-time code here, then send it to the NexusCC Telegram bot to connect your account and receive eligible rewards.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <ol className="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
+            <li>Join the NexusCC rewards channel.</li>
+            <li>Put <span className="font-semibold text-foreground">nexuscards.xyz</span> in your Telegram first or last name.</li>
+            <li>Generate a code below and send <span className="font-mono text-foreground">/link CODE</span> to the bot in a private chat.</li>
+          </ol>
+          <Button size="lg" onClick={createDailyRewardCode} disabled={dailyRewardCodeLoading} className="w-full sm:w-auto">
+            {dailyRewardCodeLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2 className="mr-2 h-4 w-4" />}
+            {dailyRewardCodeLoading ? "Creating code..." : "Generate Telegram link code"}
+          </Button>
+          {dailyRewardCode && (
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your one-time code</p>
+              <p className="mt-2 break-all font-mono text-3xl font-bold tracking-[0.2em] text-foreground">{dailyRewardCode}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Send this command to the bot within 15 minutes. The code can only be used once.</p>
+              <Button variant="outline" className="mt-4" onClick={copyLinkCommand}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy /link command
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      <p className="text-sm text-muted-foreground">
+        Already linked? You don’t need to generate another code. Daily rewards are sent automatically when your account meets the eligibility requirements.
+      </p>
+    </div>
+  );
+}
+
+function SettingsTab({ user }: { user: any }) {
+  const { logout } = useAuth();
+  const [newTelegram, setNewTelegram] = useState(user.telegramUsername || "");
+  const [newEmail, setNewEmail] = useState(user.email || "");
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const { toast } = useToast();
 
   const handleUpdateTelegram = async () => {
     try {
@@ -213,27 +276,6 @@ function SettingsTab({ user }: { user: any }) {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground text-lg">Telegram Daily Rewards</CardTitle>
-          <CardDescription>Link your account securely to receive daily rewards in your NexusCC balance.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Button onClick={createDailyRewardCode} disabled={dailyRewardCodeLoading}>
-            {dailyRewardCodeLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Link2 className="h-4 w-4 mr-2" />}
-            Create one-time link code
-          </Button>
-          {dailyRewardCode && (
-            <div className="space-y-2">
-              <div className="font-mono text-xl tracking-widest">{dailyRewardCode}</div>
-              <p className="text-sm text-muted-foreground">In Telegram, send <span className="font-mono">/link {dailyRewardCode}</span>. It expires in 15 minutes and can only be used once.</p>
-              <Button variant="outline" onClick={() => navigator.clipboard.writeText(dailyRewardCode).then(() => toast({ title: "Code copied" }))}>
-                Copy code
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
       <Card className="bg-card border-border">
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-3 text-sm">
