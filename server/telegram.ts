@@ -85,13 +85,13 @@ async function dailyGate(ctx: Context, bot: Bot) {
   const keyboard = new InlineKeyboard();
   if (joinUrl) keyboard.url("📣 Join the channel", joinUrl).row();
   keyboard.text("✅ I've joined — check again", "daily_check_join");
-  await ctx.reply("🔒 Join the NexusCC channel before using daily rewards, then tap the button below to verify.", { reply_markup: keyboard });
+  await ctx.reply("🔒 Join the OmniMarket channel before using daily rewards, then tap the button below to verify.", { reply_markup: keyboard });
   return false;
 }
 
 async function linkDailyRewards(ctx: Context, bot: Bot) {
   if (ctx.chat?.type !== "private") {
-    await ctx.reply("For account security, link your NexusCC account with the bot in a private chat.");
+    await ctx.reply("For account security, link your OmniMarket account with the bot in a private chat.");
     return;
   }
   if (!(await dailyGate(ctx, bot))) return;
@@ -101,7 +101,7 @@ async function linkDailyRewards(ctx: Context, bot: Bot) {
   }
   const code = getMatch(ctx).replace(/\s+/g, "").toUpperCase();
   if (!/^[A-F0-9]{10}$/.test(code)) {
-    await ctx.reply("Use the one-time code from your NexusCC profile: /link CODE");
+    await ctx.reply("Use the one-time code from your OmniMarket profile: /link CODE");
     return;
   }
   const codeHash = createHash("sha256").update(code).digest("hex");
@@ -117,7 +117,7 @@ async function linkDailyRewards(ctx: Context, bot: Bot) {
     const userId = result.rows[0]?.user_id;
     if (!userId) {
       await client.query("ROLLBACK");
-      await ctx.reply("That code is invalid or expired. Generate a new one in your NexusCC profile.");
+      await ctx.reply("That code is invalid or expired. Generate a new one in your OmniMarket profile.");
       return;
     }
     const alreadyLinked = await client.query(
@@ -127,7 +127,7 @@ async function linkDailyRewards(ctx: Context, bot: Bot) {
     );
     if (alreadyLinked.rows[0]) {
       await client.query("ROLLBACK");
-      await ctx.reply("This Telegram account or NexusCC account is already linked.");
+      await ctx.reply("This Telegram account or OmniMarket account is already linked.");
       return;
     }
     await client.query(
@@ -139,7 +139,7 @@ async function linkDailyRewards(ctx: Context, bot: Bot) {
       [codeHash],
     );
     await client.query("COMMIT");
-    await ctx.reply("✅ Your NexusCC account is securely linked. Eligible rewards are credited automatically each day.");
+    await ctx.reply("✅ Your OmniMarket account is securely linked. Eligible rewards are credited automatically each day.");
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
     console.error("[telegram] daily rewards account linking failed:", error);
@@ -267,7 +267,7 @@ export async function runDailyRewardSweep(bot: Bot) {
         if (result.status === "paid") {
           await bot.api.sendMessage(
             Number(chatId),
-            `✅ Your automatic NexusCC daily reward of $${(result.amountCents / 100).toFixed(2)} has been added to your balance.`,
+            `✅ Your automatic OmniMarket daily reward of $${(result.amountCents / 100).toFixed(2)} has been added to your balance.`,
           ).catch((error) => console.warn("[telegram] could not notify daily reward recipient:", error?.message ?? error));
         }
       } catch (error: any) {
@@ -307,7 +307,7 @@ async function claimDailyReward(ctx: Context, bot: Bot) {
   try {
     const result = await grantDailyReward(chatId);
     if (result.status === "unlinked") {
-      await ctx.reply("Link your NexusCC account first. Open your profile settings, create a daily-rewards code, then send /link CODE here.");
+      await ctx.reply("Link your OmniMarket account first. Open your profile settings, create a daily-rewards code, then send /link CODE here.");
       return;
     }
     if (result.status === "ineligible") {
@@ -319,7 +319,7 @@ async function claimDailyReward(ctx: Context, bot: Bot) {
       return;
     }
     await ctx.reply(
-      `✅ Today's automatic reward of $${(result.amountCents / 100).toFixed(2)} has been added to your NexusCC balance.`,
+      `✅ Today's automatic reward of $${(result.amountCents / 100).toFixed(2)} has been added to your OmniMarket balance.`,
     );
   } catch (error) {
     console.error("[telegram] daily reward status check failed:", error);
@@ -696,9 +696,9 @@ function registerDropHandlers(bot: Bot, token: string) {
       }
     }
     await ctx.reply(
-      `👋 Welcome to NexusCC rewards!\n\n` +
-      `Join our channel, keep *${NAME_KEYWORD}* in your Telegram first or last name, and link your NexusCC account to receive $0.25 automatically each qualifying day.\n\n` +
-      `/daily — check today's reward status\n/dailyref — get your daily-rewards referral link\n/link CODE — link your NexusCC account\n\n` +
+      `👋 Welcome to OmniMarket rewards!\n\n` +
+      `Join our channel, keep *${NAME_KEYWORD}* in your Telegram first or last name, and link your OmniMarket account to receive $0.25 automatically each qualifying day.\n\n` +
+      `/daily — check today's reward status\n/dailyref — get your daily-rewards referral link\n/link CODE — link your OmniMarket account\n\n` +
       `The original free-credit drops are still available with /claim.`,
       { ...MD, reply_markup: botKeyboard() },
     );
@@ -718,7 +718,7 @@ function registerDropHandlers(bot: Bot, token: string) {
     const chatId = getChatId(ctx);
     const info = await bot.api.getMe();
     await ctx.reply(
-      `Share this referral link now—even before linking your NexusCC account:\nhttps://t.me/${info.username}?start=daily_${chatId}\n\n` +
+      `Share this referral link now—even before linking your OmniMarket account:\nhttps://t.me/${info.username}?start=daily_${chatId}\n\n` +
       `You and your referred friend can earn an extra $0.10/day while eligible. Link your account with /link CODE to receive rewards.`,
     );
   });
@@ -793,9 +793,9 @@ export function startTelegramBot() {
   if (!bot) return null;
   bot.api.setMyCommands([
     { command: "start", description: "Open the free-credit menu" },
-    { command: "daily", description: "Check today's automatic NexusCC reward" },
+    { command: "daily", description: "Check today's automatic OmniMarket reward" },
     { command: "dailyref", description: "Get your daily reward referral link" },
-    { command: "link", description: "Link your NexusCC account with a one-time code" },
+    { command: "link", description: "Link your OmniMarket account with a one-time code" },
     { command: "claim", description: "Claim free credit" },
     { command: "status", description: "View credit status" },
     { command: "ref", description: "Get a referral link" },

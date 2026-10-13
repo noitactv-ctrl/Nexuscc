@@ -50,7 +50,7 @@ function StatusBadge({ status }: { status: Ticket["status"] }) {
   const classes = {
     open: "bg-red-500/15 text-red-400 border-red-500/25",
     refunded: "bg-red-500/15 text-red-400 border-red-500/25",
-    replaced: "bg-blue-500/15 text-blue-400 border-blue-500/25",
+    replaced: "bg-red-500/15 text-red-400 border-red-500/25",
     resolved: "bg-white/8 text-white/55 border-white/10",
   };
 
@@ -124,7 +124,7 @@ function Footer() {
         <span>TOS</span>
         <span>FAQs</span>
       </div>
-      <p className="text-xs text-white/25">© 2026 NexusCC. All rights reserved</p>
+      <p className="text-xs text-white/25">© 2026 OmniMarket. All rights reserved</p>
     </div>
   );
 }
@@ -416,7 +416,7 @@ export default function SupportPage({ initialView = "list" }: { initialView?: "l
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-600 text-white">
                     <UserRound className="h-6 w-6" />
                   </div>
                   <div className="min-w-0 space-y-2">
@@ -424,7 +424,7 @@ export default function SupportPage({ initialView = "list" }: { initialView?: "l
                       <strong className="text-white">You</strong>
                       <span className="ml-2">{formatTime(selectedTicket.createdAt)}</span>
                     </p>
-                    <div className="rounded-2xl rounded-tl-md bg-blue-500 px-5 py-3 text-base leading-relaxed text-white">
+                    <div className="rounded-2xl rounded-tl-md bg-red-600 px-5 py-3 text-base leading-relaxed text-white">
                       {selectedTicket.description}
                     </div>
                   </div>

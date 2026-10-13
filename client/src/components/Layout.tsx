@@ -305,9 +305,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Menu aria-hidden="true" />
           </button>
 
-          <Link href="/" className="nexus-topbar-brand" aria-label="NexusCC home">
+          <Link href="/" className="nexus-topbar-brand" aria-label="OmniMarket home">
             <CreditCard aria-hidden="true" />
-            <span>NexusCC</span>
+            <span>OmniMarket</span>
           </Link>
         </div>
 
@@ -358,13 +358,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link
               href="/"
               className="nexus-drawer-brand"
-              aria-label="NexusCC home"
+              aria-label="OmniMarket home"
               onClick={() => {
                 setNavOpen(false);
                 setAccountOpen(false);
               }}
             >
-              NexusCC
+              OmniMarket
             </Link>
             <span className="nexus-drawer-greeting">{user?.username || "Welcome"} <span aria-hidden="true">👋</span></span>
           </div>

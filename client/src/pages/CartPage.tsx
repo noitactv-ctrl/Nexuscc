@@ -89,7 +89,7 @@ function CashAppModal({ orderId, total, paymentNote, cashappTag, onClose }: {
         </div>
 
         <button
-          className="w-full h-9 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold transition-colors"
+          className="w-full h-9 rounded-xl bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-bold transition-colors"
           onClick={onClose}
         >
           Done — I've sent it

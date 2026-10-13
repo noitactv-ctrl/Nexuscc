@@ -4,7 +4,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 
 const RANKS = [
   { key: "newbie",  label: "Newbie",  emoji: "🌱", color: "text-white/45",   bar: "#ffffff40", border: "border-white/10",     glow: "",                     discount: 0,  threshold: 0,      next: 10000  },
-  { key: "regular", label: "Regular", emoji: "⭐", color: "text-blue-400",   bar: "#60a5fa",   border: "border-blue-500/30",  glow: "shadow-blue-500/10",   discount: 2,  threshold: 10000,  next: 50000  },
+  { key: "regular", label: "Regular", emoji: "⭐", color: "text-red-400",   bar: "#ef4444",   border: "border-red-500/30",  glow: "shadow-red-500/10",   discount: 2,  threshold: 10000,  next: 50000  },
   { key: "vip",     label: "VIP",     emoji: "💎", color: "text-purple-400", bar: "#c084fc",   border: "border-purple-500/30",glow: "shadow-purple-500/10", discount: 5,  threshold: 50000,  next: 100000 },
   { key: "nyc",     label: "Silverback", emoji: "🫆", color: "text-amber-400", bar: "#fbbf24", border: "border-amber-500/30", glow: "shadow-amber-500/10", discount: 10, threshold: 100000, next: null   },
 ];

@@ -51,8 +51,8 @@ function AchRow({ ach, inCart, onToggleCart }: { ach: any; inCart: boolean; onTo
             onClick={() => onToggleCart(ach)}
             className={`flex items-center gap-1.5 border rounded text-xs font-bold py-1.5 px-3 transition-all ${
               inCart
-                ? "border-blue-500/60 text-blue-300 bg-blue-900/20"
-                : "border-blue-500/25 text-blue-300/75 hover:border-blue-400/50 hover:text-blue-200"
+                ? "border-red-500/60 text-red-300 bg-red-900/20"
+                : "border-red-500/25 text-red-300/75 hover:border-red-400/50 hover:text-red-200"
             }`}
             data-testid={`btn-cart-ach-${ach.id}`}
           >
@@ -62,7 +62,7 @@ function AchRow({ ach, inCart, onToggleCart }: { ach: any; inCart: boolean; onTo
           <button
             onClick={() => purchaseMutation.mutate()}
             disabled={purchaseMutation.isPending}
-            className="flex-1 border border-blue-500/50 text-blue-300 rounded text-xs font-bold py-1.5 transition-all hover:bg-blue-900/20 disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="flex-1 border border-red-500/50 text-red-300 rounded text-xs font-bold py-1.5 transition-all hover:bg-red-900/20 disabled:opacity-50 flex items-center justify-center gap-1.5"
             data-testid={`btn-buy-ach-${ach.id}`}
           >
             {purchaseMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : `Buy $${(ach.price / 100).toFixed(2)}`}

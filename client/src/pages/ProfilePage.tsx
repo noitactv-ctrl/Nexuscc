@@ -151,7 +151,7 @@ function DailyRewardsTab() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Could not create a link code");
       setDailyRewardCode(data.code);
-      toast({ title: "One-time code created", description: "Send /link followed by this code to the NexusCC Telegram bot." });
+      toast({ title: "One-time code created", description: "Send /link followed by this code to the OmniMarket Telegram bot." });
     } catch (error: any) {
       toast({ title: "Could not create code", description: error.message, variant: "destructive" });
     } finally {
@@ -162,7 +162,7 @@ function DailyRewardsTab() {
   const copyLinkCommand = async () => {
     try {
       await navigator.clipboard.writeText(`/link ${dailyRewardCode}`);
-      toast({ title: "Telegram command copied", description: "Paste it into your private chat with the NexusCC bot." });
+      toast({ title: "Telegram command copied", description: "Paste it into your private chat with the OmniMarket bot." });
     } catch {
       toast({ title: "Could not copy command", description: "Select the code and copy it manually.", variant: "destructive" });
     }
@@ -177,12 +177,12 @@ function DailyRewardsTab() {
             Link Telegram for Daily Rewards
           </CardTitle>
           <CardDescription>
-            Create a one-time code here, then send it to the NexusCC Telegram bot to connect your account and receive eligible rewards.
+            Create a one-time code here, then send it to the OmniMarket Telegram bot to connect your account and receive eligible rewards.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <ol className="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
-            <li>Join the NexusCC rewards channel.</li>
+            <li>Join the OmniMarket rewards channel.</li>
             <li>Put <span className="font-semibold text-foreground">OmniMarket</span> in your Telegram first or last name.</li>
             <li>Generate a code below and send <span className="font-mono text-foreground">/link CODE</span> to the bot in a private chat.</li>
           </ol>
@@ -529,7 +529,7 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
                 ))}
               </div>
               <Button
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black uppercase italic tracking-tighter text-xs h-10"
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-black uppercase italic tracking-tighter text-xs h-10"
                 onClick={() => setViewingStockIdx(null)}
                 data-testid="button-stock-back"
               >
@@ -646,7 +646,7 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
 
                   {(order.status === 'fulfilled' || order.status === 'paid' || order.status === 'delivering' || order.status === 'replaced') && (item.stockItem || (item.itemType === 'card' && item.card)) && (
                     <Button 
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black uppercase italic tracking-tighter text-xs h-10"
+                      className="w-full bg-red-600 hover:bg-red-700 text-white font-black uppercase italic tracking-tighter text-xs h-10"
                       onClick={() => setViewingStockIdx(idx)}
                       data-testid={`button-view-stock-${idx}`}
                     >

@@ -24,7 +24,7 @@ function statusLabel(s: string) {
 function statusClass(s: string) {
   if (["fulfilled","delivering","replaced"].includes(s)) return "bg-red-500/20 text-red-400 border-red-500/30";
   if (s === "pending") return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-  if (s === "refunded") return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+  if (s === "refunded") return "bg-red-500/20 text-red-400 border-red-500/30";
   if (s === "waiting_payment") return "bg-red-500/20 text-red-400 border-red-500/30";
   return "bg-[#111]/5 text-white/45 border-white/10";
 }
@@ -336,7 +336,7 @@ function CardsTab() {
             return (
               <div key={card.id} className="bg-[#111] border border-white/10 rounded-xl px-4 py-3 flex items-center justify-between" data-testid={`row-card-${card.id}`}>
                 <div className="space-y-0.5 min-w-0 flex-1">
-                  <p className="text-xs font-mono font-bold text-primary">🔥 NexusCC | {card.hrPercent ?? 80}% HR 🔥</p>
+                  <p className="text-xs font-mono font-bold text-primary">🔥 OmniMarket | {card.hrPercent ?? 80}% HR 🔥</p>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono bg-[#111]/5 border border-white/10 px-1.5 py-0.5 rounded text-white/45">{cBin}</span>
                     {card.binData?.bank && <span className="text-[10px] text-white/40 font-mono">{card.binData.bank}</span>}
@@ -603,8 +603,8 @@ export default function WorkerDashboardPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-600/30 flex items-center justify-center">
-          <Briefcase className="h-4 w-4 text-blue-400" />
+        <div className="w-8 h-8 rounded-lg bg-red-600/20 border border-red-600/30 flex items-center justify-center">
+          <Briefcase className="h-4 w-4 text-red-400" />
         </div>
         <div>
           <h1 className="text-lg font-bold text-white">Worker Dashboard</h1>

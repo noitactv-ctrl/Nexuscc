@@ -61,7 +61,7 @@ export async function createNowPaymentsPayment(params: {
     price_currency: "usd",
     pay_currency: params.payCurrency.toLowerCase(),
     order_id: params.orderId || `order-${Date.now()}`,
-    order_description: "NexusCC payment",
+    order_description: "OmniMarket payment",
   };
 
   if (params.ipnCallbackUrl) body.ipn_callback_url = params.ipnCallbackUrl;

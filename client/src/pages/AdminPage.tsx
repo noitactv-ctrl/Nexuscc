@@ -559,7 +559,7 @@ function DepositsSection() {
                 <TableRow key={d.id} className="border-white/10 hover:bg-[#111]/[0.02]">
                   <TableCell className="text-xs font-mono text-white/60">{d.username}</TableCell>
                   <TableCell className="text-xs">
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${d.type === "crypto" ? "bg-blue-500/15 text-blue-400" : "bg-red-500/15 text-red-400"}`}>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${d.type === "crypto" ? "bg-red-500/15 text-red-400" : "bg-white/10 text-white/70"}`}>
                       {d.type}
                     </span>
                   </TableCell>
@@ -1236,7 +1236,7 @@ function statusBadgeClass(s: string) {
   if (s === "waiting_payment") return "bg-red-500/20 text-red-400 border-red-500/30";
   if (s === "delivering" || s === "fulfilled") return "bg-red-500/20 text-red-400 border-red-500/30";
   if (s === "refunded") return "bg-orange-500/20 text-orange-400 border-orange-500/30";
-  if (s === "replaced") return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+  if (s === "replaced") return "bg-red-500/20 text-red-400 border-red-500/30";
   return "bg-[#111]/5 text-white/60";
 }
 
@@ -1504,7 +1504,7 @@ function statusTextColor(s: string) {
   if (s === "waiting_payment") return "text-red-400";
   if (s === "delivering" || s === "fulfilled") return "text-red-400";
   if (s === "refunded") return "text-orange-400";
-  if (s === "replaced") return "text-blue-400";
+  if (s === "replaced") return "text-red-400";
   return "text-white/45";
 }
 
@@ -1616,7 +1616,7 @@ function TestModeSection({ onGoToOrders }: { onGoToOrders: () => void }) {
             <p className="text-sm font-bold text-red-400">✓ Test order created!</p>
             <div className="text-xs text-muted-foreground space-y-1">
               <p>Order ID: <span className="font-mono text-white">{lastOrder.orderId}</span></p>
-              <p>Status: <Badge className="bg-blue-500/20 text-blue-400 text-[10px]">delivering</Badge></p>
+              <p>Status: <Badge className="bg-red-500/20 text-red-400 text-[10px]">delivering</Badge></p>
               <p className="text-white/60">Now go to the Orders tab to paste items and fulfill this order.</p>
             </div>
             <Button size="sm" className="w-full" onClick={onGoToOrders}>
@@ -1883,7 +1883,7 @@ function UsersSection() {
               <button
                 onClick={() => setWorkerMutation.mutate({ userId: selectedUser.id, isWorker: false })}
                 disabled={setWorkerMutation.isPending}
-                className="h-7 px-3 border border-blue-700/40 text-blue-400 text-xs font-bold rounded hover:bg-blue-900/20 transition-colors disabled:opacity-40"
+                className="h-7 px-3 border border-red-700/40 text-red-400 text-xs font-bold rounded hover:bg-red-900/20 transition-colors disabled:opacity-40"
                 data-testid={`btn-remove-worker-${selectedUser.id}`}
               >
                 Remove Worker
@@ -1892,7 +1892,7 @@ function UsersSection() {
               <button
                 onClick={() => setWorkerMutation.mutate({ userId: selectedUser.id, isWorker: true })}
                 disabled={setWorkerMutation.isPending}
-                className="h-7 px-3 bg-blue-700/80 hover:bg-blue-700 text-white text-xs font-bold rounded transition-colors disabled:opacity-40"
+                className="h-7 px-3 bg-red-700/80 hover:bg-red-700 text-white text-xs font-bold rounded transition-colors disabled:opacity-40"
                 data-testid={`btn-make-worker-${selectedUser.id}`}
               >
                 Make Worker
@@ -2453,7 +2453,7 @@ function IntegrationsSection() {
     { id: "zelle", label: "Zelle", icon: <span className="text-white font-black text-sm">Z</span>, bg: "bg-[#6D1ED4]" },
     { id: "chime", label: "Chime", icon: <span className="text-white font-black text-sm">C</span>, bg: "bg-[#00D632]" },
     { id: "crypto", label: "Crypto", icon: <SiBitcoin className="h-4 w-4 text-white" />, bg: "bg-primary" },
-    { id: "stars", label: "Telegram Stars", icon: <Star className="h-4 w-4 text-white fill-white" />, bg: "bg-blue-500" },
+    { id: "stars", label: "Telegram Stars", icon: <Star className="h-4 w-4 text-white fill-white" />, bg: "bg-red-500" },
   ];
 
   return (
@@ -3909,7 +3909,7 @@ function SupportSection() {
   const statusCls = (s: string) => {
     if (s === "open")     return "bg-yellow-500/15 text-yellow-400 border-yellow-500/20";
     if (s === "refunded") return "bg-red-500/15  text-red-400  border-red-500/20";
-    if (s === "replaced") return "bg-blue-500/15   text-blue-400   border-blue-500/20";
+    if (s === "replaced") return "bg-red-500/15   text-red-400   border-red-500/20";
     return "bg-white/8 text-white/40 border-white/10";
   };
 
@@ -3984,7 +3984,7 @@ function SupportSection() {
                             action === "refund"
                               ? "bg-red-700 hover:bg-red-600 text-white"
                               : action === "replace"
-                              ? "bg-blue-700 hover:bg-blue-600 text-white"
+                              ? "bg-red-700 hover:bg-red-600 text-white"
                               : "bg-white/10 hover:bg-white/15 text-white/70"
                           }`}
                           onClick={() => actionMutation.mutate({ id: ticket.id, action })}

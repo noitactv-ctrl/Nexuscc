@@ -41,7 +41,7 @@ function statusBadge(status: string) {
     pending: { label: "PENDING", cls: "bg-yellow-900/40 text-yellow-400" },
     waiting_payment: { label: "UNPAID", cls: "bg-orange-900/40 text-orange-400" },
     refunded: { label: "REFUNDED", cls: "bg-red-900/40 text-red-400" },
-    replaced: { label: "REPLACED", cls: "bg-blue-900/40 text-blue-400" },
+    replaced: { label: "REPLACED", cls: "bg-red-900/40 text-red-400" },
   };
   const entry = map[status] ?? { label: status?.toUpperCase() ?? "—", cls: "bg-[#0d0d0d] text-white/45" };
   return (
@@ -293,7 +293,7 @@ export default function OrdersPage() {
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-[10px] font-mono text-white/40 truncate">#{order.orderId}</p>
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${isCard ? "bg-blue-900/30 text-blue-400" : isAchOrder(order) ? "bg-cyan-900/30 text-cyan-400" : "bg-purple-900/30 text-purple-400"}`}>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${isCard ? "bg-red-900/30 text-red-400" : isAchOrder(order) ? "bg-cyan-900/30 text-cyan-400" : "bg-purple-900/30 text-purple-400"}`}>
                         {isCard ? "card" : isAchOrder(order) ? "ach" : "log"}
                       </span>
                     </div>

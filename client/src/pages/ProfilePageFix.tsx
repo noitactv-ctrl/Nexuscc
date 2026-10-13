@@ -14,7 +14,7 @@ import { formatDate as safeFormatDate } from "@/lib/date-utils";
 
 const RANKS = [
   { key: "newbie",  label: "Newbie",  emoji: "🌱", color: "text-white/45",  bar: "#ffffff40", bg: "bg-[#0d0d0d]",        discount: 0,  threshold: 0       },
-  { key: "regular", label: "Regular", emoji: "⭐", color: "text-blue-400",  bar: "#60a5fa",   bg: "bg-blue-500/10",    discount: 2,  threshold: 10000   },
+  { key: "regular", label: "Regular", emoji: "⭐", color: "text-red-400",  bar: "#ef4444",   bg: "bg-red-500/10",    discount: 2,  threshold: 10000   },
   { key: "vip",     label: "VIP",     emoji: "💎", color: "text-purple-400",bar: "#c084fc",   bg: "bg-purple-500/10",  discount: 5,  threshold: 50000   },
   { key: "nyc",     label: "NYC",     emoji: "🫆", color: "text-amber-400", bar: "#fbbf24",   bg: "bg-amber-500/10",   discount: 10, threshold: 100000  },
 ] as const;
@@ -344,11 +344,11 @@ function statusLabel(s: string) {
 }
 
 function statusColor(s: string) {
-  if (s === "pending") return "text-blue-400";
+  if (s === "pending") return "text-red-400";
   if (s === "waiting_payment") return "text-yellow-400";
   if (s === "fulfilled" || s === "delivering") return "text-red-400";
   if (s === "refunded") return "text-orange-400";
-  if (s === "replaced") return "text-blue-400";
+  if (s === "replaced") return "text-red-400";
   return "text-white/45";
 }
 
