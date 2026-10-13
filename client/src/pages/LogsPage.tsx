@@ -147,7 +147,7 @@ export default function LogsPage() {
           <div className="absolute inset-0 bg-[radial-gradient(1px_1px_at_12%_20%,white_50%,transparent),radial-gradient(1px_1px_at_80%_36%,white_50%,transparent),radial-gradient(1px_1px_at_62%_82%,white_50%,transparent),radial-gradient(1px_1px_at_34%_66%,white_50%,transparent)]" />
         </div>
         <div className="relative max-w-xl">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-blue-300">nexuscards.xyz</p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-blue-300">OmniMarket</p>
           <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Logs shop</h1>
           <p className="mt-2 text-sm text-white/65 sm:text-base">Browse available log packages from the current inventory.</p>
           <a

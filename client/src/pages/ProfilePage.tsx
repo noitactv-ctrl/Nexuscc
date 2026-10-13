@@ -183,7 +183,7 @@ function DailyRewardsTab() {
         <CardContent className="space-y-5">
           <ol className="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
             <li>Join the NexusCC rewards channel.</li>
-            <li>Put <span className="font-semibold text-foreground">nexuscards.xyz</span> in your Telegram first or last name.</li>
+            <li>Put <span className="font-semibold text-foreground">OmniMarket</span> in your Telegram first or last name.</li>
             <li>Generate a code below and send <span className="font-mono text-foreground">/link CODE</span> to the bot in a private chat.</li>
           </ol>
           <Button size="lg" onClick={createDailyRewardCode} disabled={dailyRewardCodeLoading} className="w-full sm:w-auto">
