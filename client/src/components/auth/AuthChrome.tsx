@@ -3,9 +3,9 @@ import { CreditCard } from "lucide-react";
 
 export function SpiderBrand() {
   return (
-    <Link href="/auth" className="nexus-brand" aria-label="NexusCC.xyz home">
+    <Link href="/auth" className="nexus-brand" aria-label="OmniMarket home">
       <CreditCard aria-hidden="true" />
-      <span>NexusCC.xyz</span>
+      <span>OmniMarket</span>
     </Link>
   );
 }
