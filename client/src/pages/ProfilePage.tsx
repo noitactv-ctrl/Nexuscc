@@ -28,7 +28,6 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState(() => {
     if (tabParam === "orders") return "orders";
     if (tabParam === "balance") return "balance";
-    if (tabParam === "daily-rewards") return "daily-rewards";
     return "dashboard";
   });
 
@@ -37,7 +36,6 @@ export default function ProfilePage() {
   useEffect(() => {
     if (tabParam === "orders") setActiveTab("orders");
     else if (tabParam === "balance") setActiveTab("balance");
-    else if (tabParam === "daily-rewards") setActiveTab("daily-rewards");
   }, [tabParam]);
 
   useEffect(() => {
@@ -70,9 +68,6 @@ export default function ProfilePage() {
           <TabsTrigger value="balance" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-medium">
             Balance
           </TabsTrigger>
-          <TabsTrigger value="daily-rewards" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-medium">
-            Daily Rewards
-          </TabsTrigger>
           <TabsTrigger value="settings" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-medium">
             Settings
           </TabsTrigger>
@@ -88,10 +83,6 @@ export default function ProfilePage() {
 
         <TabsContent value="balance" className="pt-6">
           <BalanceTab user={user} />
-        </TabsContent>
-
-        <TabsContent value="daily-rewards" className="pt-6">
-          <DailyRewardsTab />
         </TabsContent>
 
         <TabsContent value="settings" className="pt-6">
@@ -136,7 +127,7 @@ function DashboardTab({ user, logout }: { user: any; logout: () => void }) {
   );
 }
 
-function DailyRewardsTab() {
+function TelegramLinkSettings() {
   const [dailyRewardCode, setDailyRewardCode] = useState("");
   const [dailyRewardCodeLoading, setDailyRewardCodeLoading] = useState(false);
   const { toast } = useToast();
@@ -173,11 +164,11 @@ function DailyRewardsTab() {
       <Card className="border-primary/30 bg-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
-            <Gift className="h-5 w-5 text-primary" />
-            Link Telegram for Daily Rewards
+            <Link2 className="h-5 w-5 text-primary" />
+            Link Telegram Account
           </CardTitle>
           <CardDescription>
-            Create a one-time code here, then send it to the OmniMarket Telegram bot to connect your account and receive eligible rewards.
+            Connect your Telegram account to receive eligible reward payouts.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -276,6 +267,8 @@ function SettingsTab({ user }: { user: any }) {
 
   return (
     <div className="space-y-6">
+      <TelegramLinkSettings />
+
       <Card className="bg-card border-border">
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-3 text-sm">
