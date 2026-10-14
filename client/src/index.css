@@ -707,13 +707,6 @@
   text-decoration: none;
 }
 
-.nexus-topbar-brand img {
-  display: block;
-  width: 72px;
-  height: 48px;
-  object-fit: contain;
-}
-
 .nexus-topbar-avatar,
 .nexus-topbar-avatar-placeholder {
   display: grid;
@@ -1239,11 +1232,6 @@
   font-size: 12px;
 }
 
-.nexus-topbar-brand img {
-  width: 68px;
-  height: 45px;
-}
-
 .nexus-topbar-avatar,
 .nexus-topbar-avatar-placeholder {
   width: 29px;
@@ -1342,11 +1330,6 @@ body {
 .nexus-topbar-brand {
   gap: 8px;
   font-size: 15px;
-}
-
-.nexus-topbar-brand img {
-  width: 72px;
-  height: 48px;
 }
 
 .nexus-topbar-avatar,

@@ -305,7 +305,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </button>
 
           <Link href="/" className="nexus-topbar-brand" aria-label="OmniMarket home">
-            <img src="/omnimarket-logo.webp" alt="OmniMarket" />
+            OmniMarket
           </Link>
         </div>
 
