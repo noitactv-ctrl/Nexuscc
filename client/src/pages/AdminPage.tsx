@@ -31,6 +31,7 @@ const adminSections = [
   { id: "cashapp",  label: "Payments",   Icon: DollarSign },
   { id: "deposits", label: "Deposits",   Icon: Wallet },
   { id: "users",    label: "Users",      Icon: Users },
+  { id: "sellers",  label: "Seller Applications", Icon: BadgeCheck },
   { id: "support",  label: "Support",    Icon: MessageSquare },
   { id: "codes",    label: "Codes",      Icon: Gift },
   { id: "announcements", label: "Announcements", Icon: Megaphone },
@@ -140,6 +141,7 @@ export default function AdminPage() {
           {activeSection === "orders"       && <OrdersSection />}
           {activeSection === "cashapp"      && <CashAppSection />}
           {activeSection === "users"        && <UsersSection />}
+          {activeSection === "sellers"      && <SellersSection />}
           {activeSection === "support"      && <SupportSection />}
           {activeSection === "codes"        && <CodesSection />}
           {activeSection === "deposits"     && <DepositsSection />}
