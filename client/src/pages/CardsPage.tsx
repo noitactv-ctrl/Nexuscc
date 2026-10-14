@@ -430,7 +430,7 @@ export default function CardsPage() {
           type="button"
           onClick={purchaseSelected}
           disabled={selectedCards.length === 0 || !!purchasing}
-          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#dc2626] text-base font-semibold text-white transition-colors hover:bg-[#b91c1c] disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg"
+          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-amber-400 text-base font-semibold text-black transition-colors hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg"
           data-testid="btn-add-selected"
         >
           {purchasing ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />}
@@ -490,7 +490,7 @@ export default function CardsPage() {
                     checked={allVisibleSelected}
                     onChange={toggleAllVisible}
                     aria-label="Select all visible cards"
-                    className="h-4 w-4 accent-[#ef4444]"
+                    className="h-4 w-4 accent-amber-400"
                     data-testid="checkbox-all"
                   />
                 </th>
@@ -513,7 +513,7 @@ export default function CardsPage() {
                       checked={selectedIds.has(card.id)}
                       onChange={() => toggleSelection(card)}
                       aria-label={`Select prepaid card ending ${formatCardNumber(card).slice(-4)}`}
-                      className="h-4 w-4 accent-[#ef4444]"
+                      className="h-4 w-4 accent-amber-400"
                       data-testid={`checkbox-card-${card.id}`}
                     />
                   </td>
@@ -545,7 +545,7 @@ export default function CardsPage() {
                         onClick={() => toggleSelection(card)}
                         aria-label={selectedIds.has(card.id) ? "Remove from selection" : "Add to selection"}
                         className={`grid h-10 w-10 place-items-center rounded-xl transition-colors ${
-                          selectedIds.has(card.id) ? "bg-[#b91c1c] text-white" : "bg-[#dc2626] text-white hover:bg-[#b91c1c]"
+                          selectedIds.has(card.id) ? "bg-amber-500 text-black" : "bg-amber-400 text-black hover:bg-amber-500"
                         }`}
                       >
                         <ShoppingCart className="h-5 w-5" aria-hidden="true" />

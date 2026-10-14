@@ -1313,6 +1313,7 @@ export class DatabaseStorage implements IStorage {
       venmo: true,
       zelle: true,
       chime: true,
+      applepay: false,
     };
     for (const row of rows) {
       const method = row.key.replace("payment_method_", "");

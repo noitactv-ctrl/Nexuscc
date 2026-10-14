@@ -559,7 +559,7 @@ function DepositsSection() {
                 <TableRow key={d.id} className="border-white/10 hover:bg-[#111]/[0.02]">
                   <TableCell className="text-xs font-mono text-white/60">{d.username}</TableCell>
                   <TableCell className="text-xs">
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${d.type === "crypto" ? "bg-red-500/15 text-red-400" : "bg-white/10 text-white/70"}`}>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${d.type === "crypto" ? "bg-amber-400/15 text-amber-300" : "bg-white/10 text-white/70"}`}>
                       {d.type}
                     </span>
                   </TableCell>
@@ -1892,7 +1892,7 @@ function UsersSection() {
               <button
                 onClick={() => setWorkerMutation.mutate({ userId: selectedUser.id, isWorker: true })}
                 disabled={setWorkerMutation.isPending}
-                className="h-7 px-3 bg-red-700/80 hover:bg-red-700 text-white text-xs font-bold rounded transition-colors disabled:opacity-40"
+                className="h-7 px-3 bg-amber-400 hover:bg-amber-500 text-black text-xs font-bold rounded transition-colors disabled:opacity-40"
                 data-testid={`btn-make-worker-${selectedUser.id}`}
               >
                 Make Worker
@@ -1902,7 +1902,7 @@ function UsersSection() {
               <button
                 onClick={() => unbanMutation.mutate(selectedUser.id)}
                 disabled={unbanMutation.isPending}
-                className="h-7 px-3 bg-red-700/80 hover:bg-red-700 text-white text-xs font-bold rounded transition-colors disabled:opacity-40"
+                className="h-7 px-3 bg-amber-400 hover:bg-amber-500 text-black text-xs font-bold rounded transition-colors disabled:opacity-40"
                 data-testid={`btn-unban-${selectedUser.id}`}
               >
                 Unban
@@ -2452,8 +2452,9 @@ function IntegrationsSection() {
     { id: "venmo", label: "Venmo", icon: <span className="text-white font-black text-sm">V</span>, bg: "bg-[#3D95CE]" },
     { id: "zelle", label: "Zelle", icon: <span className="text-white font-black text-sm">Z</span>, bg: "bg-[#6D1ED4]" },
     { id: "chime", label: "Chime", icon: <span className="text-white font-black text-sm">C</span>, bg: "bg-[#00D632]" },
+    { id: "applepay", label: "Apple Pay (Apple Cash)", icon: <span className="text-white font-black text-sm"></span>, bg: "bg-white/15" },
     { id: "crypto", label: "Crypto", icon: <SiBitcoin className="h-4 w-4 text-white" />, bg: "bg-primary" },
-    { id: "stars", label: "Telegram Stars", icon: <Star className="h-4 w-4 text-white fill-white" />, bg: "bg-red-500" },
+    { id: "stars", label: "Telegram Stars", icon: <Star className="h-4 w-4 text-black fill-black" />, bg: "bg-amber-400" },
   ];
 
   return (
@@ -2546,6 +2547,13 @@ function IntegrationsSection() {
           />
           <MinDepositCard method="chime" label="Chime" color="#00D632" />
           <FeeSettingCard method="chime" label="Chime" color="#00D632" />
+          <HandleSettingCard
+            label="Apple Cash Recipient"
+            description="Phone number or email customers use to send Apple Cash. Staff confirm deposits manually."
+            settingKey="applepay-handle"
+            placeholder="Recipient phone number or email"
+            color="#d9d9d9"
+          />
         </div>
       </div>
 
@@ -2657,6 +2665,7 @@ function methodMeta(method: string) {
   if (method === "Venmo") return { color: "#3D95CE", label: "Venmo", icon: "V" };
   if (method === "Chime") return { color: "#00D632", label: "Chime", icon: "C" };
   if (method === "Zelle") return { color: "#9B59E8", label: "Zelle", icon: "Z" };
+  if (method === "Apple Pay") return { color: "#d9d9d9", label: "Apple Cash", icon: "" };
   return { color: "#00D632", label: "CashApp", icon: "$" };
 }
 
@@ -2665,7 +2674,7 @@ function CashAppSection() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [paymentTypeFilter, setPaymentTypeFilter] = useState<"all" | "CashApp" | "Venmo" | "Chime" | "Zelle">("all");
+  const [paymentTypeFilter, setPaymentTypeFilter] = useState<"all" | "CashApp" | "Venmo" | "Chime" | "Zelle" | "Apple Pay">("all");
 
   const { data: allOrders, isLoading } = useQuery({
     queryKey: ["/api/admin/orders"],
@@ -2677,7 +2686,7 @@ function CashAppSection() {
     refetchInterval: 6000,
   });
 
-  const manualOrders = (allOrders || []).filter((o: any) => ["CashApp", "Venmo", "Chime", "Zelle"].includes(o.paymentMethod));
+  const manualOrders = (allOrders || []).filter((o: any) => ["CashApp", "Venmo", "Chime", "Zelle", "Apple Pay"].includes(o.paymentMethod));
   const pendingOrders = manualOrders.filter((o: any) => o.status === "pending");
   const cq = searchQuery.trim().toLowerCase();
   const typeFiltered = (showHistory ? manualOrders : pendingOrders).filter((o: any) =>
@@ -2694,6 +2703,7 @@ function CashAppSection() {
   const venmoCount = pendingOrders.filter((o: any) => o.paymentMethod === "Venmo").length;
   const chimeCount = pendingOrders.filter((o: any) => o.paymentMethod === "Chime").length;
   const zelleCount = pendingOrders.filter((o: any) => o.paymentMethod === "Zelle").length;
+  const applePayCount = pendingOrders.filter((o: any) => o.paymentMethod === "Apple Pay").length;
 
   const fulfillMutation = useMutation({
     mutationFn: async (orderId: number) => {
@@ -2834,6 +2844,7 @@ function CashAppSection() {
           { key: "Venmo", label: "Venmo", count: venmoCount, color: "text-[#3D95CE]" },
           { key: "Chime", label: "Chime", count: chimeCount, color: "text-[#00D632]" },
           { key: "Zelle", label: "Zelle", count: zelleCount, color: "text-[#9B59E8]" },
+          { key: "Apple Pay", label: "Apple Cash", count: applePayCount, color: "text-white/70" },
         ].map(({ key, label, count, color }) => (
           <button
             key={key}
@@ -3835,7 +3846,7 @@ function SellersSection() {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      className="flex-1 h-8 text-xs bg-red-600 hover:bg-red-700 text-white"
+                      className="flex-1 h-8 text-xs bg-amber-400 hover:bg-amber-500 text-black"
                       onClick={() => approveMutation.mutate(selected.id)}
                       disabled={approveMutation.isPending}
                       data-testid="btn-seller-approve"

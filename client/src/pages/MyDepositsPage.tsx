@@ -6,7 +6,7 @@ import { Check, ChevronDown, Columns3, Search, WalletCards } from "lucide-react"
 type Deposit = {
   id: string;
   orderId?: string | null;
-  type: "crypto" | "cashapp" | "venmo" | "chime" | "zelle";
+  type: "crypto" | "cashapp" | "venmo" | "chime" | "zelle" | "applepay";
   amount: number;
   status: string;
   paymentId?: string;

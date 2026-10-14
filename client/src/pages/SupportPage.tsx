@@ -416,7 +416,7 @@ export default function SupportPage({ initialView = "list" }: { initialView?: "l
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-600 text-white">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-400 text-black">
                     <UserRound className="h-6 w-6" />
                   </div>
                   <div className="min-w-0 space-y-2">
@@ -424,7 +424,7 @@ export default function SupportPage({ initialView = "list" }: { initialView?: "l
                       <strong className="text-white">You</strong>
                       <span className="ml-2">{formatTime(selectedTicket.createdAt)}</span>
                     </p>
-                    <div className="rounded-2xl rounded-tl-md bg-red-600 px-5 py-3 text-base leading-relaxed text-white">
+                    <div className="rounded-2xl rounded-tl-md bg-amber-400 px-5 py-3 text-base leading-relaxed text-black">
                       {selectedTicket.description}
                     </div>
                   </div>

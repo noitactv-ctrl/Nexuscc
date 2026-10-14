@@ -32,7 +32,7 @@ function AchRow({ ach, inCart, onToggleCart }: { ach: any; inCart: boolean; onTo
   });
 
   return (
-    <div className={`border rounded mb-2 overflow-hidden transition-colors ${inCart ? "border-red-600/40 bg-[#111]" : "border-white/10 bg-[#111]"}`}>
+    <div className={`border rounded mb-2 overflow-hidden transition-colors ${inCart ? "border-amber-400/40 bg-[#111]" : "border-white/10 bg-[#111]"}`}>
       <div className="px-4 py-3 space-y-1.5">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-0.5 min-w-0">
@@ -51,8 +51,8 @@ function AchRow({ ach, inCart, onToggleCart }: { ach: any; inCart: boolean; onTo
             onClick={() => onToggleCart(ach)}
             className={`flex items-center gap-1.5 border rounded text-xs font-bold py-1.5 px-3 transition-all ${
               inCart
-                ? "border-red-500/60 text-red-300 bg-red-900/20"
-                : "border-red-500/25 text-red-300/75 hover:border-red-400/50 hover:text-red-200"
+                ? "border-amber-400/60 text-amber-300 bg-amber-900/20"
+                : "border-amber-400/25 text-amber-300/75 hover:border-amber-300/50 hover:text-amber-200"
             }`}
             data-testid={`btn-cart-ach-${ach.id}`}
           >
@@ -62,7 +62,7 @@ function AchRow({ ach, inCart, onToggleCart }: { ach: any; inCart: boolean; onTo
           <button
             onClick={() => purchaseMutation.mutate()}
             disabled={purchaseMutation.isPending}
-            className="flex-1 border border-red-500/50 text-red-300 rounded text-xs font-bold py-1.5 transition-all hover:bg-red-900/20 disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="flex-1 border border-amber-400/50 text-amber-300 rounded text-xs font-bold py-1.5 transition-all hover:bg-amber-900/20 disabled:opacity-50 flex items-center justify-center gap-1.5"
             data-testid={`btn-buy-ach-${ach.id}`}
           >
             {purchaseMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : `Buy $${(ach.price / 100).toFixed(2)}`}

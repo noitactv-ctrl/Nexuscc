@@ -306,8 +306,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </button>
 
           <Link href="/" className="nexus-topbar-brand" aria-label="OmniMarket home">
-            <CreditCard aria-hidden="true" />
-            <span>OmniMarket</span>
+            <img src="/omnimarket-logo.webp" alt="OmniMarket" />
           </Link>
         </div>
 

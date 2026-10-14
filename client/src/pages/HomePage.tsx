@@ -115,7 +115,7 @@ function MetricCard({
 }
 
 function ChartCard({
-  title, subtitle, data, countLabel, amountLabel, countColor = "#ef4444", amountColor = "#fb7185", showRefunds = false,
+  title, subtitle, data, countLabel, amountLabel, countColor = "#eab308", amountColor = "#facc15", showRefunds = false,
 }: {
   title: string;
   subtitle: string;
@@ -244,13 +244,13 @@ export default function HomePage() {
         <p className="mt-1 text-4xl font-semibold tracking-tight text-white sm:text-5xl">{currency(user?.balance ?? 0)}</p>
         <p className="mt-2 text-sm text-white/55 sm:text-base">Account overview · orders, deposits, and spend</p>
         <div className="mt-5 grid grid-cols-2 gap-2.5">
-          <Link href="/deposit" className="flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-semibold text-white transition-colors hover:bg-red-700 sm:h-12 sm:text-base">
+          <Link href="/deposit" className="flex h-11 items-center justify-center gap-2 rounded-xl bg-amber-400 text-sm font-semibold text-black transition-colors hover:bg-amber-500 sm:h-12 sm:text-base">
             <Wallet className="h-4 w-4" />Deposit
           </Link>
-          <Link href="/cards" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-red-500/60 hover:bg-red-500/10 sm:h-12 sm:text-base">
+          <Link href="/cards" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-amber-400/60 hover:bg-amber-400/10 sm:h-12 sm:text-base">
             <CreditCard className="h-4 w-4" />Buy cards
           </Link>
-          <Link href="/support" className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-red-500/60 hover:bg-red-500/10 sm:h-12 sm:text-base">
+          <Link href="/support" className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-amber-400/60 hover:bg-amber-400/10 sm:h-12 sm:text-base">
             <MessageSquare className="h-4 w-4" />Support
           </Link>
         </div>
@@ -291,8 +291,8 @@ export default function HomePage() {
           </div>
           <MetricCard label="Deposit amount" value={currency(paidDepositTotal)} detail={`Avg ${currency(averageDeposit)}`} icon={Activity} />
           <StatusCard orders={purchaseOrders} />
-          <ChartCard title="Daily purchases" subtitle="Last 30 days · purchases & amount" data={dailyPurchases} countLabel="Purchases" amountLabel="Amount ($)" countColor="#ef4444" />
-          <ChartCard title="Daily deposits" subtitle="Last 30 days · deposits & paid amount" data={dailyDeposits} countLabel="Deposits" amountLabel="Amount ($)" countColor="#dc2626" amountColor="#fda4af" />
+          <ChartCard title="Daily purchases" subtitle="Last 30 days · purchases & amount" data={dailyPurchases} countLabel="Purchases" amountLabel="Amount ($)" countColor="#eab308" />
+          <ChartCard title="Daily deposits" subtitle="Last 30 days · deposits & paid amount" data={dailyDeposits} countLabel="Deposits" amountLabel="Amount ($)" countColor="#ca8a04" amountColor="#facc15" />
         </div>
       )}
 
@@ -304,7 +304,7 @@ export default function HomePage() {
             <MetricCard label="Cards" value={purchasedCards.length.toLocaleString()} detail={`All time ${purchasedCards.length.toLocaleString()}`} icon={CreditCard} />
             <MetricCard label="Refunded" value={currency(refundTotal)} detail={`${purchaseOrders.filter((order: any) => order.status === "refunded").length} full`} icon={CircleAlert} emphasis="text-rose-400" />
           </div>
-          <Link href="/orders" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-red-500/60 hover:bg-red-500/10">
+          <Link href="/orders" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-amber-400/60 hover:bg-amber-400/10">
             View my orders <ArrowUpRight className="h-4 w-4" />
           </Link>
           <ChartCard title="Monthly purchases" subtitle="Amount, purchases, refunded" data={monthlyPurchases} countLabel="Purchases" amountLabel="Amount ($)" showRefunds />
@@ -320,11 +320,11 @@ export default function HomePage() {
             <MetricCard label="Pending" value={currency(pendingAmount)} detail={`${pendingDeposits.length} pending`} icon={CircleAlert} emphasis="text-amber-400" />
             <MetricCard label="Average" value={currency(averageDeposit)} detail={`Largest ${currency(largestDeposit)}`} icon={Activity} />
           </div>
-          <Link href="/my-deposits" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-red-500/60 hover:bg-red-500/10">
+          <Link href="/my-deposits" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-amber-400/60 hover:bg-amber-400/10">
             View my deposits <ArrowUpRight className="h-4 w-4" />
           </Link>
-          <ChartCard title="Monthly deposits" subtitle="Total vs paid amount" data={monthlyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#dc2626" amountColor="#fda4af" />
-          <ChartCard title="Weekly deposits" subtitle="Deposits & paid amount by week" data={weeklyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#dc2626" amountColor="#fda4af" />
+          <ChartCard title="Monthly deposits" subtitle="Total vs paid amount" data={monthlyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#ca8a04" amountColor="#facc15" />
+          <ChartCard title="Weekly deposits" subtitle="Deposits & paid amount by week" data={weeklyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#ca8a04" amountColor="#facc15" />
         </div>
       )}
 

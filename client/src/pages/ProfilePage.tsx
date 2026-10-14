@@ -529,7 +529,7 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
                 ))}
               </div>
               <Button
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-black uppercase italic tracking-tighter text-xs h-10"
+                className="w-full bg-amber-400 hover:bg-amber-500 text-black font-black uppercase italic tracking-tighter text-xs h-10"
                 onClick={() => setViewingStockIdx(null)}
                 data-testid="button-stock-back"
               >
@@ -646,7 +646,7 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
 
                   {(order.status === 'fulfilled' || order.status === 'paid' || order.status === 'delivering' || order.status === 'replaced') && (item.stockItem || (item.itemType === 'card' && item.card)) && (
                     <Button 
-                      className="w-full bg-red-600 hover:bg-red-700 text-white font-black uppercase italic tracking-tighter text-xs h-10"
+                      className="w-full bg-amber-400 hover:bg-amber-500 text-black font-black uppercase italic tracking-tighter text-xs h-10"
                       onClick={() => setViewingStockIdx(idx)}
                       data-testid={`button-view-stock-${idx}`}
                     >
@@ -750,7 +750,7 @@ function BalanceTab({ user }: { user: any }) {
             />
           </div>
           <Button 
-            className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold"
+            className="w-full h-12 bg-amber-400 hover:bg-amber-500 text-black font-bold"
             onClick={handleRedeem}
             disabled={loading || !giftCardCode.trim()}
             data-testid="button-redeem-gift-card"

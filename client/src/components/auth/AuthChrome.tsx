@@ -1,11 +1,9 @@
 import { Link } from "wouter";
-import { CreditCard } from "lucide-react";
 
 export function SpiderBrand() {
   return (
     <Link href="/auth" className="nexus-brand" aria-label="OmniMarket home">
-      <CreditCard aria-hidden="true" />
-      <span>OmniMarket</span>
+      <img src="/omnimarket-logo.webp" alt="OmniMarket" />
     </Link>
   );
 }

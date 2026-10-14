@@ -53,7 +53,7 @@ function CashAppModal({ orderId, total, paymentNote, cashappTag, onClose }: {
           <div className="flex items-center justify-between bg-[#0d0d0d] rounded-xl px-3 py-2.5">
             <div>
               <p className="text-[10px] text-white/45 mb-0.5">Send to</p>
-              <p className="text-sm font-bold text-[#ff2d2d]">{cashappTag || "$YourCashTag"}</p>
+              <p className="text-sm font-bold text-amber-300">{cashappTag || "$YourCashTag"}</p>
             </div>
             <button onClick={() => copy(cashappTag, "CashApp tag")} className="text-white/40 hover:text-white transition-colors">
               <Copy className="h-3.5 w-3.5" />
@@ -89,7 +89,7 @@ function CashAppModal({ orderId, total, paymentNote, cashappTag, onClose }: {
         </div>
 
         <button
-          className="w-full h-9 rounded-xl bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-bold transition-colors"
+          className="w-full h-9 rounded-xl bg-amber-400 hover:bg-amber-500 text-black text-xs font-bold transition-colors"
           onClick={onClose}
         >
           Done — I've sent it

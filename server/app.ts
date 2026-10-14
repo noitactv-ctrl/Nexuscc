@@ -159,6 +159,7 @@ export async function initializeApp(
         ('payment_method_cashapp', 'true'),
         ('payment_method_chime',   'false'),
         ('payment_method_zelle',   'false'),
+        ('payment_method_applepay', 'false'),
         ('payment_method_crypto',  'true')
       ON CONFLICT (key) DO NOTHING
     `);

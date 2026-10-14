@@ -462,7 +462,7 @@ export async function registerRoutes(
       const cashappRows = await db
         .select()
         .from(orders)
-        .where(and(eq(orders.userId, userId), sql`${orders.paymentMethod} IN ('CashApp','Venmo','Chime','Zelle')`))
+        .where(and(eq(orders.userId, userId), sql`${orders.paymentMethod} IN ('CashApp','Venmo','Chime','Zelle','Apple Pay')`))
         .orderBy(desc(orders.createdAt))
         .limit(30);
 
@@ -492,7 +492,7 @@ export async function registerRoutes(
       const cashappDeposits = depositOnlyCashapp.map(o => ({
         id: `cashapp_${o.id}`,
         orderId: o.orderId,
-         type: (o.paymentMethod?.toLowerCase() ?? "cashapp") as "cashapp" | "venmo" | "chime" | "zelle",
+         type: (o.paymentMethod?.toLowerCase().replace(/\s+/g, "") ?? "cashapp") as "cashapp" | "venmo" | "chime" | "zelle" | "applepay",
         amount: o.total,
         status: o.status,
         paymentNote: o.paymentNote,
@@ -535,7 +535,7 @@ export async function registerRoutes(
         })
         .from(orders)
         .leftJoin(users, eq(orders.userId, users.id))
-         .where(sql`${orders.paymentMethod} IN ('CashApp','Venmo','Chime','Zelle')`)
+          .where(sql`${orders.paymentMethod} IN ('CashApp','Venmo','Chime','Zelle','Apple Pay')`)
         .orderBy(desc(orders.createdAt))
         .limit(200);
 
@@ -556,7 +556,7 @@ export async function registerRoutes(
           amount: p.amount, status: p.status, createdAt: p.createdAt,
         })),
         ...depositOnlyCashapp.map(o => ({
-          id: `cashapp_${o.id}`, type: o.paymentMethod?.toLowerCase() ?? "cashapp", username: o.username ?? "?",
+          id: `cashapp_${o.id}`, type: o.paymentMethod?.toLowerCase().replace(/\s+/g, "") ?? "cashapp", username: o.username ?? "?",
           amount: o.total, status: o.status, paymentNote: o.paymentNote, createdAt: o.createdAt,
         })),
       ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -2299,7 +2299,7 @@ export async function registerRoutes(
     }
     const { method } = req.params;
     const { enabled } = req.body;
-    if (!["crypto", "stars", "cashapp", "wallet", "chime", "zelle", "venmo"].includes(method) || typeof enabled !== "boolean") {
+    if (!["crypto", "stars", "cashapp", "wallet", "chime", "zelle", "venmo", "applepay"].includes(method) || typeof enabled !== "boolean") {
       return res.status(400).json({ message: "Invalid request" });
     }
     await storage.setSetting(`payment_method_${method}`, String(enabled));
@@ -2376,6 +2376,19 @@ export async function registerRoutes(
     res.json({ handle: handle.trim() });
   });
 
+  app.get("/api/admin/settings/applepay-handle", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user as any).role !== "admin") return res.status(401).json({ message: "Unauthorized" });
+    res.json({ handle: await storage.getSetting("applepay_handle", "") });
+  });
+
+  app.post("/api/admin/settings/applepay-handle", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user as any).role !== "admin") return res.status(401).json({ message: "Unauthorized" });
+    const { handle } = req.body;
+    if (typeof handle !== "string") return res.status(400).json({ message: "Invalid handle" });
+    await storage.setSetting("applepay_handle", handle.trim());
+    res.json({ handle: handle.trim() });
+  });
+
   // ── Admin: Min deposit per payment method ──────────────────────────────────
   app.get("/api/admin/settings/min-deposits", async (req, res) => {
     if (!req.isAuthenticated() || (req.user as any).role !== "admin") return res.status(401).json({ message: "Unauthorized" });
@@ -2413,13 +2426,14 @@ export async function registerRoutes(
 
   // ── Public: manual payment methods config (for deposit page) ─────────────
   app.get("/api/site-settings/manual-payments", async (req, res) => {
-    const [methods, cashappTag, chimeHandle, zelleHandle, venmoHandle,
+    const [methods, cashappTag, chimeHandle, zelleHandle, venmoHandle, applepayHandle,
            cashappFee, chimeFee, zelleFee] = await Promise.all([
       storage.getPaymentMethodsConfig(),
       storage.getSetting("cashapp_tag", ""),
       storage.getSetting("chime_handle", ""),
       storage.getSetting("zelle_handle", ""),
       storage.getSetting("venmo_handle", ""),
+      storage.getSetting("applepay_handle", ""),
       storage.getSetting("cashapp_fee", "0"),
       storage.getSetting("chime_fee", "0"),
       storage.getSetting("zelle_fee", "0"),
@@ -2429,6 +2443,7 @@ export async function registerRoutes(
       chime:   { enabled: methods.chime === true,   handle: chimeHandle, fee: parseFloat(chimeFee) || 0 },
       zelle:   { enabled: methods.zelle === true,   handle: zelleHandle, fee: parseFloat(zelleFee) || 0 },
       venmo:   { enabled: (methods as any).venmo === true, handle: venmoHandle, fee: 0 },
+      applepay: { enabled: methods.applepay === true, handle: applepayHandle, fee: 0 },
     });
   });
 
@@ -2585,6 +2600,29 @@ export async function registerRoutes(
       const [order] = await db.insert(orders).values({
         userId, orderId: publicOrderId, total: depositAmount, paidAmount: 0,
         status: "pending", paymentMethod: "Venmo", paymentNote, deliveryContent: "",
+      }).returning();
+      res.status(201).json({ order, paymentNote, handle });
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/deposits/applepay", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    try {
+      const enabled = await storage.getSetting("payment_method_applepay", "false");
+      if (enabled !== "true") return res.status(400).json({ message: "Apple Cash deposits are not available" });
+      const userId = (req.user as any).id;
+      const { amount } = req.body;
+      const parsedAmount = Number(amount);
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return res.status(400).json({ message: "Valid amount required" });
+      const handle = await storage.getSetting("applepay_handle", "");
+      if (!handle.trim()) return res.status(400).json({ message: "Apple Cash recipient is not configured" });
+      const paymentNote = generateNote();
+      const publicOrderId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const [order] = await db.insert(orders).values({
+        userId, orderId: publicOrderId, total: Math.round(parsedAmount * 100), paidAmount: 0,
+        status: "pending", paymentMethod: "Apple Pay", paymentNote, deliveryContent: "",
       }).returning();
       res.status(201).json({ order, paymentNote, handle });
     } catch (e: any) {

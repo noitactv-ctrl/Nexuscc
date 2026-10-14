@@ -104,7 +104,7 @@ export default function BecomeSellerPage() {
         {/* === APPROVED === */}
         {application?.status === "approved" && (
           <div className="space-y-4">
-            <div className="flex items-center gap-4 bg-red-500/8 border border-red-500/25 rounded-2xl px-5 py-5">
+            <div className="flex items-center gap-4 bg-amber-400/8 border border-amber-400/25 rounded-2xl px-5 py-5">
               <CheckCircle2 className="h-8 w-8 text-red-400 shrink-0" />
               <div>
                 <p className="text-base font-black text-red-400">You're an Approved Seller!</p>
@@ -146,7 +146,7 @@ export default function BecomeSellerPage() {
         {/* === REJECTED — can reapply === */}
         {application?.status === "rejected" && (
           <div className="space-y-5">
-            <div className="flex items-start gap-4 bg-red-900/15 border border-red-500/20 rounded-2xl px-5 py-5">
+            <div className="flex items-start gap-4 bg-amber-900/15 border border-amber-400/20 rounded-2xl px-5 py-5">
               <XCircle className="h-8 w-8 text-red-400 shrink-0 mt-0.5" />
               <div>
                 <p className="text-base font-black text-red-400">Application Not Approved</p>

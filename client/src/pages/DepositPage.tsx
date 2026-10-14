@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useCryptoCurrencies } from "@/hooks/use-crypto-currencies";
 import { apiRequest } from "@/lib/queryClient";
+import QRCode from "qrcode";
 import {
   Loader2, Copy, Check, Clock, CheckCircle2, XCircle, AlertTriangle,
   RefreshCw, ExternalLink, Send, Minus, Plus, ChevronDown
@@ -12,7 +13,7 @@ import {
 import { SiBitcoin, SiCashapp } from "react-icons/si";
 import { formatDate } from "@/lib/date-utils";
 
-type ManualMethod = "cashapp" | "venmo" | "zelle" | "chime";
+type ManualMethod = "cashapp" | "venmo" | "zelle" | "chime" | "applepay";
 type Method = "crypto" | ManualMethod;
 
 type Deposit = {
@@ -26,7 +27,7 @@ type Deposit = {
   createdAt: string;
 };
 
-type ManualResult = { note: string; handle: string; amount: number; method: Method };
+type ManualResult = { note: string; handle: string; amount: number; method: Method; depositId: string };
 type ManualMethodConfig = { enabled: boolean; handle?: string; tag?: string; fee: number };
 
 function LetterIcon({ letter, className = "", style }: { letter: string; className?: string; style?: React.CSSProperties }) {
@@ -47,6 +48,7 @@ function methodColor(type: string) {
   if (type === "venmo") return "#3D95CE";
   if (type === "zelle") return "#9B59E8";
   if (type === "chime") return "#00D632";
+  if (type === "applepay") return "#d9d9d9";
   return "#F7931A";
 }
 function methodLabel(type: string) {
@@ -54,10 +56,11 @@ function methodLabel(type: string) {
   if (type === "venmo") return "Venmo";
   if (type === "zelle") return "Zelle";
   if (type === "chime") return "Chime";
+  if (type === "applepay") return "Apple Cash";
   return "Crypto";
 }
 
-function CopyBtn({ value, className = "" }: { value: string; className?: string }) {
+function CopyBtn({ value, className = "", children }: { value: string; className?: string; children?: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -66,6 +69,7 @@ function CopyBtn({ value, className = "" }: { value: string; className?: string 
       data-testid="btn-copy"
     >
       {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+      {children && (copied ? "Copied" : children)}
     </button>
   );
 }
@@ -78,6 +82,32 @@ function StatusBadge({ status }: { status: string }) {
   if (status === "underpaid")
     return <span className="flex items-center gap-1 text-[10px] font-mono text-yellow-400/70"><AlertTriangle className="h-3 w-3" />underpaid</span>;
   return <span className="flex items-center gap-1 text-[10px] font-mono text-white/30 animate-pulse"><Clock className="h-3 w-3" />pending</span>;
+}
+
+function manualPaymentUrl(method: ManualMethod, handle: string) {
+  const recipient = handle.trim();
+  if (method === "cashapp") {
+    const tag = recipient.replace(/^\$+/, "");
+    return tag ? `https://cash.app/$${encodeURIComponent(tag)}` : null;
+  }
+  if (method === "venmo") {
+    const username = recipient.replace(/^@/, "");
+    return /^[A-Za-z0-9_-]+$/.test(username) ? `https://venmo.com/u/${encodeURIComponent(username)}` : null;
+  }
+  return null;
+}
+
+function PaymentQr({ value }: { value: string }) {
+  const [src, setSrc] = useState("");
+  useEffect(() => {
+    let current = true;
+    QRCode.toDataURL(value, { width: 260, margin: 1, errorCorrectionLevel: "M" })
+      .then(url => { if (current) setSrc(url); })
+      .catch(() => { if (current) setSrc(""); });
+    return () => { current = false; };
+  }, [value]);
+  if (!src) return <div className="h-52 w-52 animate-pulse rounded-xl bg-white/5" aria-label="Preparing payment QR code" />;
+  return <img src={src} alt="Scan to open the configured payment recipient" className="h-52 w-52 rounded-lg bg-white p-2" />;
 }
 
 function DepositRow({ deposit }: { deposit: Deposit }) {
@@ -114,45 +144,72 @@ function DepositRow({ deposit }: { deposit: Deposit }) {
 
 
 /* ── MANUAL DEPOSIT PANEL ── */
-function ManualDepositPanel({ result, onReset }: { result: ManualResult; onReset: () => void }) {
+function ManualDepositPanel({ result, status, onReset }: { result: ManualResult; status: string; onReset: () => void }) {
   const color = methodColor(result.method);
   const name = methodLabel(result.method);
+  const payUrl = manualPaymentUrl(result.method as ManualMethod, result.handle);
+  const isComplete = ["completed", "paid", "delivering", "fulfilled"].includes(status);
+  const needsReview = ["failed", "expired", "cancelled", "refunded"].includes(status);
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: `${color}30`, background: `${color}06` }}>
-      <div className="px-3 py-2 border-b flex items-center gap-2" style={{ borderColor: `${color}20` }}>
-        <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white" style={{ background: color }}>
-          {name.charAt(0)}
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#101010]">
+      <div className="border-b border-white/10 p-4 sm:p-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl text-lg font-black text-white" style={{ background: `${color}25`, color }}>
+            {name.slice(0, 1)}
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold text-white">{name} deposit</h2>
+            <p className="text-sm text-white/45">Send the exact amount and include the payment note.</p>
+          </div>
         </div>
-        <p className="text-xs font-bold" style={{ color }}>Send via {name}</p>
       </div>
-      <div className="p-3 space-y-2">
-        <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
-          <p className="text-[8px] text-white/30 uppercase tracking-widest mb-1 font-mono">Send to</p>
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-bold text-white font-mono truncate">{result.handle || `(no handle set)`}</p>
-            {result.handle && <CopyBtn value={result.handle} />}
+
+      <div className="space-y-4 p-4 sm:p-5">
+        {payUrl && (
+          <div className="flex justify-center rounded-xl bg-[#1a1a1a] p-4">
+            <PaymentQr value={payUrl} />
           </div>
+        )}
+
+        <div className="rounded-xl border border-amber-400/30 bg-amber-500/[0.08] p-4">
+          <p className="text-sm leading-6 text-amber-100">
+            <span className="font-bold text-amber-300">Important: </span>
+            Send only through {name}. Include the exact payment note so staff can match and confirm your deposit.
+          </p>
         </div>
-        <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
-          <p className="text-[8px] text-white/30 uppercase tracking-widest mb-1 font-mono">Amount — send EXACTLY</p>
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xl font-black text-white font-mono">${(result.amount / 100).toFixed(2)}</p>
-            <CopyBtn value={(result.amount / 100).toFixed(2)} />
-          </div>
-          <p className="text-[9px] text-yellow-400/60 font-mono mt-1">⚠ Wrong amount = not credited</p>
+
+        <div className="space-y-3">
+          <CopyField label={result.method === "cashapp" ? "Cash App tag" : result.method === "applepay" ? "Apple Cash recipient" : `${name} recipient`} value={result.handle} />
+          <CopyField label="Note to include" value={result.note} accent={color} />
+          <CopyField label="Amount to send" value={(result.amount / 100).toFixed(2)} prefix="$" />
         </div>
-        <div className="rounded-lg bg-black/30 border border-white/5 px-3 py-2">
-          <p className="text-[8px] text-white/30 uppercase tracking-widest mb-1 font-mono">Payment Note (required)</p>
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-bold font-mono" style={{ color }}>{result.note}</p>
-            <CopyBtn value={result.note} />
-          </div>
+
+        <div className={`flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold ${isComplete ? "bg-emerald-500/10 text-emerald-400" : needsReview ? "bg-amber-500/10 text-amber-300" : "bg-blue-500/10 text-blue-300"}`}>
+          {isComplete ? <CheckCircle2 className="h-4 w-4" /> : needsReview ? <AlertTriangle className="h-4 w-4" /> : <Clock className="h-4 w-4 animate-pulse" />}
+          {isComplete ? "Deposit confirmed" : needsReview ? "Payment needs review" : "Waiting for confirmation"}
         </div>
-        <p className="text-[9px] text-white/20 font-mono text-center">include the exact note · admin will confirm and credit balance</p>
-        <button onClick={onReset} className="w-full text-[10px] text-white/25 hover:text-white/50 transition-colors font-mono pt-1" data-testid="btn-new-deposit">
-          ← create new deposit
+        <div className="flex min-h-12 items-center justify-center rounded-xl bg-white/[0.04] px-4 text-sm font-semibold text-white/50">
+          {isComplete ? "Your balance has been updated." : needsReview ? "Contact support for help with this deposit." : "Waiting for staff to confirm your payment…"}
+        </div>
+        <p className="text-center text-xs text-white/35">This page checks for confirmation automatically.</p>
+
+        <button onClick={onReset} className="w-full border-t border-white/10 pt-4 text-sm text-white/45 transition-colors hover:text-white" data-testid="btn-new-deposit">
+          Create another deposit
         </button>
+      </div>
+    </div>
+  );
+}
+
+function CopyField({ label, value, prefix, accent }: { label: string; value: string; prefix?: string; accent?: string }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-semibold tracking-wide text-white/55">{label}</p>
+      <div className="flex min-h-14 items-center gap-3 rounded-xl border border-white/10 bg-[#151515] px-3">
+        {prefix && <span className="text-sm font-semibold text-white/40">{prefix}</span>}
+        <p className="min-w-0 flex-1 break-all font-mono text-sm text-white" style={accent ? { color: accent } : undefined}>{value || "Not configured"}</p>
+        {value && <CopyBtn value={value} className="h-9 w-auto gap-2 px-3 text-xs"><span>Copy</span></CopyBtn>}
       </div>
     </div>
   );
@@ -181,6 +238,7 @@ export default function DepositPage() {
     venmo: ManualMethodConfig;
     zelle: ManualMethodConfig;
     chime: ManualMethodConfig;
+    applepay: ManualMethodConfig;
   }>({ queryKey: ["/api/site-settings/manual-payments"] });
 
   const { data: minDeposits } = useQuery<Record<string, number>>({
@@ -197,6 +255,7 @@ export default function DepositPage() {
   const venmoEnabled = paymentMethods?.venmo === true && manualMethods?.venmo.enabled === true;
   const zelleEnabled = paymentMethods?.zelle === true && manualMethods?.zelle.enabled === true;
   const chimeEnabled = paymentMethods?.chime === true && manualMethods?.chime.enabled === true;
+  const applePayEnabled = paymentMethods?.applepay === true && manualMethods?.applepay.enabled === true;
 
   const parsedAmount = parseFloat(amountInput) || 0;
   const minimumDeposit = selectedOption === "crypto"
@@ -264,6 +323,7 @@ export default function DepositPage() {
         handle: data.cashappTag || data.handle || config?.tag || config?.handle || "",
         amount: Math.round(parsedAmount * 100),
         method,
+        depositId: `cashapp_${data.order.id}`,
       });
       qc.invalidateQueries({ queryKey: ["/api/deposits"] });
       qc.invalidateQueries({ queryKey: ["/api/orders"] });
@@ -283,6 +343,7 @@ export default function DepositPage() {
     ...(venmoEnabled ? [{ id: "venmo", label: "Venmo", sub: "instant", Icon: (props: any) => <LetterIcon {...props} letter="V" />, color: "#3D95CE", fee: feeLabel(manualMethods?.venmo?.fee) }] : []),
     ...(zelleEnabled ? [{ id: "zelle", label: "Zelle", sub: "instant", Icon: (props: any) => <LetterIcon {...props} letter="Z" />, color: "#9B59E8", fee: feeLabel(manualMethods?.zelle?.fee) }] : []),
     ...(chimeEnabled ? [{ id: "chime", label: "Chime", sub: "instant", Icon: (props: any) => <LetterIcon {...props} letter="C" />, color: "#00D632", fee: feeLabel(manualMethods?.chime?.fee) }] : []),
+    ...(applePayEnabled ? [{ id: "applepay", label: "Apple Pay", sub: "Apple Cash", Icon: (props: any) => <LetterIcon {...props} letter="" />, color: "#d9d9d9", fee: feeLabel(manualMethods?.applepay?.fee) }] : []),
   ];
 
   const isSelectedCrypto = selectedOption === "crypto";
@@ -295,7 +356,7 @@ export default function DepositPage() {
   function handleContinue() {
     if (!selectedOption) return;
     if (isSelectedCrypto) cryptoMutation.mutate();
-    else if (["cashapp", "venmo", "zelle", "chime"].includes(selectedOption)) {
+    else if (["cashapp", "venmo", "zelle", "chime", "applepay"].includes(selectedOption)) {
       manualMutation.mutate(selectedOption as ManualMethod);
     }
   }
@@ -311,7 +372,11 @@ export default function DepositPage() {
         </div>
 
         {manualResult ? (
-          <ManualDepositPanel result={manualResult} onReset={() => { setManualResult(null); setSelectedOption("crypto"); setAmountInput(""); }} />
+          <ManualDepositPanel
+            result={manualResult}
+            status={deposits?.find(deposit => deposit.id === manualResult.depositId)?.status ?? "pending"}
+            onReset={() => { setManualResult(null); setSelectedOption("crypto"); setAmountInput(""); }}
+          />
         ) : (
           <div className="rounded-xl border border-white/10 bg-[#181818] p-3 sm:p-4 space-y-3">
             {/* ── Payment method ── */}
