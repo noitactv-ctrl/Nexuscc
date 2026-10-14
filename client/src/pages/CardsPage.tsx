@@ -356,7 +356,7 @@ export default function CardsPage() {
     <main className="mx-auto w-full max-w-[1280px] px-3 pb-12 sm:px-5">
       <section className="pb-4 pt-5 sm:pt-7">
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Buy Cards</h1>
-        <p className="mt-2 text-sm text-white/55 sm:text-base">Purchase prepaid cards from available bases</p>
+        <p className="mt-2 text-sm text-white/55 sm:text-base">Purchase cards from available bases</p>
       </section>
 
       <section className="space-y-3 pb-4">
@@ -558,8 +558,6 @@ export default function CardsPage() {
           </table>
         )}
       </div>
-      <p className="py-3 text-right text-xs text-white/40">{filteredCards.length.toLocaleString()} available prepaid cards</p>
-
 {/* 
 function CardTableRow({ card, inCart, onToggleCart }: { card: any; inCart: boolean; onToggleCart: (c: any) => void }) {
   const { toast } = useToast();
