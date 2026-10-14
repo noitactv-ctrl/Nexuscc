@@ -1323,7 +1323,8 @@ body {
 
 /* Keep dashboard navigation at its original full size despite the page zoom. */
 .nexus-topbar {
-  zoom: 1.333333;
+  zoom: 1.186667;
+  width: 112.35955%;
   height: 54px;
   padding: 0 16px;
 }
@@ -1365,8 +1366,8 @@ body {
 }
 
 .nexus-drawer {
-  inset: 0 auto 0 0;
-  height: 100vh;
-  height: 100svh;
-  zoom: 1.333333;
+  inset: 0 auto auto 0;
+  height: 112.35955vh;
+  height: 112.35955svh;
+  zoom: 1.186667;
 }
