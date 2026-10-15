@@ -527,10 +527,10 @@ export default function CardsPage() {
                               {value}
                             </span>
                             <span className="block truncate text-[10px] text-white/45">
-                              {card.baseOwnerType === "seller"
-                                ? `Uploaded by ${card.baseOwnerName || "Seller"}`
-                                : card.baseOwnerType === "admin"
-                                  ? "Uploaded by Admin"
+                              {card.baseUploaderType === "seller"
+                                ? `Uploaded by ${card.baseUploaderName || "Seller"}`
+                                : card.baseUploaderType === "admin"
+                                  ? `Uploaded by ${card.baseUploaderName || "Admin"}`
                                   : "Uploader unavailable"}
                             </span>
                           </div>

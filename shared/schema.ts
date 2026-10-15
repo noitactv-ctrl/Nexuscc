@@ -227,6 +227,7 @@ export const cardBases = pgTable("card_bases", {
   refundable: boolean("refundable").default(false).notNull(),
   hrPercent: integer("hr_percent").default(80).notNull(),
   ownerId: integer("owner_id").references(() => users.id),
+  createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   uniqueIndex("card_bases_owner_id_unique").on(table.ownerId),

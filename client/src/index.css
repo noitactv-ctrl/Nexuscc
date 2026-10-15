@@ -1277,19 +1277,6 @@
   zoom: .8;
 }
 
-.spider-entry-content {
-  zoom: .8;
-}
-
-.spider-recovery-shell > .nexus-brand,
-.spider-recovery-shell > .spider-recovery-heading,
-.spider-recovery-shell > .spider-form,
-.spider-recovery-shell > .spider-recovery-success,
-.spider-recovery-shell > .spider-auth-switch,
-.spider-recovery-shell > .spider-recovery-footer {
-  zoom: .8;
-}
-
 /* Global UI scale requested across authenticated and public pages. */
 html {
   zoom: 0.75;
@@ -1307,6 +1294,27 @@ body {
 .min-h-screen {
   min-height: 133.333333vh !important;
   min-height: 133.333333svh !important;
+}
+
+/* Auth, recovery, and legal screens stay at their original full size. */
+html:has(.spider-entry-page),
+html:has(.spider-recovery-page),
+html:has(.spider-legal-page) {
+  zoom: 1;
+}
+
+html:has(.spider-entry-page) body,
+html:has(.spider-recovery-page) body,
+html:has(.spider-legal-page) body {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.spider-entry-page,
+.spider-recovery-page,
+.spider-legal-page {
+  min-height: 100vh !important;
+  min-height: 100svh !important;
 }
 
 /* Keep dashboard navigation at its original full size despite the page zoom. */

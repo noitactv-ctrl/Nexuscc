@@ -107,7 +107,7 @@ export interface IStorage {
 
   // Card Bases
   getCardBasesWithCount(ownerId?: number): Promise<(CardBase & { count: number; soldCount: number; profit: number })[]>;
-  createCardBase(name: string, refundable?: boolean, ownerId?: number): Promise<CardBase>;
+  createCardBase(name: string, refundable?: boolean, ownerId?: number, createdById?: number): Promise<CardBase>;
   updateCardBase(id: number, name: string, refundable?: boolean, hrPercent?: number): Promise<CardBase>;
   deleteCardBase(id: number): Promise<void>;
   getCardsByBase(baseId: number): Promise<Card[]>;
@@ -1181,7 +1181,7 @@ export class DatabaseStorage implements IStorage {
   async getCardBasesWithCount(ownerId?: number): Promise<(CardBase & { count: number; soldCount: number; profit: number })[]> {
     const ownerFilter = ownerId === undefined ? sql`` : sql`WHERE cb.owner_id = ${ownerId}`;
     const result = await db.execute(sql`
-      SELECT cb.id, cb.name, cb.refundable, cb.owner_id, cb.created_at,
+      SELECT cb.id, cb.name, cb.refundable, cb.owner_id, cb.created_by_id, cb.created_at,
              cb.hr_percent,
              COUNT(c.id) FILTER (WHERE c.is_sold = false) as count,
              COUNT(c.id) FILTER (WHERE c.is_sold = true) as sold_count,
@@ -1189,7 +1189,7 @@ export class DatabaseStorage implements IStorage {
       FROM card_bases cb
       LEFT JOIN cards c ON c.base_id = cb.id
       ${ownerFilter}
-      GROUP BY cb.id, cb.name, cb.refundable, cb.hr_percent, cb.owner_id, cb.created_at
+      GROUP BY cb.id, cb.name, cb.refundable, cb.hr_percent, cb.owner_id, cb.created_by_id, cb.created_at
       ORDER BY cb.name
     `);
     return (result.rows as any[]).map((r: any) => ({
@@ -1198,6 +1198,7 @@ export class DatabaseStorage implements IStorage {
       refundable: Boolean(r.refundable),
       hrPercent: Number(r.hr_percent ?? 80),
       ownerId: r.owner_id == null ? null : Number(r.owner_id),
+      createdById: r.created_by_id == null ? null : Number(r.created_by_id),
       createdAt: r.created_at,
       count: Number(r.count),
       soldCount: Number(r.sold_count),
@@ -1205,8 +1206,8 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async createCardBase(name: string, refundable = false, ownerId?: number): Promise<CardBase> {
-    const [base] = await db.insert(cardBases).values({ name, refundable, ownerId }).returning();
+  async createCardBase(name: string, refundable = false, ownerId?: number, createdById?: number): Promise<CardBase> {
+    const [base] = await db.insert(cardBases).values({ name, refundable, ownerId, createdById }).returning();
     return base;
   }
 

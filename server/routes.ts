@@ -1674,7 +1674,7 @@ export async function registerRoutes(
           return res.status(409).json({ message: "Workers can only create one card base" });
         }
       }
-      const base = await storage.createCardBase(name.trim(), Boolean(refundable), ownerId);
+      const base = await storage.createCardBase(name.trim(), Boolean(refundable), ownerId, Number(user.id));
       res.status(201).json(base);
     } catch (e: any) {
       res.status(400).json({ message: e.message });
@@ -1693,7 +1693,7 @@ export async function registerRoutes(
       if (ownedBases.length >= 1) {
         return res.status(409).json({ message: "Workers can only create one card base" });
       }
-      const base = await storage.createCardBase(name.trim(), Boolean(refundable), ownerId);
+      const base = await storage.createCardBase(name.trim(), Boolean(refundable), ownerId, ownerId);
       res.status(201).json(base);
     } catch (e: any) {
       res.status(400).json({ message: e.message });
@@ -1772,10 +1772,14 @@ export async function registerRoutes(
              c.price, c.hr_percent, c.is_sold, c.is_first_hand, c.user_id, c.created_at, c.bin_data,
              c.base_id, cb.name as base_name, cb.refundable as base_refundable,
              cb.hr_percent as base_hr_percent, cb.owner_id as base_owner_id,
-             base_owner.username as base_owner_name
+             cb.created_by_id as base_created_by_id,
+             base_owner.username as base_owner_name,
+             base_creator.username as base_creator_name,
+             base_creator.role as base_creator_role
       FROM cards c
       LEFT JOIN card_bases cb ON cb.id = c.base_id
        LEFT JOIN users base_owner ON base_owner.id = cb.owner_id
+       LEFT JOIN users base_creator ON base_creator.id = cb.created_by_id
       WHERE c.is_sold = false ${baseFilter}
       ORDER BY c.created_at DESC
     `) as any;
@@ -1807,8 +1811,10 @@ export async function registerRoutes(
       userId: r.user_id, createdAt: r.created_at,
       binData: r.bin_data ?? null,
        baseId: r.base_id ?? null, baseName: r.base_name ?? null,
-        baseOwnerName: r.base_owner_name ?? null,
-        baseOwnerType: r.base_id == null ? null : (r.base_owner_id == null ? "admin" : "seller"),
+        baseUploaderName: r.base_creator_name ?? r.base_owner_name ?? null,
+        baseUploaderType: r.base_id == null
+          ? null
+          : (r.base_creator_role === "admin" || (r.base_created_by_id == null && r.base_owner_id == null) ? "admin" : "seller"),
        baseRefundable: Boolean(r.base_refundable),
     })));
   });
