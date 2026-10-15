@@ -9,7 +9,7 @@ import { scrypt, randomBytes, randomInt, timingSafeEqual, createHash } from "cry
 import { createNowPaymentsPayment, getNowPaymentsCurrencies, getNowPaymentsPayment, mapNowPaymentsStatus, verifyNowPaymentsWebhook } from "./nowpayments.js";
 import { settleCryptoPayment } from "./crypto-settlement.js";
 import { hashPassword, comparePassword } from "./auth.js";
-import { cryptoPayments, orders, orderItems, verifications, variants, userIps, users, mails, mailReads, discountCodes, transactions, stockItems, cards, cardBases, achs, products, insertAnnouncementSchema } from "../shared/schema.js";
+import { cryptoPayments, orders, orderItems, verifications, variants, userIps, users, mails, mailReads, discountCodes, transactions, stockItems, cards, cardBases, achs, products, vouchTokens, vouches, insertAnnouncementSchema } from "../shared/schema.js";
 import { db, pool } from "./db.js";
 import { eq, and, ne, desc, sql } from "drizzle-orm";
 import { MAX_LICENSE_FILE_BYTES, parseLicenseKeyFile } from "./license-key-file.js";
@@ -1193,18 +1193,26 @@ export async function registerRoutes(
       return res.status(401).json({ message: "Unauthorized" });
     }
     try {
-      await db.delete(orderItems);
-      await db.delete(cryptoPayments);
-      await db.delete(stockItems);
-      await db.delete(orders);
-      await db.delete(variants);
-      await db.delete(products);
-      await db.delete(cards);
-      await db.delete(transactions);
-      await db.update(users).set({ balance: 0, protectedBalance: 0 });
+      await db.transaction(async (tx) => {
+        await tx.delete(vouchTokens);
+        await tx.delete(vouches);
+        await tx.delete(orderItems);
+        await tx.delete(cryptoPayments);
+        await tx.delete(stockItems);
+        await tx.delete(transactions);
+        await tx.delete(orders);
+        await tx.delete(variants);
+        await tx.delete(products);
+        await tx.delete(cards);
+        await tx.update(users).set({ balance: 0, protectedBalance: 0 });
+      });
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      console.error("[admin] clear-all-data failed:", error?.code || error?.name || "unknown database error");
+      if (error?.code === "23503") {
+        return res.status(409).json({ message: "Site history could not be cleared because related records still exist. No changes were applied." });
+      }
+      res.status(500).json({ message: "Site data could not be cleared. No changes were applied." });
     }
   });
 
