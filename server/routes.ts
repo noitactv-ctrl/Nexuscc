@@ -1664,6 +1664,8 @@ export async function registerRoutes(
   app.post("/api/admin/card-bases", async (req, res) => {
     if (!isAdminOrWorker(req)) return res.status(401).json({ message: "Unauthorized" });
     const { name, refundable } = req.body;
+    const sellerName = typeof req.body.sellerName === "string" ? req.body.sellerName.trim() : "";
+    if (sellerName.length > 60) return res.status(400).json({ message: "Seller name must be 60 characters or fewer" });
     if (!name?.trim()) return res.status(400).json({ message: "Name required" });
     try {
       const user = req.user as any;
@@ -1674,7 +1676,7 @@ export async function registerRoutes(
           return res.status(409).json({ message: "Workers can only create one card base" });
         }
       }
-      const base = await storage.createCardBase(name.trim(), Boolean(refundable), ownerId, Number(user.id));
+      const base = await storage.createCardBase(name.trim(), Boolean(refundable), ownerId, Number(user.id), sellerName || undefined);
       res.status(201).json(base);
     } catch (e: any) {
       res.status(400).json({ message: e.message });
@@ -1686,6 +1688,8 @@ export async function registerRoutes(
       return res.status(403).json({ message: "Worker access required" });
     }
     const { name, refundable } = req.body;
+    const sellerName = typeof req.body.sellerName === "string" ? req.body.sellerName.trim() : "";
+    if (sellerName.length > 60) return res.status(400).json({ message: "Seller name must be 60 characters or fewer" });
     if (!name?.trim()) return res.status(400).json({ message: "Name required" });
     try {
       const ownerId = Number((req.user as any).id);
@@ -1693,7 +1697,7 @@ export async function registerRoutes(
       if (ownedBases.length >= 1) {
         return res.status(409).json({ message: "Workers can only create one card base" });
       }
-      const base = await storage.createCardBase(name.trim(), Boolean(refundable), ownerId, ownerId);
+      const base = await storage.createCardBase(name.trim(), Boolean(refundable), ownerId, ownerId, sellerName || undefined);
       res.status(201).json(base);
     } catch (e: any) {
       res.status(400).json({ message: e.message });
@@ -1712,6 +1716,8 @@ export async function registerRoutes(
     if (!req.isAuthenticated() || (req.user as any).role !== "admin") return res.status(401).json({ message: "Unauthorized" });
     const { name, refundable } = req.body;
     if (!name?.trim()) return res.status(400).json({ message: "Name required" });
+    const sellerName = typeof req.body.sellerName === "string" ? req.body.sellerName.trim() : undefined;
+    if (sellerName !== undefined && sellerName.length > 60) return res.status(400).json({ message: "Seller name must be 60 characters or fewer" });
     const hasHrPercent = req.body.hrPercent !== undefined;
     const hrPercent = Number(req.body.hrPercent);
     if (hasHrPercent && (!Number.isFinite(hrPercent) || !Number.isInteger(hrPercent) || hrPercent < 0 || hrPercent > 100)) {
@@ -1723,7 +1729,27 @@ export async function registerRoutes(
         name.trim(),
         typeof refundable === "boolean" ? refundable : undefined,
         hasHrPercent ? hrPercent : undefined,
+        sellerName,
       );
+      res.json(base);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.patch("/api/worker/card-bases/:id", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user as any)?.isWorker !== true) {
+      return res.status(403).json({ message: "Worker access required" });
+    }
+    const sellerName = typeof req.body.sellerName === "string" ? req.body.sellerName.trim() : "";
+    if (sellerName.length > 60) return res.status(400).json({ message: "Seller name must be 60 characters or fewer" });
+    try {
+      const id = Number(req.params.id);
+      const [ownedBase] = await db.select({ id: cardBases.id, name: cardBases.name })
+        .from(cardBases)
+        .where(and(eq(cardBases.id, id), eq(cardBases.ownerId, Number((req.user as any).id))));
+      if (!ownedBase) return res.status(404).json({ message: "Base not found" });
+      const base = await storage.updateCardBase(id, ownedBase.name, undefined, undefined, sellerName || "");
       res.json(base);
     } catch (e: any) {
       res.status(400).json({ message: e.message });
@@ -1736,7 +1762,8 @@ export async function registerRoutes(
       await storage.deleteCardBase(Number(req.params.id));
       res.json({ ok: true });
     } catch (e: any) {
-      res.status(400).json({ message: e.message });
+      const hasCardHistory = String(e?.message ?? "").includes("card records");
+      res.status(hasCardHistory ? 409 : 400).json({ message: e.message });
     }
   });
 
@@ -1772,7 +1799,7 @@ export async function registerRoutes(
              c.price, c.hr_percent, c.is_sold, c.is_first_hand, c.user_id, c.created_at, c.bin_data,
              c.base_id, cb.name as base_name, cb.refundable as base_refundable,
              cb.hr_percent as base_hr_percent, cb.owner_id as base_owner_id,
-             cb.created_by_id as base_created_by_id,
+              cb.created_by_id as base_created_by_id, cb.seller_name as base_seller_name,
              base_owner.username as base_owner_name,
              base_creator.username as base_creator_name,
              base_creator.role as base_creator_role
@@ -1811,7 +1838,7 @@ export async function registerRoutes(
       userId: r.user_id, createdAt: r.created_at,
       binData: r.bin_data ?? null,
        baseId: r.base_id ?? null, baseName: r.base_name ?? null,
-        baseUploaderName: r.base_creator_name ?? r.base_owner_name ?? null,
+         baseUploaderName: r.base_seller_name || r.base_creator_name || r.base_owner_name || null,
         baseUploaderType: r.base_id == null
           ? null
           : (r.base_creator_role === "admin" || (r.base_created_by_id == null && r.base_owner_id == null) ? "admin" : "seller"),

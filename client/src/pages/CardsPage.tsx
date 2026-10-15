@@ -236,7 +236,7 @@ export default function CardsPage() {
       const zip = extractZip(card.extras ?? "");
       const state = extractState(card.extras ?? "");
       const price = Number(card.price ?? 0) / 100;
-      const matchesSearch = !q || [bin, card.baseName, brand, card.binData?.type, bank, countryName(countryCode)]
+      const matchesSearch = !q || [bin, card.baseName, card.baseUploaderName, brand, card.binData?.type, bank, countryName(countryCode)]
         .some((value) => String(value ?? "").toLowerCase().includes(q));
       const matchesFields =
         (!filters.country || countryCode === filters.country) &&

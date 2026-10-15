@@ -107,8 +107,8 @@ export interface IStorage {
 
   // Card Bases
   getCardBasesWithCount(ownerId?: number): Promise<(CardBase & { count: number; soldCount: number; profit: number })[]>;
-  createCardBase(name: string, refundable?: boolean, ownerId?: number, createdById?: number): Promise<CardBase>;
-  updateCardBase(id: number, name: string, refundable?: boolean, hrPercent?: number): Promise<CardBase>;
+  createCardBase(name: string, refundable?: boolean, ownerId?: number, createdById?: number, sellerName?: string): Promise<CardBase>;
+  updateCardBase(id: number, name: string, refundable?: boolean, hrPercent?: number, sellerName?: string): Promise<CardBase>;
   deleteCardBase(id: number): Promise<void>;
   getCardsByBase(baseId: number): Promise<Card[]>;
 
@@ -1181,7 +1181,7 @@ export class DatabaseStorage implements IStorage {
   async getCardBasesWithCount(ownerId?: number): Promise<(CardBase & { count: number; soldCount: number; profit: number })[]> {
     const ownerFilter = ownerId === undefined ? sql`` : sql`WHERE cb.owner_id = ${ownerId}`;
     const result = await db.execute(sql`
-      SELECT cb.id, cb.name, cb.refundable, cb.owner_id, cb.created_by_id, cb.created_at,
+      SELECT cb.id, cb.name, cb.refundable, cb.owner_id, cb.created_by_id, cb.seller_name, cb.created_at,
              cb.hr_percent,
              COUNT(c.id) FILTER (WHERE c.is_sold = false) as count,
              COUNT(c.id) FILTER (WHERE c.is_sold = true) as sold_count,
@@ -1189,7 +1189,7 @@ export class DatabaseStorage implements IStorage {
       FROM card_bases cb
       LEFT JOIN cards c ON c.base_id = cb.id
       ${ownerFilter}
-      GROUP BY cb.id, cb.name, cb.refundable, cb.hr_percent, cb.owner_id, cb.created_by_id, cb.created_at
+       GROUP BY cb.id, cb.name, cb.refundable, cb.hr_percent, cb.owner_id, cb.created_by_id, cb.seller_name, cb.created_at
       ORDER BY cb.name
     `);
     return (result.rows as any[]).map((r: any) => ({
@@ -1199,6 +1199,7 @@ export class DatabaseStorage implements IStorage {
       hrPercent: Number(r.hr_percent ?? 80),
       ownerId: r.owner_id == null ? null : Number(r.owner_id),
       createdById: r.created_by_id == null ? null : Number(r.created_by_id),
+      sellerName: r.seller_name ?? null,
       createdAt: r.created_at,
       count: Number(r.count),
       soldCount: Number(r.sold_count),
@@ -1206,17 +1207,18 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async createCardBase(name: string, refundable = false, ownerId?: number, createdById?: number): Promise<CardBase> {
-    const [base] = await db.insert(cardBases).values({ name, refundable, ownerId, createdById }).returning();
+  async createCardBase(name: string, refundable = false, ownerId?: number, createdById?: number, sellerName?: string): Promise<CardBase> {
+    const [base] = await db.insert(cardBases).values({ name, refundable, ownerId, createdById, sellerName }).returning();
     return base;
   }
 
-  async updateCardBase(id: number, name: string, refundable?: boolean, hrPercent?: number): Promise<CardBase> {
+  async updateCardBase(id: number, name: string, refundable?: boolean, hrPercent?: number, sellerName?: string): Promise<CardBase> {
     const [base] = await db.update(cardBases)
       .set({
         name,
         ...(refundable === undefined ? {} : { refundable }),
         ...(hrPercent === undefined ? {} : { hrPercent }),
+        ...(sellerName === undefined ? {} : { sellerName }),
       })
       .where(eq(cardBases.id, id))
       .returning();
@@ -1224,10 +1226,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCardBase(id: number): Promise<void> {
-    const result = await db.execute(sql`SELECT COUNT(*) as n FROM cards WHERE base_id = ${id} AND is_sold = false`);
+    const result = await db.execute(sql`SELECT COUNT(*) as n FROM cards WHERE base_id = ${id}`);
     const count = Number((result.rows[0] as any).n);
-    if (count > 0) throw new Error("Cannot delete base with cards in stock");
-    await db.delete(cardBases).where(eq(cardBases.id, id));
+    if (count > 0) {
+      throw new Error("This base still has card records and cannot be deleted. Sold-card history is retained.");
+    }
+    try {
+      await db.delete(cardBases).where(eq(cardBases.id, id));
+    } catch (error: any) {
+      if (error?.code === "23503") {
+        throw new Error("This base still has card records and cannot be deleted. Sold-card history is retained.");
+      }
+      throw error;
+    }
   }
 
   async getCardsByBase(baseId: number): Promise<Card[]> {

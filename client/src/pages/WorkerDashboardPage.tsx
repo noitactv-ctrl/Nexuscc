@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -361,13 +361,14 @@ function BasesTab() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [name, setName] = useState("");
+  const [sellerName, setSellerName] = useState("");
   const [refundable, setRefundable] = useState(false);
   const { data: bases = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/worker/card-bases"] });
 
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!name.trim()) throw new Error("Base name is required");
-      const res = await apiRequest("POST", "/api/worker/card-bases", { name: name.trim(), refundable });
+      const res = await apiRequest("POST", "/api/worker/card-bases", { name: name.trim(), refundable, sellerName: sellerName.trim() });
       if (!res.ok) {
         const error = await res.json().catch(() => ({}));
         throw new Error(error.message || "Failed to create base");
@@ -376,6 +377,7 @@ function BasesTab() {
     },
     onSuccess: () => {
       setName("");
+      setSellerName("");
       setRefundable(false);
       qc.invalidateQueries({ queryKey: ["/api/worker/card-bases"] });
       toast({ title: "Base created" });
@@ -383,7 +385,27 @@ function BasesTab() {
     onError: (error: any) => toast({ title: "Error", description: error.message, variant: "destructive" }),
   });
 
+  const sellerNameMutation = useMutation({
+    mutationFn: async ({ id, sellerName }: { id: number; sellerName: string }) => {
+      const res = await apiRequest("PATCH", `/api/worker/card-bases/${id}`, { sellerName });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to update seller name");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/worker/card-bases"] });
+      qc.invalidateQueries({ queryKey: ["/api/cards"] });
+      toast({ title: "Seller name updated" });
+    },
+    onError: (error: any) => toast({ title: "Error", description: error.message, variant: "destructive" }),
+  });
+
   const base = bases[0];
+  useEffect(() => {
+    setSellerName(base?.sellerName ?? "");
+  }, [base?.id, base?.sellerName]);
 
   return (
     <div className="space-y-4">
@@ -403,6 +425,25 @@ function BasesTab() {
             </div>
             {base.refundable && <Badge className="bg-green-500/15 text-green-400 border-green-500/25 text-[9px]">REFUNDABLE</Badge>}
           </div>
+          <form
+            className="flex gap-2"
+            onSubmit={event => {
+              event.preventDefault();
+              sellerNameMutation.mutate({ id: base.id, sellerName });
+            }}
+          >
+            <Input
+              value={sellerName}
+              onChange={event => setSellerName(event.target.value)}
+              maxLength={60}
+              placeholder={base.sellerName || "Seller name shown to buyers"}
+              className="h-8 bg-[#111]/5 border-white/10 text-xs"
+              data-testid="input-worker-seller-name"
+            />
+            <Button size="sm" variant="outline" className="h-8" disabled={sellerNameMutation.isPending}>
+              Save
+            </Button>
+          </form>
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-[#111]/5 border border-white/10 rounded-lg p-3">
               <p className="text-[9px] uppercase tracking-widest text-white/35">Base revenue</p>
@@ -425,6 +466,14 @@ function BasesTab() {
             placeholder="Base name (e.g. MY BASE)"
             className="bg-[#111]/5 border-white/10 h-8 text-sm"
             data-testid="input-worker-base-name"
+          />
+          <Input
+            value={sellerName}
+            onChange={e => setSellerName(e.target.value)}
+            maxLength={60}
+            placeholder="Seller name shown to buyers (optional)"
+            className="bg-[#111]/5 border-white/10 h-8 text-sm"
+            data-testid="input-worker-new-base-seller-name"
           />
           <label className="flex items-center gap-2 text-xs text-white/60 cursor-pointer">
             <input type="checkbox" checked={refundable} onChange={e => setRefundable(e.target.checked)} className="h-3.5 w-3.5 accent-primary" data-testid="checkbox-worker-base-refundable" />

@@ -2974,7 +2974,9 @@ function AdminBasesTab() {
   const { toast } = useToast();
   const qc = queryClient;
   const [newBaseName, setNewBaseName] = useState("");
+  const [newBaseSellerName, setNewBaseSellerName] = useState("");
   const [newBaseRefundable, setNewBaseRefundable] = useState(false);
+  const [sellerNameDrafts, setSellerNameDrafts] = useState<Record<number, string>>({});
   const [rateDrafts, setRateDrafts] = useState<Record<number, string>>({});
   const [expandedBase, setExpandedBase] = useState<number | null>(null);
   const [editingBaseId, setEditingBaseId] = useState<number | null>(null);
@@ -2997,6 +2999,7 @@ function AdminBasesTab() {
       const res = await apiRequest("POST", "/api/admin/card-bases", {
         name: newBaseName.trim(),
         refundable: newBaseRefundable,
+        sellerName: newBaseSellerName.trim(),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
       return res.json();
@@ -3004,8 +3007,24 @@ function AdminBasesTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/card-bases"] });
       setNewBaseName("");
+      setNewBaseSellerName("");
       setNewBaseRefundable(false);
       toast({ title: "Base created" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const sellerNameMutation = useMutation({
+    mutationFn: async ({ id, name, sellerName }: { id: number; name: string; sellerName: string }) => {
+      const res = await apiRequest("PATCH", `/api/admin/card-bases/${id}`, { name, sellerName });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
+      return res.json();
+    },
+    onSuccess: (updated: any) => {
+      qc.invalidateQueries({ queryKey: ["/api/card-bases"] });
+      qc.invalidateQueries({ queryKey: ["/api/cards"] });
+      setSellerNameDrafts(drafts => ({ ...drafts, [updated.id]: updated.sellerName ?? "" }));
+      toast({ title: "Seller name updated" });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
@@ -3102,6 +3121,14 @@ function AdminBasesTab() {
             {createMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Create"}
           </Button>
         </div>
+        <Input
+          value={newBaseSellerName}
+          onChange={e => setNewBaseSellerName(e.target.value)}
+          maxLength={60}
+          placeholder="Seller name shown to buyers (optional)"
+          className="bg-[#111]/5 border-white/10 text-sm"
+          data-testid="input-new-base-seller-name"
+        />
       </div>
 
       {/* Bases list */}
@@ -3204,7 +3231,20 @@ function AdminBasesTab() {
                       {expandedBase === b.id ? "close" : "view"}
                     </button>
                     <button
-                      onClick={() => { if (b.count > 0) { toast({ title: "Cannot delete", description: "Remove all cards first", variant: "destructive" }); return; } deleteMutation.mutate(b.id); }}
+                      onClick={() => {
+                        const totalCards = Number(b.count ?? 0) + Number(b.soldCount ?? 0);
+                        if (totalCards > 0) {
+                          toast({
+                            title: "Cannot delete base",
+                            description: Number(b.soldCount ?? 0) > 0
+                              ? "This base has sold-card history and must be kept."
+                              : "Remove all cards from this base first.",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        deleteMutation.mutate(b.id);
+                      }}
                       disabled={deleteMutation.isPending}
                       className="text-white/30 hover:text-destructive transition-colors"
                       data-testid={`btn-delete-base-${b.id}`}
@@ -3213,6 +3253,26 @@ function AdminBasesTab() {
                     </button>
                   </div>
                 )}
+              </div>
+              <div className="px-4 pb-3 flex gap-2">
+                <Input
+                  value={sellerNameDrafts[b.id] ?? b.sellerName ?? ""}
+                  onChange={e => setSellerNameDrafts(drafts => ({ ...drafts, [b.id]: e.target.value }))}
+                  maxLength={60}
+                  placeholder="Seller name shown to buyers (blank uses account name)"
+                  className="h-8 bg-[#111]/5 border-white/10 text-xs"
+                  data-testid={`input-base-seller-name-${b.id}`}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 shrink-0 text-xs"
+                  disabled={sellerNameMutation.isPending}
+                  onClick={() => sellerNameMutation.mutate({ id: b.id, name: b.name, sellerName: sellerNameDrafts[b.id] ?? b.sellerName ?? "" })}
+                  data-testid={`btn-save-base-seller-name-${b.id}`}
+                >
+                  Save
+                </Button>
               </div>
               {expandedBase === b.id && (
                 <div className="border-t border-white/10 px-4 py-3 space-y-2">
