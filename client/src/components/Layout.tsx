@@ -351,7 +351,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         aria-hidden={!navOpen}
       >
         <div className="nexus-drawer-header">
-          <div className="nexus-drawer-user-mark"><CreditCard aria-hidden="true" /></div>
+          <div className="nexus-drawer-user-mark">
+            <img src="/omnimarket-eye-transparent.png" alt="" aria-hidden="true" />
+          </div>
           <div className="nexus-drawer-user-copy">
             <Link
               href="/"

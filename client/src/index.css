@@ -794,6 +794,18 @@
   stroke-width: 1.6;
 }
 
+.nexus-drawer-user-mark {
+  border: 0;
+  background: transparent;
+}
+
+.nexus-drawer-user-mark img {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
 .nexus-drawer-user-copy {
   display: flex;
   min-width: 0;

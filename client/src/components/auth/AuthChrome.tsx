@@ -3,7 +3,7 @@ import { Link } from "wouter";
 export function SpiderBrand() {
   return (
     <Link href="/auth" className="nexus-brand" aria-label="OmniMarket home">
-      <img src="/omnimarket-logo.webp" alt="OmniMarket" />
+      <img src="/omnimarket-logo-transparent.png" alt="OmniMarket" />
     </Link>
   );
 }
