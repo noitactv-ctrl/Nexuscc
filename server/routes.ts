@@ -1771,9 +1771,11 @@ export async function registerRoutes(
       SELECT c.id, c.card_number, c.masked_card, c.expiry, c.cvv, c.country, c.extras,
              c.price, c.hr_percent, c.is_sold, c.is_first_hand, c.user_id, c.created_at, c.bin_data,
              c.base_id, cb.name as base_name, cb.refundable as base_refundable,
-             cb.hr_percent as base_hr_percent
+             cb.hr_percent as base_hr_percent, cb.owner_id as base_owner_id,
+             base_owner.username as base_owner_name
       FROM cards c
       LEFT JOIN card_bases cb ON cb.id = c.base_id
+       LEFT JOIN users base_owner ON base_owner.id = cb.owner_id
       WHERE c.is_sold = false ${baseFilter}
       ORDER BY c.created_at DESC
     `) as any;
@@ -1805,6 +1807,8 @@ export async function registerRoutes(
       userId: r.user_id, createdAt: r.created_at,
       binData: r.bin_data ?? null,
        baseId: r.base_id ?? null, baseName: r.base_name ?? null,
+        baseOwnerName: r.base_owner_name ?? null,
+        baseOwnerType: r.base_id == null ? null : (r.base_owner_id == null ? "admin" : "seller"),
        baseRefundable: Boolean(r.base_refundable),
     })));
   });

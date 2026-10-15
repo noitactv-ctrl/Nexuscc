@@ -34,7 +34,7 @@ const COLUMNS = [
   { id: "city", label: "City", width: 125 },
   { id: "state", label: "State", width: 80 },
   { id: "zip", label: "ZIP", width: 80 },
-  { id: "base", label: "BaseName", width: 140 },
+  { id: "base", label: "Base / Uploader", width: 190 },
   { id: "price", label: "PricePerCard", width: 110 },
 ] as const;
 
@@ -521,12 +521,27 @@ export default function CardsPage() {
                     const value = getColumnValue(card, column.id);
                     return (
                       <td key={column.id} className="overflow-hidden px-3 py-3.5 text-white/85">
-                        <span
-                          title={String(value)}
-                          className={`block truncate ${column.id === "number" || column.id === "bin" ? "font-mono text-sky-400" : ""}`}
-                        >
-                          {value}
-                        </span>
+                        {column.id === "base" ? (
+                          <div className="min-w-0">
+                            <span title={String(value)} className="block truncate text-white/85">
+                              {value}
+                            </span>
+                            <span className="block truncate text-[10px] text-white/45">
+                              {card.baseOwnerType === "seller"
+                                ? `Uploaded by ${card.baseOwnerName || "Seller"}`
+                                : card.baseOwnerType === "admin"
+                                  ? "Uploaded by Admin"
+                                  : "Uploader unavailable"}
+                            </span>
+                          </div>
+                        ) : (
+                          <span
+                            title={String(value)}
+                            className={`block truncate ${column.id === "number" || column.id === "bin" ? "font-mono text-sky-400" : ""}`}
+                          >
+                            {value}
+                          </span>
+                        )}
                       </td>
                     );
                   })}
