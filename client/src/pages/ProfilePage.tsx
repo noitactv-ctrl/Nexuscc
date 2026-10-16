@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, Package, Clock, Gift, Mail, Key, User, Calendar, Link2, LogOut, Copy } from "lucide-react";
+import { Loader2, Package, Clock, Gift, Mail, Key, User, Calendar, Link2, LogOut, Copy, ExternalLink } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
@@ -185,10 +185,20 @@ function TelegramLinkSettings() {
             <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your one-time code</p>
               <p className="mt-2 break-all font-mono text-3xl font-bold tracking-[0.2em] text-foreground">{dailyRewardCode}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Send this command to the bot within 15 minutes. The code can only be used once.</p>
-              <Button variant="outline" className="mt-4" onClick={copyLinkCommand}>
+              <p className="mt-2 text-sm text-muted-foreground">Open the bot below within 15 minutes. Your one-time code will be sent securely to finish linking.</p>
+              <Button asChild size="lg" className="mt-4 w-full sm:w-auto">
+                <a
+                  href={`https://t.me/OmniMarketCCBot?start=link_${dailyRewardCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Open @OmniMarketCCBot
+                </a>
+              </Button>
+              <Button variant="outline" className="mt-4 sm:ml-3" onClick={copyLinkCommand}>
                 <Copy className="mr-2 h-4 w-4" />
-                Copy /link command
+                Copy /link command instead
               </Button>
             </div>
           )}

@@ -60,7 +60,7 @@ function botKeyboard() {
     .text("💸 Daily reward", "daily_reward")
     .text("🔗 Daily referrals", "daily_referrals")
     .row()
-    .text("🎁 Claim free credit", "claim_reward")
+    .text("🎁 Claim Drops", "claim_reward")
     .text("👤 Credit status", "account_status")
     .row()
     .url("📣 Join our channel", getDailyJoinUrl() || getJoinUrl());
@@ -89,7 +89,7 @@ async function dailyGate(ctx: Context, bot: Bot) {
   return false;
 }
 
-async function linkDailyRewards(ctx: Context, bot: Bot) {
+async function linkDailyRewards(ctx: Context, bot: Bot, providedCode?: string) {
   if (ctx.chat?.type !== "private") {
     await ctx.reply("For account security, link your OmniMarket account with the bot in a private chat.");
     return;
@@ -99,7 +99,7 @@ async function linkDailyRewards(ctx: Context, bot: Bot) {
     await ctx.reply(`Add ${NAME_KEYWORD} to your first or last name before linking your account.`);
     return;
   }
-  const code = getMatch(ctx).replace(/\s+/g, "").toUpperCase();
+  const code = (providedCode ?? getMatch(ctx)).replace(/\s+/g, "").toUpperCase();
   if (!/^[A-F0-9]{10}$/.test(code)) {
     await ctx.reply("Use the one-time code from your OmniMarket profile: /link CODE");
     return;
@@ -185,7 +185,7 @@ async function grantDailyReward(chatId: string) {
        WHERE r.referred_chat_id = $1`,
       [chatId],
     );
-    const amountCents = 25 + (referral.rows[0] ? 10 : 0);
+    const amountCents = 100 + (referral.rows[0] ? 10 : 0);
     await client.query(
       `INSERT INTO telegram_daily_reward_claims (chat_id, user_id, amount_cents)
        VALUES ($1, $2, $3)`,
@@ -327,7 +327,7 @@ async function claimDailyReward(ctx: Context, bot: Bot) {
   }
 }
 
-async function ensureDropSchema() {
+export async function ensureDropSchema() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS telegram_license_drops (
       id BIGSERIAL PRIMARY KEY,
@@ -340,6 +340,7 @@ async function ensureDropSchema() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+  await pool.query(`ALTER TABLE telegram_license_drops ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id)`);
   await pool.query(`ALTER TABLE telegram_license_drops ADD COLUMN IF NOT EXISTS claimed_chat_id TEXT`);
   await pool.query(`ALTER TABLE telegram_license_drops ALTER COLUMN created_by DROP NOT NULL`);
   await pool.query(`ALTER TABLE telegram_license_drops ADD COLUMN IF NOT EXISTS created_by_chat_id TEXT`);
@@ -429,7 +430,7 @@ async function confirmReferral(referrerChatId: string, referredChatId: string, b
   );
   await bot.api.sendMessage(
     referrerChatId,
-    "🎉 Referral confirmed! Your friend started the bot, so you received one extra free-credit claim.",
+    "🎉 Referral confirmed! Your friend started the bot, so you received one extra drop claim.",
     MD,
   ).catch(() => {});
 }
@@ -539,11 +540,11 @@ async function sendStatus(ctx: Context) {
       : `⚠️ Add *${NAME_KEYWORD}* to your first or last name`;
 
   await ctx.reply(
-    `👤 *Free-credit status*\n\n` +
+    `👤 *Drop claim status*\n\n` +
     `Access: ${accessLine}\n` +
     `Claims in the last 24 hours: *${claims.used}/${claims.allowance} used*\n` +
     `Claims remaining: *${Math.max(0, claims.allowance - claims.used)}*\n` +
-    `Free credits available: *${Number(stock.rows[0]?.count ?? 0)}*`,
+    `Available drops: *${Number(stock.rows[0]?.count ?? 0)}*`,
     { ...MD, reply_markup: botKeyboard() },
   );
 }
@@ -561,7 +562,7 @@ async function sendClaim(ctx: Context) {
   if (!access.allowed) {
     await ctx.reply(
       access.reason === "suspended"
-        ? `⛔ Your free-credit access is suspended until *${suspendedUntil?.toISOString().replace(".000Z", " UTC")}*.`
+        ? `⛔ Your drop-claim access is suspended until *${suspendedUntil?.toISOString().replace(".000Z", " UTC")}*.`
         : `⚠️ Add *${NAME_KEYWORD}* to your Telegram first or last name, then try /claim again.`,
       { ...MD, reply_markup: botKeyboard() },
     );
@@ -572,14 +573,14 @@ async function sendClaim(ctx: Context) {
   if (!result.ok) {
     await ctx.reply(
       result.reason === "empty"
-        ? "📭 There are no free credits available right now. Please check back later."
-        : `⏳ Your 24-hour free-credit allowance is used. Try again after 24 hours.`,
+        ? "📭 There are no drops available right now. Please check back later."
+        : `⏳ Your drop-claim allowance is used. Try again after 24 hours.`,
       { ...MD, reply_markup: botKeyboard() },
     );
     return;
   }
   await ctx.reply(
-    `🎁 *Your free credit:*\n\n${result.licenseKey}\n\nClaims remaining in the last 24 hours: ${result.remaining}`,
+    `🎁 *Your drop:*\n\n${result.licenseKey}\n\nClaims remaining in the last 24 hours: ${result.remaining}`,
     { ...MD, reply_markup: botKeyboard() },
   );
 }
@@ -598,7 +599,7 @@ async function handleNameState(ctx: Context) {
   );
   const hadBefore = current.rows[0]?.name_active === true;
   if (nowHas && !hadBefore) {
-    await ctx.reply(`✅ Your name is active. You can now claim free credit with /claim.\n\nKeep *${NAME_KEYWORD}* in your name.`, MD);
+    await ctx.reply(`✅ Your name is active. You can now claim drops with /claim.\n\nKeep *${NAME_KEYWORD}* in your name.`, MD);
   } else if (!nowHas && hadBefore) {
     await pool.query(
       `INSERT INTO telegram_suspensions (chat_id, suspended_until)
@@ -606,20 +607,20 @@ async function handleNameState(ctx: Context) {
        ON CONFLICT (chat_id) DO UPDATE SET suspended_until = EXCLUDED.suspended_until`,
       [chatId],
     );
-    await ctx.reply(`⚠️ *${NAME_KEYWORD}* was removed from your name. Free-credit access is suspended for 3 days.`, MD);
+      await ctx.reply(`⚠️ *${NAME_KEYWORD}* was removed from your name. Drop access is suspended for 3 days.`, MD);
   }
 }
 
 async function uploadDrops(ctx: Context, bot: Bot, token: string) {
   const chatId = getChatId(ctx);
   if (!getAdminIds().has(chatId)) {
-    await ctx.reply("❌ Only authorized bot administrators can upload free credits.", MD);
+    await ctx.reply("❌ Only authorized bot administrators can upload drops.", MD);
     return;
   }
   const document = (ctx.message as any)?.document;
   const fileName = String(document?.file_name ?? "").toLowerCase();
   if (!document || !/\.(txt|csv)$/.test(fileName)) {
-    await ctx.reply("❌ Upload a .txt or .csv file with one free credit per line.", MD);
+    await ctx.reply("❌ Upload a .txt or .csv file with one drop per line.", MD);
     return;
   }
   if (Number(document.file_size ?? 0) > MAX_LICENSE_FILE_BYTES) {
@@ -638,7 +639,7 @@ async function uploadDrops(ctx: Context, bot: Bot, token: string) {
        ON CONFLICT (license_key) DO NOTHING RETURNING id`,
       [keys, chatId],
     );
-    await ctx.reply(`✅ Free-credit queue updated.\n\nAdded: *${result.rowCount ?? 0}*\nSkipped duplicates: ${keys.length - (result.rowCount ?? 0)}`, MD);
+    await ctx.reply(`✅ Drop inventory updated.\n\nAdded: *${result.rowCount ?? 0}*\nSkipped duplicates: ${keys.length - (result.rowCount ?? 0)}`, MD);
   } catch (error: any) {
     console.error("[telegram] free-credit upload failed:", error?.message ?? error);
     await ctx.reply(`❌ Upload failed: ${error?.message ?? "Invalid credit file"}`);
@@ -695,11 +696,15 @@ function registerDropHandlers(bot: Bot, token: string) {
         );
       }
     }
+    if (match.startsWith("link_")) {
+      await linkDailyRewards(ctx, bot, match.slice("link_".length));
+      return;
+    }
     await ctx.reply(
       `👋 Welcome to OmniMarket rewards!\n\n` +
-      `Join our channel, keep *${NAME_KEYWORD}* in your Telegram first or last name, and link your OmniMarket account to receive $0.25 automatically each qualifying day.\n\n` +
+      `Join our channel, keep *${NAME_KEYWORD}* in your Telegram first or last name, and link your OmniMarket account to receive $1.00 automatically each qualifying day.\n\n` +
       `/daily — check today's reward status\n/dailyref — get your daily-rewards referral link\n/link CODE — link your OmniMarket account\n\n` +
-      `The original free-credit drops are still available with /claim.`,
+      `Claim drops with /claim.`,
       { ...MD, reply_markup: botKeyboard() },
     );
   });
@@ -770,7 +775,7 @@ function registerDropHandlers(bot: Bot, token: string) {
   });
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      `*Free-credit bot*\n\n/claim — claim free credit once per 24 hours\n/status — view your status\n/ref — get a referral link\n/help — show this help\n\nAdmins can upload a .txt or .csv file with one credit per line.`,
+      `*OmniMarket Drops*\n\n/claim — claim drops once per 24 hours\n/status — view your status\n/ref — get a referral link\n/help — show this help\n\nAdmins can upload a .txt or .csv file with one drop per line.`,
       { ...MD, reply_markup: botKeyboard() },
     );
   });
@@ -792,11 +797,11 @@ export function startTelegramBot() {
   const bot = createTelegramBot();
   if (!bot) return null;
   bot.api.setMyCommands([
-    { command: "start", description: "Open the free-credit menu" },
+    { command: "start", description: "Open the OmniMarket Drops menu" },
     { command: "daily", description: "Check today's automatic OmniMarket reward" },
     { command: "dailyref", description: "Get your daily reward referral link" },
     { command: "link", description: "Link your OmniMarket account with a one-time code" },
-    { command: "claim", description: "Claim free credit" },
+    { command: "claim", description: "Claim drops" },
     { command: "status", description: "View credit status" },
     { command: "ref", description: "Get a referral link" },
     { command: "help", description: "Show bot help" },

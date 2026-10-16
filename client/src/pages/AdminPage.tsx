@@ -34,6 +34,7 @@ const adminSections = [
   { id: "sellers",  label: "Seller Applications", Icon: BadgeCheck },
   { id: "support",  label: "Support",    Icon: MessageSquare },
   { id: "codes",    label: "Codes",      Icon: Gift },
+  { id: "drops",    label: "Telegram Drops", Icon: Gift },
   { id: "announcements", label: "Announcements", Icon: Megaphone },
   { id: "integrations", label: "Settings", Icon: Settings },
 ];
@@ -144,6 +145,7 @@ export default function AdminPage() {
           {activeSection === "sellers"      && <SellersSection />}
           {activeSection === "support"      && <SupportSection />}
           {activeSection === "codes"        && <CodesSection />}
+          {activeSection === "drops"        && <TelegramDropsSection />}
           {activeSection === "deposits"     && <DepositsSection />}
           {activeSection === "announcements" && <AnnouncementsSection />}
           
@@ -4090,6 +4092,115 @@ function SupportSection() {
           </CardContent>
         </Card>
       ))}
+    </div>
+  );
+}
+
+function TelegramDropsSection() {
+  const [dropFile, setDropFile] = useState<File | null>(null);
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const { data: inventory, isLoading } = useQuery<{
+    total: number;
+    available: number;
+    claimed: number;
+  }>({
+    queryKey: ["/api/admin/telegram-drops"],
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: async () => {
+      if (!dropFile) throw new Error("Choose a .txt or .csv file first.");
+      const response = await fetch("/api/admin/telegram-drops", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        credentials: "include",
+        body: dropFile,
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Drop upload failed.");
+      return result;
+    },
+    onSuccess: (result) => {
+      toast({
+        title: `Added ${result.addedCount} drop${result.addedCount === 1 ? "" : "s"}`,
+        description: result.skippedCount ? `${result.skippedCount} duplicate drop(s) skipped.` : undefined,
+      });
+      setDropFile(null);
+      qc.invalidateQueries({ queryKey: ["/api/admin/telegram-drops"] });
+    },
+    onError: (error: Error) => toast({
+      title: "Upload failed",
+      description: error.message,
+      variant: "destructive",
+    }),
+  });
+
+  return (
+    <div className="mx-auto w-full max-w-3xl space-y-5">
+      <div>
+        <h2 className="text-xl font-black text-white">Telegram Drops</h2>
+        <p className="mt-1 text-sm text-white/50">Add claimable drops to the Telegram bot’s shared inventory.</p>
+      </div>
+
+      <Card className="border-white/10 bg-[#111]">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Gift className="h-5 w-5 text-primary" />
+            Drop inventory
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                ["Available", inventory?.available ?? 0],
+                ["Claimed", inventory?.claimed ?? 0],
+                ["Total", inventory?.total ?? 0],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-white/10 bg-black/30 p-3">
+                  <p className="text-xs text-white/50">{label}</p>
+                  <p className="mt-1 text-xl font-bold text-white">{value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-white/10 bg-[#111]">
+        <CardHeader>
+          <CardTitle className="text-white">Upload drops</CardTitle>
+          <p className="text-sm text-white/50">
+            Upload a TXT or CSV file with one drop per line. Duplicate drops are skipped.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Input
+            type="file"
+            accept=".txt,.csv,text/plain,text/csv"
+            onChange={(event) => setDropFile(event.target.files?.[0] ?? null)}
+            className="border-white/10 bg-black/30 text-white"
+          />
+          {dropFile && <p className="truncate text-xs text-white/50">{dropFile.name}</p>}
+          <Button
+            disabled={!dropFile || uploadMutation.isPending}
+            onClick={() => uploadMutation.mutate()}
+            className="w-full sm:w-auto"
+          >
+            {uploadMutation.isPending
+              ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              : <Upload className="mr-2 h-4 w-4" />}
+            Upload drops
+          </Button>
+          <p className="text-xs text-white/40">
+            Maximum 5 MB and 10,000 entries per upload. Payment-card data is rejected.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -19,5 +19,5 @@
 - [Crypto payment settlement](crypto-payment-settlement.md) — blockchain confirmations can race across webhooks, polling, and client status checks; settle idempotently and retry incomplete settlements.
 - [Card inventory diagnostics](card-inventory-diagnostics.md) — cards can appear empty when restored DB schema lags shared schema or every card is already marked sold.
 - [OmniMarket frontend precedence](nexuscc-frontend-precedence.md) — resolve stale conflicts in favor of the user's current brand, design, and removals.
-- [Telegram daily rewards](telegram-daily-rewards.md) — preserve the OmniMarket name-tag gate, daily/referral credit amounts, and secure website-account pairing.
+- [Telegram daily rewards](telegram-daily-rewards.md) — $1.00 base daily payout, $0.10 referral bonuses, name-tag gate, and secure website-account pairing.
 - [GitHub push authentication](github-push-authentication.md) — a healthy Replit GitHub connection may still fail to authenticate Git pushes; do not request tokens or retry blindly.

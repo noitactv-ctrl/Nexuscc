@@ -13,6 +13,7 @@ import { cryptoPayments, orders, orderItems, verifications, variants, userIps, u
 import { db, pool } from "./db.js";
 import { eq, and, ne, desc, sql } from "drizzle-orm";
 import { MAX_LICENSE_FILE_BYTES, parseLicenseKeyFile } from "./license-key-file.js";
+import { ensureDropSchema } from "./telegram.js";
 import { formatOrdersAsText } from "./order-export.js";
 import { authorizeAndVoidCard, getAuthorizeNetClientConfig, getAuthorizeNetConfig } from "./authorize-net.js";
 import {
@@ -1263,6 +1264,64 @@ export async function registerRoutes(
         });
       } catch (error: any) {
         res.status(400).json({ message: error?.message ?? "Invalid license-key file" });
+      }
+    },
+  );
+
+  app.get("/api/admin/telegram-drops", requireAdmin, async (_req, res) => {
+    try {
+      await ensureDropSchema();
+      const result = await pool.query(`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE claimed_by IS NULL AND claimed_chat_id IS NULL)::int AS available,
+          COUNT(*) FILTER (WHERE claimed_by IS NOT NULL OR claimed_chat_id IS NOT NULL)::int AS claimed
+        FROM telegram_license_drops
+      `);
+      res.json(result.rows[0] ?? { total: 0, available: 0, claimed: 0 });
+    } catch (error) {
+      console.error("[admin] Telegram drop inventory lookup failed:", error instanceof Error ? error.message : "unknown error");
+      res.status(503).json({ message: "Drop inventory is temporarily unavailable." });
+    }
+  });
+
+  app.post(
+    "/api/admin/telegram-drops",
+    requireAdmin,
+    express.text({
+      type: ["text/plain", "text/csv", "application/octet-stream"],
+      limit: `${MAX_LICENSE_FILE_BYTES}b`,
+    }),
+    async (req, res) => {
+      if (typeof req.body !== "string") {
+        return res.status(400).json({ message: "Upload a .txt or .csv file with one drop per line." });
+      }
+      let keys: string[];
+      try {
+        keys = parseLicenseKeyFile(req.body);
+      } catch (error) {
+        return res.status(400).json({
+          message: error instanceof Error ? error.message : "Invalid drop file.",
+        });
+      }
+      try {
+        await ensureDropSchema();
+        const result = await pool.query(
+          `INSERT INTO telegram_license_drops (license_key, created_by)
+           SELECT DISTINCT value, $2
+           FROM unnest($1::text[]) AS input(value)
+           ON CONFLICT (license_key) DO NOTHING
+           RETURNING id`,
+          [keys, Number((req.user as any).id)],
+        );
+        res.json({
+          addedCount: result.rowCount ?? 0,
+          skippedCount: keys.length - (result.rowCount ?? 0),
+          keyCount: keys.length,
+        });
+      } catch (error: any) {
+        console.error("[admin] Telegram drop upload failed:", error?.code || error?.name || "unknown error");
+        res.status(503).json({ message: "Drops could not be uploaded right now." });
       }
     },
   );
