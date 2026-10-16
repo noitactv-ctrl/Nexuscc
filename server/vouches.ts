@@ -101,7 +101,7 @@ export async function ensureVouchSchema() {
 }
 
 export async function getTelegramBotUrl() {
-  const configuredUsername = process.env.TELEGRAM_BOT_USERNAME ?? process.env.BOT_USERNAME;
+  const configuredUsername = process.env.TELEGRAM_BOT_USERNAME ?? process.env.BOT_USERNAME ?? "OmniMarketCCBot";
   if (configuredUsername) return `https://t.me/${configuredUsername.replace(/^@/, "")}`;
   if (telegramBotUsername) return `https://t.me/${telegramBotUsername}`;
   if (telegramBotUsername === null) throw new VouchError("BOT_NOT_CONFIGURED", "Telegram vouch bot is not configured.");
