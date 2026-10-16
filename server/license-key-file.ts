@@ -1,5 +1,6 @@
 export const MAX_LICENSE_FILE_BYTES = 5 * 1024 * 1024;
 export const MAX_LICENSE_KEYS_PER_UPLOAD = 10_000;
+export const MAX_LICENSE_KEY_CHARACTERS = 1_000;
 
 export function parseLicenseKeyFile(raw: string): string[] {
   if (!raw.trim()) throw new Error("The license-key file is empty");
@@ -17,8 +18,8 @@ export function parseLicenseKeyFile(raw: string): string[] {
   }
 
   for (const key of keys) {
-    if (key.length < 4 || key.length > 256 || /[\u0000-\u001f\u007f]/.test(key)) {
-      throw new Error("Each license key must be 4–256 printable characters on one line");
+    if (Array.from(key).length > MAX_LICENSE_KEY_CHARACTERS || /[\u0000-\u001f\u007f]/.test(key)) {
+      throw new Error(`Each drop must be at most ${MAX_LICENSE_KEY_CHARACTERS} printable characters on one line`);
     }
     if (
       /(?:\bpan\b|\bcvv\b|\bcvc\b|card\s*number|security\s*code)/i.test(key) ||

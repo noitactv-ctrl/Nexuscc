@@ -4175,7 +4175,7 @@ function TelegramDropsSection() {
         <CardHeader>
           <CardTitle className="text-white">Upload drops</CardTitle>
           <p className="text-sm text-white/50">
-            Upload a TXT or CSV file with one drop per line. Duplicate drops are skipped.
+            Upload a TXT or CSV file with one text drop per line. Each drop can be up to 1,000 characters. Duplicates are skipped.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -4197,7 +4197,7 @@ function TelegramDropsSection() {
             Upload drops
           </Button>
           <p className="text-xs text-white/40">
-            Maximum 5 MB and 10,000 entries per upload. Payment-card data is rejected.
+            Any text is accepted, including short entries, spaces, and symbols. Maximum 5 MB and 10,000 entries per upload. Payment-card data is rejected.
           </p>
         </CardContent>
       </Card>
