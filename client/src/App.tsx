@@ -33,7 +33,6 @@ import PlinkoPage from "@/pages/PlinkoPage";
 import HomePage from "@/pages/HomePage";
 import MyDepositsPage from "@/pages/MyDepositsPage";
 import CryptoPaymentPage from "@/pages/CryptoPaymentPage";
-import DailySpinPage from "@/pages/DailySpinPage";
 
 function LoadingScreen() {
   return (
@@ -120,8 +119,6 @@ function Router() {
         <Route path="/checker" component={CheckerPage} />
         <Route path="/become-reseller" component={BecomeResellerPage} />
         <Route path="/profile" component={ProfilePage} />
-        <Route path="/daily-rewards" component={DailySpinPage} />
-        <Route path="/daily-spin" component={DailySpinPage} />
         <Route path="/support/create">{() => <SupportPage initialView="create" />}</Route>
         <Route path="/support">{() => <SupportPage />}</Route>
         <Route path="/admin">

@@ -125,7 +125,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         },
       ],
       entries: [
-        { href: "/daily-rewards", label: "Daily Rewards", icon: Gift },
         { href: "/redeem", label: "Redeem Code", icon: Gift },
       ],
     },

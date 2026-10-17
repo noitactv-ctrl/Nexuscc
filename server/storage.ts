@@ -17,7 +17,6 @@ export interface IStorage {
   updateUserBalance(userId: number, amountCents: number): Promise<User>;
   updateProtectedBalance(userId: number, amountCents: number): Promise<User>;
   setProtectedBalance(userId: number, value: number): Promise<User>;
-  updateLastDailySpin(userId: number): Promise<void>;
   getAllUsers(): Promise<User[]>;
   updateUser(id: number, data: Partial<User>): Promise<User>;
 
@@ -174,11 +173,6 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return user;
   }
-
-  async updateLastDailySpin(userId: number): Promise<void> {
-    await db.update(users).set({ lastDailySpin: new Date() }).where(eq(users.id, userId));
-  }
-
 
   async getAllUsers(): Promise<User[]> {
     return db.select().from(users).orderBy(desc(users.createdAt));

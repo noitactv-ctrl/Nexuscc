@@ -224,17 +224,6 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
-    spin: {
-      method: 'POST' as const,
-      path: '/api/games/spin',
-      responses: {
-        200: z.object({
-          reward: z.number(),
-          newBalance: z.number(),
-        }),
-        400: z.object({ message: z.string() }), // Already spun today
-      },
-    },
   },
   admin: {
     dashboard: {

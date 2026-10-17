@@ -78,23 +78,5 @@ export function useGames() {
     onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
-  const spinWheel = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(api.games.spin.path, {
-        method: api.games.spin.method,
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Spin failed");
-      }
-      return api.games.spin.responses[200].parse(await res.json());
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData([api.auth.me.path], (old: any) => ({ ...old, balance: data.newBalance }));
-      toast({ title: "Daily Spin!", description: `You won $${(data.reward / 100).toFixed(2)}` });
-    },
-    onError: (err) => toast({ title: "Spin unavailable", description: err.message, variant: "destructive" }),
-  });
-
-  return { playDice, playMines, playPlinko, spinWheel };
+  return { playDice, playMines, playPlinko };
 }

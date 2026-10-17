@@ -720,53 +720,6 @@ export async function registerRoutes(
     });
   });
 
-  app.post(api.games.spin.path, gameLimiter, async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
-    const user = req.user as any;
-
-    if (user.lastDailySpin) {
-      const last = new Date(user.lastDailySpin);
-      const now = new Date();
-      if (last.getDate() === now.getDate() && last.getMonth() === now.getMonth() && last.getFullYear() === now.getFullYear()) {
-         return res.status(400).json({ message: "Already spun today" });
-      }
-    }
-
-    // Rewards: $0.05, $0.10, $0.50, $1, $5, $10
-    // Weighted probabilities (normalized to request)
-    const rewards = [
-      { amount: 5, weight: 80 },
-      { amount: 10, weight: 60 },
-      { amount: 50, weight: 50 },
-      { amount: 100, weight: 30 },
-      { amount: 500, weight: 20 },
-      { amount: 1000, weight: 10 },
-    ];
-
-    const totalWeight = rewards.reduce((sum, r) => sum + r.weight, 0);
-    let random = Math.random() * totalWeight;
-    let reward = 0;
-
-    for (const r of rewards) {
-      if (random < r.weight) {
-        reward = r.amount;
-        break;
-      }
-      random -= r.weight;
-    }
-
-    await storage.updateUserBalance(user.id, reward);
-    await storage.updateLastDailySpin(user.id);
-    await storage.createTransaction(user.id, reward, "daily_spin", "Daily spin reward");
-
-    const updatedUser = await storage.getUser(user.id);
-    
-    res.json({
-      reward, // in cents
-      newBalance: updatedUser?.balance || 0,
-    });
-  });
-
   // User - Update Email
   app.patch("/api/user/email", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
