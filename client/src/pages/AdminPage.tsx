@@ -2641,13 +2641,14 @@ function IntegrationsSection() {
 
 function FeatureTogglesCard() {
   const { toast } = useToast();
-  const { data: features, isLoading: featuresLoading } = useQuery<{ checker: boolean; reseller: boolean; ranks: boolean; logs: boolean; cards: boolean; plinko: boolean }>({
+  const { data: features, isLoading: featuresLoading } = useQuery<{ pages?: Record<string, boolean> }>({
     queryKey: ["/api/settings/features"],
   });
 
   const toggleFeature = useMutation({
-    mutationFn: async (body: { checker?: boolean; reseller?: boolean; ranks?: boolean; logs?: boolean; cards?: boolean; plinko?: boolean }) => {
+    mutationFn: async (body: { pages: Record<string, boolean> }) => {
       const res = await apiRequest("POST", "/api/admin/settings/features", body);
+      if (!res.ok) throw new Error("Could not update page visibility");
       return res.json();
     },
     onSuccess: () => {
@@ -2658,32 +2659,44 @@ function FeatureTogglesCard() {
   });
 
   const FEATURES = [
-    { key: "logs" as const, label: "Logs Shop", desc: "Show/hide the Logs shop page and nav link" },
-    { key: "cards" as const, label: "Cards", desc: "Show/hide the Cards page and nav link" },
-    { key: "plinko" as const, label: "Plinko", desc: "Show/hide the Plinko game and nav link" },
-    { key: "checker" as const, label: "Card Checker", desc: "Show/hide the Checker page and nav link" },
-    { key: "reseller" as const, label: "Become Reseller", desc: "Show/hide the Reseller application page" },
+    { key: "home", label: "Home" },
+    { key: "deposit", label: "Deposit Money" },
+    { key: "myDeposits", label: "My Deposits" },
+    { key: "redeem", label: "Redeem Code" },
+    { key: "ranks", label: "Ranks" },
+    { key: "freeCard", label: "Free Card" },
+    { key: "cards", label: "Buy Cards" },
+    { key: "banks", label: "Banks" },
+    { key: "logs", label: "Buy Logs" },
+    { key: "reseller", label: "Become a Seller" },
+    { key: "orders", label: "My Orders" },
+    { key: "myCode", label: "My Code" },
+    { key: "cart", label: "Shopping Cart" },
+    { key: "checker", label: "Card Checker" },
+    { key: "plinko", label: "Plinko" },
+    { key: "support", label: "Support" },
+    { key: "profile", label: "Account Management" },
   ];
 
   return (
     <div>
-      <p className="text-xs font-semibold text-muted-foreground mb-3">Feature Visibility</p>
+      <p className="text-xs font-semibold text-muted-foreground mb-3">Page Visibility</p>
       <div className="space-y-2">
         {featuresLoading ? (
           <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>
         ) : FEATURES.map((f) => {
-          const enabled = features?.[f.key] !== false;
+          const enabled = features?.pages?.[f.key] !== false;
           return (
             <Card key={f.key} className="bg-[#111] border-white/10" data-testid={`card-feature-${f.key}`}>
               <CardContent className="p-4 flex items-center justify-between gap-4">
                 <div>
                   <p className="font-bold text-sm text-white">{f.label}</p>
-                  <p className="text-xs text-muted-foreground">{enabled ? "Visible to users" : "Hidden — nobody can see it"}</p>
+                  <p className="text-xs text-muted-foreground">{enabled ? "Visible to users" : "Hidden from users; direct visits return home"}</p>
                 </div>
                 <Switch
                   checked={enabled}
                   disabled={toggleFeature.isPending}
-                  onCheckedChange={(val) => toggleFeature.mutate({ [f.key]: val })}
+                  onCheckedChange={(val) => toggleFeature.mutate({ pages: { [f.key]: val } })}
                   data-testid={`switch-feature-${f.key}`}
                 />
               </CardContent>

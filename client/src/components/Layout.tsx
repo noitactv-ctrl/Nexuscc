@@ -97,10 +97,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     ranks: boolean;
     logs: boolean;
     cards: boolean;
+    pages?: Record<string, boolean>;
   }>({
     queryKey: ["/api/settings/features"],
     staleTime: 30000,
   });
+  const pageVisible = (key: string) => user?.role === "admin" || features?.pages?.[key] !== false;
 
   const { data: announcements } = useQuery<{ id: number; content: string; link: string | null; active: boolean; bannerColor?: string }[]>({
     queryKey: ["/api/announcements"],
@@ -111,7 +113,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const navSections: NavSection[] = [
     {
       label: "Navigation",
-      entries: [{ href: "/", label: "Home", icon: House }],
+      entries: pageVisible("home") ? [{ href: "/", label: "Home", icon: House }] : [],
     },
     {
       label: "Finance",
@@ -121,20 +123,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
           label: "Deposit",
           icon: WalletCards,
           entries: [
-            { href: "/deposit", label: "Deposit Money", icon: CreditCard },
-            { href: "/my-deposits", label: "My Deposits", icon: FileText },
+            ...(pageVisible("deposit") ? [{ href: "/deposit", label: "Deposit Money", icon: CreditCard }] : []),
+            ...(pageVisible("myDeposits") ? [{ href: "/my-deposits", label: "My Deposits", icon: FileText }] : []),
           ],
         },
       ],
-      entries: [
-        { href: "/redeem", label: "Redeem Code", icon: Gift },
-      ],
+      entries: pageVisible("redeem") ? [{ href: "/redeem", label: "Redeem Code", icon: Gift }] : [],
     },
-    ...(features?.ranks !== false ? [{
+    ...((pageVisible("ranks") || pageVisible("freeCard")) ? [{
       label: "VIP",
       entries: [
-        { href: "/ranks", label: "Ranks", icon: Trophy },
-        { href: "/free-card", label: "Free Card", icon: Gift },
+        ...(pageVisible("ranks") ? [{ href: "/ranks", label: "Ranks", icon: Trophy }] : []),
+        ...(pageVisible("freeCard") ? [{ href: "/free-card", label: "Free Card", icon: Gift }] : []),
       ],
     }] : []),
     {
@@ -145,15 +145,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
           label: "Shop",
           icon: ShoppingBag,
           entries: [
-            ...(features?.cards !== false ? [{ href: "/cards", label: "Buy Cards", icon: CreditCard }] : []),
-            { href: "/banks", label: "Banks", icon: WalletCards },
-            ...(features?.logs !== false ? [{ href: "/shop", label: "Buy Logs", icon: FileText }] : []),
-            ...(features?.reseller !== false ? [{ href: "/become-reseller", label: "Become a Seller", icon: BookOpen }] : []),
+            ...(pageVisible("cards") ? [{ href: "/cards", label: "Buy Cards", icon: CreditCard }] : []),
+            ...(pageVisible("banks") ? [{ href: "/banks", label: "Banks", icon: WalletCards }] : []),
+            ...(pageVisible("logs") ? [{ href: "/shop", label: "Buy Logs", icon: FileText }] : []),
+            ...(pageVisible("reseller") ? [{ href: "/become-reseller", label: "Become a Seller", icon: BookOpen }] : []),
           ],
         },
       ],
     },
-    {
+    ...(pageVisible("orders") ? [{
       label: "My Orders",
       groups: [
         {
@@ -165,10 +165,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           ],
         },
       ],
-    },
+    }] : []),
     {
       label: "Tools",
-      groups: features?.checker !== false
+      groups: pageVisible("checker")
         ? [{
             id: "checker",
             label: "Checker",
@@ -177,7 +177,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           }]
         : [],
     },
-    {
+    ...(pageVisible("support") ? [{
       label: "Support",
       groups: [
         {
@@ -190,11 +190,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           ],
         },
       ],
-    },
-    {
+    }] : []),
+    ...(pageVisible("profile") ? [{
       label: "Settings",
       entries: [{ href: "/profile", label: "Account Management", icon: UserRound }],
-    },
+    }] : []),
     ...((user?.role === "admin" || (user as any)?.isWorker)
       ? [{
           label: "Management",
@@ -320,7 +320,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="nexus-topbar-trailing">
-          {user && (
+          {user && pageVisible("deposit") && (
             <Link href="/deposit" className="nexus-topbar-balance" aria-label={`Balance $${balanceDollars}. Add funds`}>
               <span>${balanceDollars}</span>
               <Plus aria-hidden="true" />
@@ -392,7 +392,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="nexus-drawer-nav" aria-label="Dashboard sections">
-          {navSections.map((section) => {
+          {navSections.filter((section) => (section.entries?.length ?? 0) > 0 || (section.groups?.some((group) => group.entries.length > 0) ?? false)).map((section) => {
             const groups = section.groups?.filter((group) => group.entries.length > 0) ?? [];
             const entries = section.entries ?? [];
             if (groups.length === 0 && entries.length === 0) return null;
@@ -441,21 +441,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="nexus-account-dock">
             {accountOpen && (
               <div className="nexus-account-popover" role="menu">
-                <Link
-                  href="/profile"
-                  className="nexus-account-popover-profile"
-                  onClick={() => {
-                    setAccountOpen(false);
-                    setNavOpen(false);
-                  }}
-                >
-                  <div className="nexus-account-mark"><CreditCard aria-hidden="true" /></div>
-                  <div className="nexus-account-popover-copy">
-                    <span>{user.username}</span>
-                    <span>{user.email}</span>
-                    <span className="nexus-account-balance">Balance · ${balanceDollars}</span>
-                  </div>
-                </Link>
+                {pageVisible("profile") && (
+                  <Link
+                    href="/profile"
+                    className="nexus-account-popover-profile"
+                    onClick={() => {
+                      setAccountOpen(false);
+                      setNavOpen(false);
+                    }}
+                  >
+                    <div className="nexus-account-mark"><CreditCard aria-hidden="true" /></div>
+                    <div className="nexus-account-popover-copy">
+                      <span>{user.username}</span>
+                      <span>{user.email}</span>
+                      <span className="nexus-account-balance">Balance · ${balanceDollars}</span>
+                    </div>
+                  </Link>
+                )}
                 <button
                   type="button"
                   className="nexus-logout-button"

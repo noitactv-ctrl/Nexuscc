@@ -3072,27 +3072,68 @@ export async function registerRoutes(
   });
 
   // === FEATURE FLAGS ===
+  const pageVisibilitySettings: Record<string, string> = {
+    home: "feature_home",
+    deposit: "feature_deposit",
+    myDeposits: "feature_my_deposits",
+    redeem: "feature_redeem",
+    ranks: "feature_ranks",
+    freeCard: "feature_free_card",
+    cards: "feature_cards",
+    banks: "feature_banks",
+    logs: "feature_logs",
+    reseller: "feature_reseller",
+    orders: "feature_orders",
+    myCode: "feature_my_code",
+    cart: "feature_cart",
+    checker: "feature_checker",
+    plinko: "feature_plinko",
+    support: "feature_support",
+    profile: "feature_profile",
+  };
+
   app.get("/api/settings/features", async (_req, res) => {
-    const checker = await storage.getSetting("feature_checker", "true");
-    const reseller = await storage.getSetting("feature_reseller", "true");
-    const ranks = await storage.getSetting("feature_ranks", "true");
-    const logs = await storage.getSetting("feature_logs", "true");
-    const cards = await storage.getSetting("feature_cards", "true");
-    const plinko = await storage.getSetting("feature_plinko", "true");
-    res.json({ checker: checker !== "false", reseller: reseller !== "false", ranks: ranks !== "false", logs: logs !== "false", cards: cards !== "false", plinko: plinko !== "false" });
+    const pages: Record<string, boolean> = {};
+    for (const [page, setting] of Object.entries(pageVisibilitySettings)) {
+      pages[page] = (await storage.getSetting(setting, "true")) !== "false";
+    }
+    res.json({
+      ...pages,
+      checker: pages.checker,
+      reseller: pages.reseller,
+      ranks: pages.ranks,
+      logs: pages.logs,
+      cards: pages.cards,
+      plinko: pages.plinko,
+      pages,
+    });
   });
 
   app.post("/api/admin/settings/features", async (req, res) => {
     if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const { checker, reseller, ranks, logs, cards, plinko } = req.body;
-    if (checker !== undefined) await storage.setSetting("feature_checker", checker ? "true" : "false");
-    if (reseller !== undefined) await storage.setSetting("feature_reseller", reseller ? "true" : "false");
-    if (ranks !== undefined) await storage.setSetting("feature_ranks", ranks ? "true" : "false");
-    if (logs !== undefined) await storage.setSetting("feature_logs", logs ? "true" : "false");
-    if (cards !== undefined) await storage.setSetting("feature_cards", cards ? "true" : "false");
-    if (plinko !== undefined) await storage.setSetting("feature_plinko", plinko ? "true" : "false");
+
+    const body = req.body ?? {};
+    const pages = body.pages ?? {};
+    if (typeof pages !== "object" || Array.isArray(pages)) {
+      return res.status(400).json({ message: "Page visibility settings must be an object." });
+    }
+    for (const [page, visible] of Object.entries(pages)) {
+      if (!Object.prototype.hasOwnProperty.call(pageVisibilitySettings, page) || typeof visible !== "boolean") {
+        return res.status(400).json({ message: `Invalid page visibility setting: ${page}` });
+      }
+    }
+    for (const [page, visible] of Object.entries(pages)) {
+      await storage.setSetting(pageVisibilitySettings[page], visible ? "true" : "false");
+    }
+
+    // Keep the original API fields working for existing clients.
+    for (const page of ["checker", "reseller", "ranks", "logs", "cards", "plinko"]) {
+      if (typeof body[page] === "boolean") {
+        await storage.setSetting(pageVisibilitySettings[page], body[page] ? "true" : "false");
+      }
+    }
     res.json({ ok: true });
   });
 

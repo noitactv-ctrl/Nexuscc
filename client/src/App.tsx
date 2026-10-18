@@ -1,6 +1,6 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
@@ -67,6 +67,46 @@ function ConnectionErrorScreen({ retry }: { retry: () => void }) {
   );
 }
 
+function PageVisibilityGate({ page, children }: { page: string; children: React.ReactNode }) {
+  const { user } = useAuth();
+  const { data: features, isLoading } = useQuery<{ pages?: Record<string, boolean> }>({
+    queryKey: ["/api/settings/features"],
+    staleTime: 30000,
+  });
+  if (isLoading) return <LoadingScreen />;
+  if (features?.pages?.[page] === false && user?.role !== "admin") {
+    if (page !== "home") return <Redirect to="/" />;
+    const fallback = [
+      ["deposit", "/deposit"],
+      ["myDeposits", "/my-deposits"],
+      ["redeem", "/redeem"],
+      ["myCode", "/my-code"],
+      ["cards", "/cards"],
+      ["banks", "/banks"],
+      ["logs", "/shop"],
+      ["cart", "/cart"],
+      ["orders", "/orders"],
+      ["reseller", "/become-reseller"],
+      ["support", "/support"],
+      ["profile", "/profile"],
+      ["ranks", "/ranks"],
+      ["freeCard", "/free-card"],
+      ["checker", "/checker"],
+      ["plinko", "/games/plinko"],
+    ].find(([key]) => features?.pages?.[key] !== false)?.[1];
+    if (fallback) return <Redirect to={fallback} />;
+    return (
+      <main className="flex min-h-[60vh] items-center justify-center px-6 text-center">
+        <div>
+          <h1 className="text-xl font-semibold text-white">Pages are temporarily unavailable</h1>
+          <p className="mt-2 text-sm text-white/60">Please check back later.</p>
+        </div>
+      </main>
+    );
+  }
+  return <>{children}</>;
+}
+
 function Router() {
   const { user, isLoading, isError, retryAuth } = useAuth();
   const [location, setLocation] = useLocation();
@@ -105,29 +145,29 @@ function Router() {
         <Route path="/terms-of-service">{() => <LegalPage kind="terms" />}</Route>
         <Route path="/privacy">{() => <LegalPage kind="privacy" />}</Route>
         <Route path="/privacy-policy">{() => <LegalPage kind="privacy" />}</Route>
-        <Route path="/" component={HomePage} />
-        <Route path="/deposit" component={DepositPage} />
-        <Route path="/my-deposits" component={MyDepositsPage} />
-        <Route path="/crypto-payment/:paymentId" component={CryptoPaymentPage} />
-        <Route path="/shop" component={LogsPage} />
-        <Route path="/redeem" component={RedeemCodePage} />
-        <Route path="/product/:name" component={ProductDetailPage} />
-        <Route path="/order/:id" component={OrderDetailPageNew} />
-        <Route path="/orders" component={OrdersPage} />
-        <Route path="/my-code" component={MyCodePage} />
-        <Route path="/cart" component={CartPage} />
+        <Route path="/">{() => <PageVisibilityGate page="home"><HomePage /></PageVisibilityGate>}</Route>
+        <Route path="/deposit">{() => <PageVisibilityGate page="deposit"><DepositPage /></PageVisibilityGate>}</Route>
+        <Route path="/my-deposits">{() => <PageVisibilityGate page="myDeposits"><MyDepositsPage /></PageVisibilityGate>}</Route>
+        <Route path="/crypto-payment/:paymentId">{() => <PageVisibilityGate page="deposit"><CryptoPaymentPage /></PageVisibilityGate>}</Route>
+        <Route path="/shop">{() => <PageVisibilityGate page="logs"><LogsPage /></PageVisibilityGate>}</Route>
+        <Route path="/redeem">{() => <PageVisibilityGate page="redeem"><RedeemCodePage /></PageVisibilityGate>}</Route>
+        <Route path="/product/:name">{() => <PageVisibilityGate page="logs"><ProductDetailPage /></PageVisibilityGate>}</Route>
+        <Route path="/order/:id">{() => <PageVisibilityGate page="orders"><OrderDetailPageNew /></PageVisibilityGate>}</Route>
+        <Route path="/orders">{() => <PageVisibilityGate page="orders"><OrdersPage /></PageVisibilityGate>}</Route>
+        <Route path="/my-code">{() => <PageVisibilityGate page="myCode"><MyCodePage /></PageVisibilityGate>}</Route>
+        <Route path="/cart">{() => <PageVisibilityGate page="cart"><CartPage /></PageVisibilityGate>}</Route>
         <Route path="/worker" component={WorkerDashboardPage} />
-        <Route path="/cards" component={CardsPage} />
-        <Route path="/banks" component={AchPage} />
-        <Route path="/ach" component={AchPage} />
-        <Route path="/games/plinko" component={PlinkoPage} />
-        <Route path="/checker" component={CheckerPage} />
-        <Route path="/become-reseller" component={BecomeResellerPage} />
-        <Route path="/profile" component={ProfilePage} />
-        <Route path="/ranks" component={RanksPage} />
-        <Route path="/free-card" component={FreeCardPage} />
-        <Route path="/support/create">{() => <SupportPage initialView="create" />}</Route>
-        <Route path="/support">{() => <SupportPage />}</Route>
+        <Route path="/cards">{() => <PageVisibilityGate page="cards"><CardsPage /></PageVisibilityGate>}</Route>
+        <Route path="/banks">{() => <PageVisibilityGate page="banks"><AchPage /></PageVisibilityGate>}</Route>
+        <Route path="/ach">{() => <PageVisibilityGate page="banks"><AchPage /></PageVisibilityGate>}</Route>
+        <Route path="/games/plinko">{() => <PageVisibilityGate page="plinko"><PlinkoPage /></PageVisibilityGate>}</Route>
+        <Route path="/checker">{() => <PageVisibilityGate page="checker"><CheckerPage /></PageVisibilityGate>}</Route>
+        <Route path="/become-reseller">{() => <PageVisibilityGate page="reseller"><BecomeResellerPage /></PageVisibilityGate>}</Route>
+        <Route path="/profile">{() => <PageVisibilityGate page="profile"><ProfilePage /></PageVisibilityGate>}</Route>
+        <Route path="/ranks">{() => <PageVisibilityGate page="ranks"><RanksPage /></PageVisibilityGate>}</Route>
+        <Route path="/free-card">{() => <PageVisibilityGate page="freeCard"><FreeCardPage /></PageVisibilityGate>}</Route>
+        <Route path="/support/create">{() => <PageVisibilityGate page="support"><SupportPage initialView="create" /></PageVisibilityGate>}</Route>
+        <Route path="/support">{() => <PageVisibilityGate page="support"><SupportPage /></PageVisibilityGate>}</Route>
         <Route path="/admin">
           {() => <AdminPage />}
         </Route>

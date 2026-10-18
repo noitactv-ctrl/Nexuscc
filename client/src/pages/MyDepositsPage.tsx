@@ -81,6 +81,10 @@ function statusTone(status: string) {
 }
 
 export default function MyDepositsPage() {
+  const { data: pageSettings } = useQuery<{ pages?: Record<string, boolean> }>({
+    queryKey: ["/api/settings/features"],
+    staleTime: 30000,
+  });
   const { data: deposits, isLoading, isError, refetch } = useQuery<Deposit[]>({
     queryKey: ["/api/deposits"],
   });
@@ -246,7 +250,7 @@ export default function MyDepositsPage() {
                     ? "You haven't made any deposits yet."
                     : "Try adjusting your search or status filter."}
                 </p>
-                {(deposits ?? []).length === 0 && (
+                {(deposits ?? []).length === 0 && pageSettings?.pages?.deposit !== false && (
                   <Link href="/deposit" className="mt-5 inline-flex h-10 items-center rounded-lg border border-[#383838] bg-[#151515] px-4 text-sm font-medium text-white transition-colors hover:bg-[#202020]">
                     Create a deposit
                   </Link>

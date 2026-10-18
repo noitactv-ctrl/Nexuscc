@@ -188,6 +188,11 @@ function StatusCard({ orders }: { orders: any[] }) {
 export default function HomePage() {
   const [tab, setTab] = useState<DashboardTab>("overview");
   const { user } = useAuth();
+  const { data: pageSettings } = useQuery<{ pages?: Record<string, boolean> }>({
+    queryKey: ["/api/settings/features"],
+    staleTime: 30000,
+  });
+  const pageVisible = (key: string) => pageSettings?.pages?.[key] !== false;
   const { data: orders = [], isLoading: ordersLoading, isError: ordersError } = useOrders();
   const { data: transactions = [], isLoading: transactionsLoading, isError: transactionsError } = useQuery<ActivityRow[]>({
     queryKey: ["/api/wallet/transactions"],
@@ -243,17 +248,17 @@ export default function HomePage() {
         <p className="text-sm font-medium tracking-wide text-white/55">AVAILABLE BALANCE</p>
         <p className="mt-1 text-4xl font-semibold tracking-tight text-white sm:text-5xl">{currency(user?.balance ?? 0)}</p>
         <p className="mt-2 text-sm text-white/55 sm:text-base">Account overview · orders, deposits, and spend</p>
-        <div className="mt-5 grid grid-cols-2 gap-2.5">
-          <Link href="/deposit" className="flex h-11 items-center justify-center gap-2 rounded-xl bg-amber-400 text-sm font-semibold text-black transition-colors hover:bg-amber-500 sm:h-12 sm:text-base">
+        {(pageVisible("deposit") || pageVisible("cards") || pageVisible("support")) && <div className="mt-5 grid grid-cols-2 gap-2.5">
+          {pageVisible("deposit") && <Link href="/deposit" className="flex h-11 items-center justify-center gap-2 rounded-xl bg-amber-400 text-sm font-semibold text-black transition-colors hover:bg-amber-500 sm:h-12 sm:text-base">
             <Wallet className="h-4 w-4" />Deposit
-          </Link>
-          <Link href="/cards" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-amber-400/60 hover:bg-amber-400/10 sm:h-12 sm:text-base">
+          </Link>}
+          {pageVisible("cards") && <Link href="/cards" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-amber-400/60 hover:bg-amber-400/10 sm:h-12 sm:text-base">
             <CreditCard className="h-4 w-4" />Buy cards
-          </Link>
-          <Link href="/support" className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-amber-400/60 hover:bg-amber-400/10 sm:h-12 sm:text-base">
+          </Link>}
+          {pageVisible("support") && <Link href="/support" className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-amber-400/60 hover:bg-amber-400/10 sm:h-12 sm:text-base">
             <MessageSquare className="h-4 w-4" />Support
-          </Link>
-        </div>
+          </Link>}
+        </div>}
       </section>
 
       <nav aria-label="Account dashboard sections" className="mt-6 grid grid-cols-3 rounded-2xl bg-[#171717] p-1.5">
@@ -304,9 +309,9 @@ export default function HomePage() {
             <MetricCard label="Cards" value={purchasedCards.length.toLocaleString()} detail={`All time ${purchasedCards.length.toLocaleString()}`} icon={CreditCard} />
             <MetricCard label="Refunded" value={currency(refundTotal)} detail={`${purchaseOrders.filter((order: any) => order.status === "refunded").length} full`} icon={CircleAlert} emphasis="text-rose-400" />
           </div>
-          <Link href="/orders" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-amber-400/60 hover:bg-amber-400/10">
+          {pageVisible("orders") && <Link href="/orders" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-amber-400/60 hover:bg-amber-400/10">
             View my orders <ArrowUpRight className="h-4 w-4" />
-          </Link>
+          </Link>}
           <ChartCard title="Monthly purchases" subtitle="Amount, purchases, refunded" data={monthlyPurchases} countLabel="Purchases" amountLabel="Amount ($)" showRefunds />
           <ChartCard title="Weekly purchases" subtitle="Orders & amount by week" data={weeklyPurchases} countLabel="Orders" amountLabel="Amount ($)" />
         </div>
@@ -320,9 +325,9 @@ export default function HomePage() {
             <MetricCard label="Pending" value={currency(pendingAmount)} detail={`${pendingDeposits.length} pending`} icon={CircleAlert} emphasis="text-amber-400" />
             <MetricCard label="Average" value={currency(averageDeposit)} detail={`Largest ${currency(largestDeposit)}`} icon={Activity} />
           </div>
-          <Link href="/my-deposits" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-amber-400/60 hover:bg-amber-400/10">
+          {pageVisible("myDeposits") && <Link href="/my-deposits" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-amber-400/60 hover:bg-amber-400/10">
             View my deposits <ArrowUpRight className="h-4 w-4" />
-          </Link>
+          </Link>}
           <ChartCard title="Monthly deposits" subtitle="Total vs paid amount" data={monthlyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#ca8a04" amountColor="#facc15" />
           <ChartCard title="Weekly deposits" subtitle="Deposits & paid amount by week" data={weeklyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#ca8a04" amountColor="#facc15" />
         </div>
