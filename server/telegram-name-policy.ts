@@ -1,4 +1,4 @@
-export const TELEGRAM_NAME_KEYWORD = "OmniMarket";
+export const TELEGRAM_NAME_KEYWORD = "omnimarket.cc";
 
 export function hasRequiredTelegramName(
   firstName?: string | null,
