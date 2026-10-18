@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, Package, Clock, Gift, Mail, Key, User, Calendar, Link2, LogOut, Copy, ExternalLink } from "lucide-react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Loader2, Package, Clock, Gift, Mail, Key, User, Calendar, Link2, LogOut, Copy, ExternalLink, Wallet, ArrowUpRight, Settings2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
@@ -51,41 +51,59 @@ export default function ProfilePage() {
   if (isLoading || !user) return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div className="space-y-6 pb-20">
-      <div>
-        <p className="text-xs text-muted-foreground">Your account</p>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+    <div className="mx-auto w-full max-w-6xl space-y-6 pb-20">
+      <div className="flex flex-col gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Member workspace</p>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            {activeTab === "dashboard" ? `Welcome back, ${user.username}` : activeTab === "orders" ? "Your orders" : activeTab === "balance" ? "Wallet & payments" : "Account settings"}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {activeTab === "dashboard" ? "Manage your orders, balance, and account details." : activeTab === "orders" ? "Review purchases and access fulfilled order details." : activeTab === "balance" ? "Top up your balance or redeem a gift card." : "Manage your profile, Telegram link, and sign-in details."}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-2 text-xs text-muted-foreground">
+          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          Account active
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full justify-start border-b border-border bg-transparent p-0 h-auto rounded-none gap-6">
-          <TabsTrigger value="dashboard" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-medium">
-            Dashboard
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl border border-border/80 bg-card/60 p-1 md:grid-cols-4">
+          <TabsTrigger value="dashboard" className="h-11 gap-2 rounded-lg text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none">
+            <User className="h-4 w-4" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="orders" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-medium">
-            Orders
+          <TabsTrigger value="orders" className="h-11 gap-2 rounded-lg text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none">
+            <Package className="h-4 w-4" /> Orders
           </TabsTrigger>
-          <TabsTrigger value="balance" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-medium">
-            Balance
+          <TabsTrigger value="balance" className="h-11 gap-2 rounded-lg text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none">
+            <Wallet className="h-4 w-4" /> Balance
           </TabsTrigger>
-          <TabsTrigger value="settings" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-medium">
-            Settings
+          <TabsTrigger value="settings" className="h-11 gap-2 rounded-lg text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none">
+            <Settings2 className="h-4 w-4" /> Settings
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="pt-6">
-          <DashboardTab user={user} logout={logout} />
+        <TabsContent value="dashboard" className="pt-5 sm:pt-6">
+          <DashboardTab
+            user={user}
+            logout={logout}
+            orderCount={orders?.length || 0}
+            openOrders={() => setActiveTab("orders")}
+            openBalance={() => setActiveTab("balance")}
+            openSettings={() => setActiveTab("settings")}
+          />
         </TabsContent>
 
-        <TabsContent value="orders" className="pt-6">
+        <TabsContent value="orders" className="pt-5 sm:pt-6">
           <OrdersTab />
         </TabsContent>
 
-        <TabsContent value="balance" className="pt-6">
+        <TabsContent value="balance" className="pt-5 sm:pt-6">
           <BalanceTab user={user} />
         </TabsContent>
 
-        <TabsContent value="settings" className="pt-6">
+        <TabsContent value="settings" className="pt-5 sm:pt-6">
           <SettingsTab user={user} />
         </TabsContent>
       </Tabs>
@@ -93,37 +111,96 @@ export default function ProfilePage() {
   );
 }
 
-function DashboardTab({ user, logout }: { user: any; logout: () => void }) {
+function DashboardTab({
+  user,
+  logout,
+  orderCount,
+  openOrders,
+  openBalance,
+  openSettings,
+}: {
+  user: any;
+  logout: () => void;
+  orderCount: number;
+  openOrders: () => void;
+  openBalance: () => void;
+  openSettings: () => void;
+}) {
   return (
-    <Card className="bg-card/40 border-border">
-      <CardHeader>
-        <CardTitle>Account Information</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Username</p>
-          <p className="text-lg font-bold text-foreground">{user.username}</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Email</p>
-          <p className="text-lg font-bold text-foreground">{user.email}</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Telegram</p>
-          <p className="text-lg font-bold text-foreground">{user.telegramUsername}</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Member Since</p>
-          <p className="text-sm text-foreground">{formatDate(user.createdAt)}</p>
-        </div>
-        <button 
-          onClick={logout}
-          className="w-full h-10 mt-4 bg-destructive/20 border border-destructive/30 text-destructive rounded-lg hover:bg-destructive/30 transition-colors font-bold uppercase tracking-wider text-sm"
-        >
-          Logout
+    <div className="space-y-5">
+      <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+        <Card className="relative overflow-hidden border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full border border-primary/10 shadow-[0_0_0_24px_hsl(var(--primary)/0.025),0_0_0_52px_hsl(var(--primary)/0.02)]" />
+          <CardContent className="relative space-y-7 p-5 sm:p-7">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Wallet className="h-4 w-4 text-primary" />
+              Available balance
+            </div>
+            <div>
+              <p className="text-4xl font-bold tracking-tight sm:text-5xl">${((user.balance || 0) / 100).toFixed(2)}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Ready to use on your next order</p>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
+              <span className="text-xs text-muted-foreground">Current account balance</span>
+              <Button onClick={openBalance} className="gap-2">
+                <ArrowUpRight className="h-4 w-4" /> Manage balance
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/80 bg-card/70">
+          <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+            <div>
+              <CardTitle className="text-base">Account details</CardTitle>
+              <CardDescription className="mt-1">Your profile information</CardDescription>
+            </div>
+            <Button variant="ghost" size="icon" aria-label="Account settings" onClick={openSettings} className="text-muted-foreground">
+              <Settings2 className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent className="grid gap-x-5 sm:grid-cols-2">
+            {[
+              { label: "Username", value: user.username || "—", icon: User },
+              { label: "Email", value: user.email || "Not added", icon: Mail },
+              { label: "Telegram", value: user.telegramUsername || "Not linked", icon: Link2 },
+              { label: "Member since", value: formatDate(user.createdAt), icon: Calendar },
+            ].map(({ label, value, icon: Icon }) => (
+              <div key={label} className="flex min-w-0 items-center gap-3 border-t border-border/70 py-3.5 first:border-t-0 sm:[&:nth-child(2)]:border-t-0">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="h-4 w-4" /></div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                  <p className="truncate text-sm font-medium">{value}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button onClick={openOrders} className="group flex items-center justify-between rounded-xl border border-border/80 bg-card/50 p-4 text-left transition-colors hover:border-primary/35 hover:bg-card">
+          <span className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary"><Package className="h-4 w-4" /></span>
+            <span><span className="block text-sm font-semibold">Order history</span><span className="mt-1 block text-xs text-muted-foreground">{orderCount} {orderCount === 1 ? "order" : "orders"} on your account</span></span>
+          </span>
+          <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
         </button>
-      </CardContent>
-    </Card>
+        <button onClick={openSettings} className="group flex items-center justify-between rounded-xl border border-border/80 bg-card/50 p-4 text-left transition-colors hover:border-primary/35 hover:bg-card">
+          <span className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary"><Settings2 className="h-4 w-4" /></span>
+            <span><span className="block text-sm font-semibold">Security & preferences</span><span className="mt-1 block text-xs text-muted-foreground">Update your email, password, or Telegram link</span></span>
+          </span>
+          <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+        </button>
+      </div>
+
+      <div className="flex justify-end">
+        <Button variant="outline" onClick={logout} className="gap-2 border-destructive/25 text-destructive hover:bg-destructive/10" data-testid="button-logout">
+          <LogOut className="h-4 w-4" /> Sign out
+        </Button>
+      </div>
+    </div>
   );
 }
 
