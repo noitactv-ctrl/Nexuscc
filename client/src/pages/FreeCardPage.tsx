@@ -45,7 +45,7 @@ export default function FreeCardPage() {
       <div className="mb-6 sm:mb-8">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400">VIP benefits</p>
         <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">Free Card</h1>
-        <p className="mt-1 text-sm text-white/50">Make a qualifying deposit this week and claim one random prepaid card.</p>
+        <p className="mt-1 text-sm text-white/50">Make a qualifying deposit this week and claim one random card.</p>
       </div>
 
       <section className="overflow-hidden rounded-[22px] border border-amber-400/25 bg-[#171717] shadow-[0_18px_60px_rgba(0,0,0,0.25)]">
@@ -57,7 +57,7 @@ export default function FreeCardPage() {
             <div>
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-amber-300" aria-hidden="true" />
-                <h2 className="font-display text-lg font-semibold text-white">Weekly prepaid card reward</h2>
+                <h2 className="font-display text-lg font-semibold text-white">Weekly card reward</h2>
               </div>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/55">
                 Deposit at least <strong className="font-semibold text-white">$10</strong> during the current UTC week to unlock one free card selected at random from Buy Cards inventory.

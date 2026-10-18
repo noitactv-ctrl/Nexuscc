@@ -204,7 +204,7 @@ export default function CardsPage() {
     queryKey: ["/api/cards", selectedBase],
     queryFn: async () => {
       const response = await fetch(selectedBase ? `/api/cards?baseId=${selectedBase}` : "/api/cards", { credentials: "include" });
-      if (!response.ok) throw new Error("Could not load prepaid cards");
+      if (!response.ok) throw new Error("Could not load cards");
       return response.json();
     },
     enabled: features?.cards !== false,
@@ -316,7 +316,7 @@ export default function CardsPage() {
     setSelectedIds(new Set());
     setPurchasing(null);
     if (successful) {
-      toast({ title: `${successful} prepaid card${successful === 1 ? "" : "s"} purchased` });
+      toast({ title: `${successful} card${successful === 1 ? "" : "s"} purchased` });
       setLocation("/orders");
     }
   };
@@ -472,7 +472,7 @@ export default function CardsPage() {
         {isLoading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>
         ) : filteredCards.length === 0 ? (
-          <div className="px-5 py-16 text-center text-sm text-white/50">No prepaid cards match these filters.</div>
+          <div className="px-5 py-16 text-center text-sm text-white/50">No cards match these filters.</div>
         ) : (
           <table className="w-full table-fixed border-collapse text-sm" style={{ minWidth: `${cardTableMinWidth}px` }}>
             <colgroup>
@@ -512,7 +512,7 @@ export default function CardsPage() {
                       type="checkbox"
                       checked={selectedIds.has(card.id)}
                       onChange={() => toggleSelection(card)}
-                      aria-label={`Select prepaid card ending ${formatCardNumber(card).slice(-4)}`}
+                      aria-label={`Select card ending ${formatCardNumber(card).slice(-4)}`}
                       className="h-4 w-4 accent-amber-400"
                       data-testid={`checkbox-card-${card.id}`}
                     />

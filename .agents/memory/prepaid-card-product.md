@@ -1,10 +1,10 @@
 ---
-name: Prepaid card product
-description: User clarification that cards sold through this project are prepaids.
+name: Card product terminology
+description: User-facing terminology for the card products sold through this project.
 ---
 
-Cards sold through this project are prepaids.
+In user-facing project copy, refer to the products as “cards.” Do not call them “prepaids” or “prepaid cards.”
 
-**Why:** The user clarified this while requesting the Cards page redesign.
+**Why:** The user requested consistent “cards” wording in project copy.
 
-**How to apply:** Treat the product as prepaid cards in project-specific UI work.
+**How to apply:** Use “card” or “cards” in labels, messages, and descriptions.

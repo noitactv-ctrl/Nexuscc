@@ -860,7 +860,7 @@ export async function registerRoutes(
       const card = cardResult.rows[0];
       if (!card) {
         await client.query("ROLLBACK");
-        return res.status(409).json({ message: "No prepaid cards are available to claim right now." });
+        return res.status(409).json({ message: "No cards are available to claim right now." });
       }
 
       const publicOrderId = `FREE-CARD-${randomBytes(8).toString("hex").toUpperCase()}`;
