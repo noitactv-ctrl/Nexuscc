@@ -146,6 +146,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           icon: ShoppingBag,
           entries: [
             ...(features?.cards !== false ? [{ href: "/cards", label: "Buy Cards", icon: CreditCard }] : []),
+            { href: "/banks", label: "Banks", icon: WalletCards },
             ...(features?.logs !== false ? [{ href: "/shop", label: "Buy Logs", icon: FileText }] : []),
             ...(features?.reseller !== false ? [{ href: "/become-reseller", label: "Become a Seller", icon: BookOpen }] : []),
           ],

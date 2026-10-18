@@ -24,6 +24,7 @@ import MyCodePage from "@/pages/MyCodePage";
 import CartPage from "@/pages/CartPage";
 import WorkerDashboardPage from "@/pages/WorkerDashboardPage";
 import CardsPage from "@/pages/CardsPage";
+import AchPage from "@/pages/AchPage";
 import CheckerPage from "@/pages/CheckerPage";
 import BecomeResellerPage from "@/pages/BecomeSellerPage";
 import ProfilePage from "@/pages/ProfilePage";
@@ -117,6 +118,8 @@ function Router() {
         <Route path="/cart" component={CartPage} />
         <Route path="/worker" component={WorkerDashboardPage} />
         <Route path="/cards" component={CardsPage} />
+        <Route path="/banks" component={AchPage} />
+        <Route path="/ach" component={AchPage} />
         <Route path="/games/plinko" component={PlinkoPage} />
         <Route path="/checker" component={CheckerPage} />
         <Route path="/become-reseller" component={BecomeResellerPage} />
