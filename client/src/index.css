@@ -104,6 +104,7 @@
 }
 
 .spider-login-card {
+  zoom: .95;
   padding: 24px 22px 25px;
   background: #080808;
   border-radius: 25px;
