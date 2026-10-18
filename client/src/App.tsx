@@ -31,6 +31,7 @@ import SupportPage from "@/pages/SupportPage";
 import RedeemCodePage from "@/pages/RedeemCodePage";
 import PlinkoPage from "@/pages/PlinkoPage";
 import RanksPage from "@/pages/RanksPage";
+import FreeCardPage from "@/pages/FreeCardPage";
 import HomePage from "@/pages/HomePage";
 import MyDepositsPage from "@/pages/MyDepositsPage";
 import CryptoPaymentPage from "@/pages/CryptoPaymentPage";
@@ -121,6 +122,7 @@ function Router() {
         <Route path="/become-reseller" component={BecomeResellerPage} />
         <Route path="/profile" component={ProfilePage} />
         <Route path="/ranks" component={RanksPage} />
+        <Route path="/free-card" component={FreeCardPage} />
         <Route path="/support/create">{() => <SupportPage initialView="create" />}</Route>
         <Route path="/support">{() => <SupportPage />}</Route>
         <Route path="/admin">

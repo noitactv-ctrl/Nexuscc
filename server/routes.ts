@@ -792,6 +792,112 @@ export async function registerRoutes(
     const nextRankAt = rank === "newbie" ? 10000 : rank === "regular" ? 50000 : rank === "vip" ? 100000 : null;
     res.json({ rank, discountPct, totalDeposited, nextRankAt });
   });
+  app.get("/api/user/free-card/status", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const userId = Number((req.user as any).id);
+    try {
+      const result = await pool.query(
+        `SELECT
+           COALESCE(SUM(amount) FILTER (WHERE amount > 0 AND type IN ('deposit', 'manual_deposit')), 0)::int AS deposited,
+           COUNT(*) FILTER (WHERE type = 'free_card_claim')::int AS claimed
+         FROM transactions
+         WHERE user_id = $1
+           AND created_at >= date_trunc('week', timezone('UTC', now()))`,
+        [userId],
+      );
+      const inventory = await pool.query(`SELECT COUNT(*)::int AS available FROM cards WHERE is_sold = false`);
+      const deposited = Number(result.rows[0]?.deposited ?? 0);
+      res.json({
+        deposited,
+        required: 1000,
+        eligible: deposited >= 1000,
+        claimed: Number(result.rows[0]?.claimed ?? 0) > 0,
+        available: Number(inventory.rows[0]?.available ?? 0) > 0,
+      });
+    } catch (error) {
+      console.error("Free card status lookup failed:", error);
+      res.status(503).json({ message: "Free Card status is temporarily unavailable." });
+    }
+  });
+
+  app.post("/api/user/free-card/claim", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const userId = Number((req.user as any).id);
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT id FROM users WHERE id = $1 FOR UPDATE", [userId]);
+      const depositResult = await client.query(
+        `SELECT COALESCE(SUM(amount), 0)::int AS deposited
+         FROM transactions
+         WHERE user_id = $1 AND amount > 0
+           AND type IN ('deposit', 'manual_deposit')
+           AND created_at >= date_trunc('week', timezone('UTC', now()))`,
+        [userId],
+      );
+      if (Number(depositResult.rows[0]?.deposited ?? 0) < 1000) {
+        await client.query("ROLLBACK");
+        return res.status(403).json({ message: "Deposit at least $10 this UTC week to claim a free card." });
+      }
+
+      const claimResult = await client.query(
+        `SELECT id FROM transactions
+         WHERE user_id = $1 AND type = 'free_card_claim'
+           AND created_at >= date_trunc('week', timezone('UTC', now()))
+         LIMIT 1`,
+        [userId],
+      );
+      if (claimResult.rowCount) {
+        await client.query("ROLLBACK");
+        return res.status(409).json({ message: "You have already claimed this week's free card." });
+      }
+
+      const cardResult = await client.query(
+        `SELECT id, card_number, masked_card, expiry, cvv, country, extras
+         FROM cards WHERE is_sold = false
+         ORDER BY random() LIMIT 1 FOR UPDATE SKIP LOCKED`,
+      );
+      const card = cardResult.rows[0];
+      if (!card) {
+        await client.query("ROLLBACK");
+        return res.status(409).json({ message: "No prepaid cards are available to claim right now." });
+      }
+
+      const publicOrderId = `FREE-CARD-${randomBytes(8).toString("hex").toUpperCase()}`;
+      const deliveryContent = [card.card_number, card.expiry, card.cvv, card.country, card.extras].filter(Boolean).join("|");
+      const orderResult = await client.query(
+        `INSERT INTO orders (order_id, user_id, status, total, paid_amount, delivery_content, payment_method)
+         VALUES ($1, $2, 'fulfilled', 0, 0, $3, 'free-card') RETURNING id`,
+        [publicOrderId, userId, deliveryContent],
+      );
+      const orderDbId = orderResult.rows[0].id;
+      const updatedCard = await client.query(
+        `UPDATE cards SET is_sold = true, user_id = $1 WHERE id = $2 AND is_sold = false RETURNING id`,
+        [userId, card.id],
+      );
+      if (!updatedCard.rowCount) throw new Error("Card was claimed by another user.");
+
+      await client.query(
+        `INSERT INTO order_items (order_id, variant_id, stock_item_id, card_id, item_type, price, quantity)
+         VALUES ($1, NULL, NULL, $2, 'card', 0, 1)`,
+        [orderDbId, card.id],
+      );
+      await client.query(
+        `INSERT INTO transactions (user_id, amount, type, description, order_id, created_at)
+         VALUES ($1, 0, 'free_card_claim', $2, $3, timezone('UTC', now()))`,
+        [userId, `Free Card weekly claim (${card.masked_card})`, orderDbId],
+      );
+
+      await client.query("COMMIT");
+      res.json({ orderId: publicOrderId });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      console.error("Free card claim failed:", error);
+      res.status(500).json({ message: "Could not claim a free card right now." });
+    } finally {
+      client.release();
+    }
+  });
 
   // User - Update Password
   app.patch("/api/user/password", passwordChangeLimiter, async (req, res) => {
@@ -1989,7 +2095,14 @@ export async function registerRoutes(
       await storage.updateUserBalance(userId, -finalPrice);
       await storage.createTransaction(userId, -finalPrice, "purchase", `Purchased card ${card.maskedCard}`);
 
-      const updatedCard = await storage.purchaseCard(cardId, userId, finalPrice);
+      let updatedCard;
+      try {
+        updatedCard = await storage.purchaseCard(cardId, userId, finalPrice);
+      } catch (error) {
+        await storage.updateUserBalance(userId, finalPrice);
+        await storage.createTransaction(userId, finalPrice, "refund", `Refund: card ${card.maskedCard} was no longer available`);
+        throw error;
+      }
       res.json(updatedCard);
     } catch (e: any) {
       res.status(400).json({ message: e.message });

@@ -1131,7 +1131,11 @@ export class DatabaseStorage implements IStorage {
     const [card] = await db.select().from(cards).where(and(eq(cards.id, cardId), eq(cards.isSold, false)));
     if (!card) throw new Error("Card not found or already sold");
     
-    const [updated] = await db.update(cards).set({ isSold: true, userId }).where(eq(cards.id, cardId)).returning();
+    const [updated] = await db.update(cards)
+      .set({ isSold: true, userId })
+      .where(and(eq(cards.id, cardId), eq(cards.isSold, false)))
+      .returning();
+    if (!updated) throw new Error("Card not found or already sold");
 
     const paidTotal = finalPrice ?? card.price;
 
