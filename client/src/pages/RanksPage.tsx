@@ -1,18 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check, Loader2, LockKeyhole, Trophy } from "lucide-react";
 
 const RANKS = [
-  { key: "newbie",  label: "Newbie",  emoji: "🌱", color: "text-white/45",   bar: "#ffffff40", border: "border-white/10",     glow: "",                     discount: 0,  threshold: 0,      next: 10000  },
-  { key: "regular", label: "Regular", emoji: "⭐", color: "text-red-400",   bar: "#ef4444",   border: "border-red-500/30",  glow: "shadow-red-500/10",   discount: 2,  threshold: 10000,  next: 50000  },
-  { key: "vip",     label: "VIP",     emoji: "💎", color: "text-purple-400", bar: "#c084fc",   border: "border-purple-500/30",glow: "shadow-purple-500/10", discount: 5,  threshold: 50000,  next: 100000 },
-  { key: "nyc",     label: "Silverback", emoji: "🫆", color: "text-amber-400", bar: "#fbbf24", border: "border-amber-500/30", glow: "shadow-amber-500/10", discount: 10, threshold: 100000, next: null   },
+  { key: "newbie", label: "Newbie", emoji: "🌱", discount: 0, threshold: 0 },
+  { key: "regular", label: "Regular", emoji: "⭐", discount: 2, threshold: 10000 },
+  { key: "vip", label: "VIP", emoji: "💎", discount: 5, threshold: 50000 },
+  { key: "nyc", label: "Silverback", emoji: "🫆", discount: 10, threshold: 100000 },
 ];
 
 function getRankIdx(totalDeposited: number) {
   if (totalDeposited >= 100000) return 3;
-  if (totalDeposited >= 50000)  return 2;
-  if (totalDeposited >= 10000)  return 1;
+  if (totalDeposited >= 50000) return 2;
+  if (totalDeposited >= 10000) return 1;
   return 0;
 }
 
@@ -29,121 +29,145 @@ export default function RanksPage() {
     : 100;
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] pb-20">
-      <div className="max-w-md sm:max-w-2xl lg:max-w-3xl mx-auto px-4 pt-6">
-
-        <div className="flex items-center gap-3 mb-8">
-          <button
-            onClick={() => setLocation("/profile")}
-            className="h-8 w-8 flex items-center justify-center rounded-full bg-[#0d0d0d] hover:bg-[#111]/5 transition-colors text-white/45 hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div>
-            <h1 className="text-lg font-bold text-white">Ranks</h1>
-            <p className="text-[10px] text-white/40 uppercase tracking-widest">deposit more, save more</p>
-          </div>
+    <main className="mx-auto w-full max-w-[1120px] px-4 pb-20 pt-4 sm:px-6 sm:pt-6">
+      <div className="mb-6 flex items-center gap-4 sm:mb-8">
+        <button
+          type="button"
+          onClick={() => setLocation("/profile")}
+          aria-label="Back to profile"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-white/65 transition-colors hover:border-amber-400/40 hover:bg-amber-400/10 hover:text-amber-300"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400">Member benefits</p>
+          <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">Ranks</h1>
+          <p className="mt-1 text-sm text-white/50">Deposit more, save more on every order.</p>
         </div>
+      </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          </div>
-        ) : (
-          <>
-            {/* Current rank hero */}
-            <div className={`rounded-2xl border ${current.border} bg-[#0d0d0d] p-5 mb-6 shadow-lg ${current.glow}`}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{current.emoji}</span>
-                  <div>
-                    <p className={`text-lg font-bold ${current.color}`}>{current.label}</p>
-                    <p className="text-[10px] text-white/40 uppercase tracking-widest">your rank</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  {current.discount > 0 ? (
-                    <>
-                      <p className={`text-2xl font-bold ${current.color}`}>{current.discount}%</p>
-                      <p className="text-[10px] text-white/40">off every order</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-2xl font-bold text-white/30">—</p>
-                      <p className="text-[10px] text-white/40">no discount yet</p>
-                    </>
-                  )}
+      {isLoading ? (
+        <div className="flex min-h-64 items-center justify-center rounded-[22px] border border-white/10 bg-[#141414]">
+          <Loader2 className="h-6 w-6 animate-spin text-amber-400" aria-label="Loading rank" />
+        </div>
+      ) : (
+        <>
+          <section className="mb-7 rounded-[22px] border border-amber-400/25 bg-[#171717] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.25)] sm:p-7">
+            <div className="flex flex-wrap items-start justify-between gap-5">
+              <div className="flex min-w-0 items-center gap-4">
+                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-amber-400/20 bg-amber-400/10 text-amber-300">
+                  <Trophy className="h-7 w-7" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Your current rank</p>
+                  <h2 className="mt-1 font-display text-2xl font-bold tracking-tight text-white">{current.label}</h2>
                 </div>
               </div>
-
-              {next ? (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] text-white/40">
-                    <span>${(totalDeposited / 100).toFixed(0)} deposited</span>
-                    <span>${(next.threshold / 100).toFixed(0)} for {next.label} {next.emoji}</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-[#0d0d0d] overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${progress}%`, backgroundColor: current.bar }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-white/30">
-                    ${((next.threshold - totalDeposited) / 100).toFixed(0)} more to unlock {next.discount}% discount
-                  </p>
-                </div>
-              ) : (
-                <p className="text-[11px] text-amber-400/60 mt-2">Max rank reached — {current.discount}% discount on every order automatically</p>
-              )}
+              <div className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] px-4 py-3 text-left sm:min-w-32 sm:text-right">
+                <p className="font-display text-2xl font-bold text-amber-300">
+                  {current.discount > 0 ? `${current.discount}%` : "—"}
+                </p>
+                <p className="mt-0.5 text-xs text-white/50">discount per order</p>
+              </div>
             </div>
 
-            {/* All tiers */}
-            <div className="space-y-2">
-              <p className="text-[9px] text-white/30 uppercase tracking-widest mb-3">All Tiers</p>
+            <div className="mt-7 border-t border-white/10 pt-5">
+              <div className="mb-3 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-xs text-white/45">Lifetime deposits</p>
+                  <p className="mt-1 font-display text-xl font-semibold text-white">${(totalDeposited / 100).toFixed(2)}</p>
+                </div>
+                {next ? (
+                  <p className="max-w-44 text-right text-xs leading-relaxed text-white/50">
+                    <span className="font-semibold text-white">${(next.threshold / 100).toLocaleString()}</span>
+                    {" "}to unlock {next.label}
+                  </p>
+                ) : (
+                  <p className="max-w-48 text-right text-xs leading-relaxed text-amber-300/80">
+                    Top rank unlocked. Your discount applies automatically.
+                  </p>
+                )}
+              </div>
+              <div
+                role="progressbar"
+                aria-label="Progress toward next rank"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progress}
+                className="h-2 overflow-hidden rounded-full bg-white/10"
+              >
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300 transition-[width] duration-700"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              {next && (
+                <p className="mt-2 text-xs text-white/45">
+                  ${(Math.max(0, next.threshold - totalDeposited) / 100).toLocaleString()} more to unlock {next.discount}% off
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section aria-labelledby="rank-tiers-heading">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2 id="rank-tiers-heading" className="font-display text-lg font-semibold text-white">All ranks</h2>
+                <p className="mt-1 text-sm text-white/45">Your deposit history unlocks automatic savings.</p>
+              </div>
+              <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/45">
+                Lifetime deposits
+              </span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
               {RANKS.map((rank, i) => {
                 const isUnlocked = i <= currentIdx;
                 const isCurrent = i === currentIdx;
                 return (
-                  <div
+                  <article
                     key={rank.key}
-                    className={`flex items-center justify-between px-4 py-3.5 rounded-xl border transition-all ${
+                    className={`flex items-center justify-between gap-4 rounded-2xl border p-4 transition-colors sm:p-5 ${
                       isCurrent
-                        ? `${rank.border} bg-[#0d0d0d]`
-                        : isUnlocked
-                        ? "border-white/10 bg-[#0d0d0d]"
-                        : "border-white/10 bg-transparent opacity-50"
-                    }`}
+                        ? "border-amber-400/35 bg-amber-400/[0.06]"
+                        : "border-white/10 bg-[#141414] hover:border-white/20"
+                    } ${!isUnlocked ? "opacity-55" : ""}`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg w-7 text-center">{rank.emoji}</span>
-                      <div>
-                        <p className={`text-sm font-bold ${isUnlocked ? rank.color : "text-white/40"}`}>
-                          {rank.label}
-                          {isCurrent && <span className="ml-2 text-[9px] font-normal text-white/40 uppercase tracking-widest">current</span>}
-                        </p>
-                        <p className="text-[10px] text-white/30">
-                          {rank.threshold === 0 ? "Default" : `$${(rank.threshold / 100).toFixed(0)}+ deposited`}
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${
+                        isCurrent ? "bg-amber-400/10 text-amber-300" : "bg-white/[0.04] text-white/55"
+                      }`}>
+                        {isUnlocked ? <span className="text-xl">{rank.emoji}</span> : <LockKeyhole className="h-4 w-4" aria-hidden="true" />}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className={`font-display text-base font-semibold ${isCurrent ? "text-amber-300" : "text-white"}`}>{rank.label}</h3>
+                          {isCurrent && (
+                            <span className="rounded-full bg-amber-400/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-300">Current</span>
+                          )}
+                          {isUnlocked && !isCurrent && <Check className="h-3.5 w-3.5 text-amber-400" aria-label="Unlocked" />}
+                        </div>
+                        <p className="mt-1 text-xs text-white/45">
+                          {rank.threshold === 0 ? "Starting rank" : `$${(rank.threshold / 100).toLocaleString()}+ deposited`}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      {rank.discount > 0 ? (
-                        <span className={`text-sm font-bold ${isUnlocked ? rank.color : "text-white/30"}`}>{rank.discount}% off</span>
-                      ) : (
-                        <span className="text-sm text-white/30">—</span>
-                      )}
+                    <div className="shrink-0 text-right">
+                      <p className={`font-display text-lg font-bold ${isUnlocked && rank.discount > 0 ? "text-amber-300" : "text-white/35"}`}>
+                        {rank.discount > 0 ? `${rank.discount}%` : "—"}
+                      </p>
+                      <p className="text-[10px] text-white/40">off</p>
                     </div>
-                  </div>
+                  </article>
                 );
               })}
             </div>
+          </section>
 
-            <p className="text-[10px] text-white/30 text-center mt-6 leading-relaxed">
-              Discounts apply automatically at checkout.<br />Based on your total lifetime deposits.
-            </p>
-          </>
-        )}
-      </div>
-    </div>
+          <p className="mt-6 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-center text-xs leading-relaxed text-white/45">
+            Discounts apply automatically at checkout and are based on your total lifetime deposits.
+          </p>
+        </>
+      )}
+    </main>
   );
 }
