@@ -3,8 +3,8 @@ name: Supabase runtime connection
 description: The difference between the agent's Supabase MCP access and the app's direct PostgreSQL runtime connection.
 ---
 
-The Supabase MCP connection is for agent-side inspection and SQL operations; it does not automatically replace the app's `DATABASE_URL` or provide a runtime database driver connection. This app uses Drizzle with `pg`, so switching it to Supabase requires a securely configured direct Supabase PostgreSQL connection string.
+The Supabase MCP connection is for agent-side inspection and SQL operations; it does not automatically replace the app's runtime PostgreSQL connection. This app uses Drizzle with `pg`. For Supabase runtime connections, prefer the transaction pooler: Supavisor session mode (`.pooler.supabase.com:5432`) has a small per-project session cap, while transaction mode multiplexes clients. The app automatically switches recognized session-pooler URLs to port 6543 and keeps its local pool bounded.
 
-**Why:** The app can successfully query the Replit-managed PostgreSQL database while the attached Supabase project is healthy, because they are separate data sources.
+**Why:** Concurrent app processes exhausted Supabase's 15-client session pool, preventing server startup. An unbounded application pool would worsen that limit, not remove it.
 
-**How to apply:** Before changing the database target, obtain the Supabase direct connection string through the secure secrets flow, then validate the existing schema and data before repointing the app.
+**How to apply:** Keep Supabase app traffic on transaction pooling where supported; do not raise the local pool to an unbounded size. Direct Supabase hosts and Replit `PG*` bindings are left unchanged.

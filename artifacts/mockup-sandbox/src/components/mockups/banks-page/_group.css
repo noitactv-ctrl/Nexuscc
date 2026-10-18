@@ -1,0 +1,23 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+:root {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 95%;
+  --card: 0 0% 7%;
+  --card-foreground: 0 0% 95%;
+  --primary: 45 93% 47%;
+  --primary-foreground: 0 0% 5%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 52%;
+  --border: 0 0% 16%;
+  --radius: 0.625rem;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+body {
+  background: #000;
+  color: #f2f2f2;
+  font-family: var(--font-body);
+}

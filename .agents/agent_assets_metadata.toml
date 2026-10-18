@@ -7,6 +7,7 @@ uri = "file://project-source.zip"
 type = "unspecified"
 title = "Project source ZIP"
 description = "Source project archive including application code, assets, configuration, and package lockfile. Dependencies, build output, Git history, caches, internal metadata, and environment-secret files are excluded."
+logical_id = "db5dc599-ec5a-4a73-86c5-433daaefc56e"
 
 [[outputs]]
 id = "Irpooq5aQN5ijVjDSSWrQ"
@@ -14,6 +15,7 @@ uri = "file://bot-files.zip"
 type = "unspecified"
 title = "Telegram bot source ZIP"
 description = "Telegram bot implementation and related drop/claim logic, routes, schema, tests, and package configuration. No secrets or dependency folders are included."
+logical_id = "5557418f-04a5-4222-860b-5e3401c0b566"
 
 [[outputs]]
 id = "FeLCzn5b6Rbl3zqrJ9EvE"
@@ -21,3 +23,4 @@ uri = "file://self-hosted-telegram-bot.zip"
 type = "unspecified"
 title = "Self-hosted Telegram bot ZIP"
 description = "Updated standalone bot bundle with entrypoint, build script, bot logic, database helpers, tests, package files, and the self-hosting/systemd guide. Secrets are excluded."
+logical_id = "ac849dd7-a8f5-41dd-a7b1-a7b338f17ada"

@@ -1,4 +1,5 @@
 import { createApp, initializeApp } from "./app";
+import { pool } from "./db";
 import { serveStatic } from "./static";
 
 const { app, httpServer } = createApp();
@@ -19,9 +20,22 @@ const { app, httpServer } = createApp();
     console.log(`[express] serving on port ${port}`);
   });
 
+  let shuttingDown = false;
   const shutdown = () => {
-    httpServer.close(() => process.exit(0));
-    setTimeout(() => process.exit(0), 3000);
+    if (shuttingDown) return;
+    shuttingDown = true;
+    const forceExit = setTimeout(() => process.exit(1), 5000);
+    forceExit.unref();
+    httpServer.close(async () => {
+      try {
+        await pool.end();
+      } catch (error) {
+        console.error("[db] Failed to close database pool cleanly:", error);
+      } finally {
+        clearTimeout(forceExit);
+        process.exit(0);
+      }
+    });
   };
   process.on("SIGTERM", shutdown);
   process.on("SIGINT", shutdown);

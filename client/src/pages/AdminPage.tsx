@@ -27,6 +27,7 @@ const adminSections = [
   { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { id: "products",  label: "Products",  Icon: Package },
   { id: "cards", label: "Cards",      Icon: CreditCard },
+  { id: "ach", label: "Banks (ACH)", Icon: Wallet },
   { id: "orders",   label: "Orders",     Icon: ShoppingBag },
   { id: "cashapp",  label: "Payments",   Icon: DollarSign },
   { id: "deposits", label: "Deposits",   Icon: Wallet },
@@ -157,6 +158,7 @@ export default function AdminPage() {
           {activeSection === "dashboard"    && <DashboardSection />}
           {activeSection === "products"     && <ProductsSection />}
           {activeSection === "cards"        && <AdminCardsSection />}
+          {activeSection === "ach"          && <AdminAchSection />}
           {activeSection === "orders"       && <OrdersSection />}
           {activeSection === "cashapp"      && <CashAppSection />}
           {activeSection === "users"        && <UsersSection />}
@@ -3554,8 +3556,10 @@ function AdminAchSection() {
   const [balance, setBalance] = useState("");
   const [fullItem, setFullItem] = useState("");
   const [price, setPrice] = useState("");
+  const [bulkInput, setBulkInput] = useState("");
 
   const { data: achList, isLoading } = useQuery<any[]>({ queryKey: ["/api/ach"] });
+  const bulkEntries = bulkInput.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
 
   const addMutation = useMutation({
     mutationFn: async () => {
@@ -3569,6 +3573,22 @@ function AdminAchSection() {
       toast({ title: "ACH added" });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const bulkAddMutation = useMutation({
+    mutationFn: async () => {
+      if (bulkEntries.length === 0) throw new Error("Paste at least one ACH entry");
+      const res = await apiRequest("POST", "/api/admin/ach/bulk", { rawContent: bulkInput });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to bulk add ACH entries");
+      return data as { addedCount: number };
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["/api/ach"] });
+      setBulkInput("");
+      toast({ title: `${data.addedCount} ACH entr${data.addedCount === 1 ? "y" : "ies"} added` });
+    },
+    onError: (e: Error) => toast({ title: "Bulk add failed", description: e.message, variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
@@ -3637,6 +3657,36 @@ function AdminAchSection() {
           data-testid="btn-add-ach"
         >
           {addMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add ACH"}
+        </Button>
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-white/10 bg-[#111] p-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-white/45">Bulk add ACH</p>
+          <p className="mt-1 text-[10px] text-white/35">Paste one entry per line, up to 100 entries.</p>
+        </div>
+        <Textarea
+          value={bulkInput}
+          onChange={e => setBulkInput(e.target.value)}
+          placeholder={"Chase|4,990|12.00|routing|account|name|address\nWells Fargo|3,298.09|10.00|routing|account|name|address"}
+          rows={5}
+          className="resize-y border-white/10 bg-black/20 font-mono text-xs text-white placeholder:text-white/30"
+          data-testid="input-ach-bulk"
+        />
+        <p className="text-[10px] text-white/35">
+          Format: Bank | Balance | Price ($) | Full item. Pipes in the full item are preserved. Blank lines are ignored.
+          {bulkEntries.length > 0 && <span className="ml-2 text-white/55">{bulkEntries.length} entries detected</span>}
+        </p>
+        <Button
+          onClick={() => bulkAddMutation.mutate()}
+          disabled={bulkAddMutation.isPending || bulkEntries.length === 0}
+          size="sm"
+          className="w-full"
+          data-testid="btn-bulk-add-ach"
+        >
+          {bulkAddMutation.isPending
+            ? <Loader2 className="h-4 w-4 animate-spin" />
+            : bulkEntries.length > 0 ? `Add ${bulkEntries.length} ACH` : "Add ACH"}
         </Button>
       </div>
 

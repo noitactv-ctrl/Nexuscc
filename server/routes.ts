@@ -1785,12 +1785,21 @@ export async function registerRoutes(
   app.get("/api/card-bases", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     const user = req.user as any;
-    const bases = user?.role === "admin"
-      ? await storage.getCardBasesWithCount()
-      : user?.isWorker
-        ? await storage.getCardBasesWithCount(Number(user.id))
-        : [];
-    res.json(bases);
+    if (user?.role === "admin") {
+      return res.json(await storage.getCardBasesWithCount());
+    }
+    if (user?.isWorker) {
+      return res.json(await storage.getCardBasesWithCount(Number(user.id)));
+    }
+
+    // Customers need the public base list to browse and filter the Buy Cards
+    // catalog, but must not receive seller ownership or revenue details.
+    const publicBases = await storage.getCardBasesWithCount();
+    res.json(
+      publicBases
+        .filter((base) => base.count > 0)
+        .map(({ id, name, count }) => ({ id, name, count })),
+    );
   });
 
   app.post("/api/admin/card-bases", async (req, res) => {
@@ -2880,6 +2889,46 @@ export async function registerRoutes(
       price: Math.round(parseFloat(String(price)) * 100),
     });
     res.status(201).json(ach);
+  });
+
+  app.post("/api/admin/ach/bulk", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const rawContent = typeof req.body?.rawContent === "string" ? req.body.rawContent : "";
+    const lines = rawContent.split(/\r?\n/).map((line: string) => line.trim()).filter(Boolean);
+    if (lines.length === 0) return res.status(400).json({ message: "Paste at least one ACH entry." });
+    if (lines.length > 100) return res.status(400).json({ message: "Bulk add is limited to 100 entries at a time." });
+
+    const entries: Array<{ bankName: string; balance: string; fullItem: string; price: number }> = [];
+    for (const [index, line] of lines.entries()) {
+      const [rawBankName, rawBalance, rawPrice, ...fullItemParts] = line.split("|");
+      const bankName = rawBankName?.trim();
+      const balance = rawBalance?.trim().replace(/^\$/, "");
+      const fullItem = fullItemParts.join("|").trim();
+      const priceText = rawPrice?.trim().replace(/[$,]/g, "");
+      const priceDollars = priceText ? Number(priceText) : NaN;
+
+      if (!bankName || !balance || !fullItem || !Number.isFinite(priceDollars) || priceDollars <= 0) {
+        return res.status(400).json({
+          message: `Line ${index + 1} is invalid. Use Bank|Balance|Price|full item.`,
+        });
+      }
+      const price = Math.round(priceDollars * 100);
+      if (!Number.isSafeInteger(price) || price <= 0) {
+        return res.status(400).json({ message: `Line ${index + 1} has an invalid price.` });
+      }
+      entries.push({ bankName, balance, fullItem, price });
+    }
+
+    try {
+      const created = await db.insert(achs).values(entries).returning({ id: achs.id });
+      return res.status(201).json({ addedCount: created.length });
+    } catch (error) {
+      console.error("[ach] bulk add failed:", error);
+      return res.status(500).json({ message: "Could not add ACH entries. No entries were added." });
+    }
   });
 
   app.post("/api/ach/:id/purchase", async (req, res) => {
