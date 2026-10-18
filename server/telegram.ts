@@ -5,7 +5,9 @@ import { log } from "./logger.js";
 import { CLAIM_LIMIT_PER_WINDOW, getClaimAccess } from "./reward-claim-policy.js";
 import { MAX_LICENSE_FILE_BYTES, parseLicenseKeyFile } from "./license-key-file.js";
 import { hasRequiredTelegramName, TELEGRAM_NAME_KEYWORD as NAME_KEYWORD } from "./telegram-name-policy.js";
+import { isRequiredChannelMember } from "./telegram-channel-policy.js";
 import { ensureTelegramReferralSchema } from "./telegram-referrals.js";
+import { payPendingDailyReferralStartBonuses } from "./telegram-referral-rewards.js";
 
 const BROADCAST_MAX_CHARS = 1_000;
 const BROADCAST_MAX_RECIPIENTS = 500;
@@ -58,7 +60,7 @@ function hasKeyword(ctx: Context) {
 function botKeyboard() {
   return new InlineKeyboard()
     .text("💸 Daily reward", "daily_reward")
-    .text("🔗 Daily referrals", "daily_referrals")
+    .text("💰 Earn $1 per referral", "daily_referrals")
     .row()
     .text("🎁 Claim Drops", "claim_reward")
     .text("👤 Credit status", "account_status")
@@ -66,42 +68,60 @@ function botKeyboard() {
     .url("📣 Join our channel", getDailyJoinUrl() || getJoinUrl());
 }
 
-async function dailyGate(ctx: Context, bot: Bot) {
+async function requiredChannelGate(ctx: Context, bot: Bot) {
   const channelId = getDailyChannelId();
   const joinUrl = getDailyJoinUrl();
   const userId = ctx.from?.id;
-  if (!channelId || !userId) {
-    await ctx.reply("Daily rewards are not configured yet. Please try again later.");
+  if (!userId) return false;
+  if (!channelId) {
+    console.error("[telegram] required channel gate blocked an update: channel ID is not configured");
+    await ctx.reply("The required OmniMarket channel is not configured right now. Please try again later.");
     return false;
   }
+
+  let isMember = false;
   try {
     const member = await bot.api.getChatMember(channelId, userId);
-    const joined = member.status === "creator" || member.status === "administrator" ||
-      member.status === "member" || (member.status === "restricted" && member.is_member);
-    if (joined) return true;
+    isMember = isRequiredChannelMember(member.status, member.status === "restricted" ? member.is_member : undefined);
   } catch (error: any) {
-    console.error("[telegram] daily rewards membership check failed:", error?.message ?? error);
+    console.error("[telegram] required channel membership check failed:", error?.message ?? error);
+    const keyboard = new InlineKeyboard();
+    if (joinUrl) keyboard.url("📣 Join the required channel", joinUrl).row();
+    keyboard.text("✅ Check membership", "required_channel_check");
+    await ctx.reply(
+      "I couldn't verify your channel membership. Join the required OmniMarket channel if needed, then tap “Check membership” or send /start again.",
+      { reply_markup: keyboard },
+    );
+    return false;
   }
+
+  if (isMember) return true;
   const keyboard = new InlineKeyboard();
-  if (joinUrl) keyboard.url("📣 Join the channel", joinUrl).row();
-  keyboard.text("✅ I've joined — check again", "daily_check_join");
-  await ctx.reply("🔒 Join the OmniMarket channel before using daily rewards, then tap the button below to verify.", { reply_markup: keyboard });
+  if (joinUrl) keyboard.url("📣 Join the required channel", joinUrl).row();
+  keyboard.text("✅ Check membership", "required_channel_check");
+  await ctx.reply(
+    "🔒 Join the required OmniMarket channel before using any bot command. After joining, tap “Check membership” or send /start again.",
+    { reply_markup: keyboard },
+  );
   return false;
 }
 
 async function linkDailyRewards(ctx: Context, bot: Bot, providedCode?: string) {
   if (ctx.chat?.type !== "private") {
-    await ctx.reply("For account security, link your OmniMarket account with the bot in a private chat.");
+    await ctx.reply(
+      "To link your account: on the OmniMarket website open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to @OmniMarketCCBot in a private chat.",
+    );
     return;
   }
-  if (!(await dailyGate(ctx, bot))) return;
   if (!hasKeyword(ctx)) {
     await ctx.reply(`Add ${NAME_KEYWORD} to your first or last name before linking your account.`);
     return;
   }
   const code = (providedCode ?? getMatch(ctx)).replace(/\s+/g, "").toUpperCase();
   if (!/^[A-F0-9]{10}$/.test(code)) {
-    await ctx.reply("Use the one-time code from your OmniMarket profile: /link CODE");
+    await ctx.reply(
+      "Get your one-time code on the OmniMarket website: Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE here in this private chat.",
+    );
     return;
   }
   const codeHash = createHash("sha256").update(code).digest("hex");
@@ -117,7 +137,9 @@ async function linkDailyRewards(ctx: Context, bot: Bot, providedCode?: string) {
     const userId = result.rows[0]?.user_id;
     if (!userId) {
       await client.query("ROLLBACK");
-      await ctx.reply("That code is invalid or expired. Generate a new one in your OmniMarket profile.");
+      await ctx.reply(
+        "That code is invalid or expired. On the OmniMarket website open Profile → Link Telegram Account and generate a new code.",
+      );
       return;
     }
     const alreadyLinked = await client.query(
@@ -139,14 +161,27 @@ async function linkDailyRewards(ctx: Context, bot: Bot, providedCode?: string) {
       [codeHash],
     );
     await client.query("COMMIT");
-    await ctx.reply("✅ Your OmniMarket account is securely linked. Eligible rewards are credited automatically each day.");
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
     console.error("[telegram] daily rewards account linking failed:", error);
     await ctx.reply("Could not link your account right now. Please generate a new code and try again.");
+    return;
   } finally {
     client.release();
   }
+
+  let paidReferralCount = 0;
+  try {
+    paidReferralCount = await payPendingDailyReferralStartBonuses(String(ctx.from!.id));
+  } catch (error) {
+    console.error("[telegram] pending referral bonus payout failed after account linking:", error);
+  }
+  const bonusNote = paidReferralCount > 0
+    ? `\n\n💰 We also added $${paidReferralCount.toFixed(2)} for ${paidReferralCount} new referral${paidReferralCount === 1 ? "" : "s"}.`
+    : "";
+  await ctx.reply(
+    `✅ Your OmniMarket account is securely linked. Eligible daily rewards are credited automatically. Share /dailyref to earn $1 for each new user who starts the bot through your link.${bonusNote}`,
+  );
 }
 
 async function grantDailyReward(chatId: string) {
@@ -197,39 +232,14 @@ async function grantDailyReward(chatId: string) {
        VALUES ($1, $2, 'daily_reward', 'Telegram daily reward')`,
       [userId, amountCents],
     );
-    const referralPayouts = await client.query(
-      `INSERT INTO telegram_daily_referral_payouts
-         (referral_id, reward_date, referrer_user_id, referred_user_id, amount_cents)
-       SELECT r.id, CURRENT_DATE, referrer.user_id, $2, 10
-       FROM telegram_daily_reward_referrals r
-       JOIN telegram_daily_reward_accounts referrer ON referrer.chat_id = r.referrer_chat_id
-       JOIN users referrer_user ON referrer_user.id = referrer.user_id AND referrer_user.is_banned = FALSE
-       WHERE r.referred_chat_id = $1
-       ON CONFLICT (referral_id, reward_date) DO NOTHING
-       RETURNING referrer_user_id`,
-      [chatId, userId],
-    );
-    for (const payout of referralPayouts.rows) {
-      await client.query(`UPDATE users SET balance = balance + 10 WHERE id = $1`, [payout.referrer_user_id]);
-      await client.query(
-        `INSERT INTO transactions (user_id, amount, type, description)
-         VALUES ($1, 10, 'daily_referral_reward', 'Daily reward from an active referral')`,
-        [payout.referrer_user_id],
-      );
-    }
     await client.query("COMMIT");
-    return { status: "paid" as const, amountCents, referrerCount: referralPayouts.rowCount ?? 0 };
+    return { status: "paid" as const, amountCents };
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
     throw error;
   } finally {
     client.release();
   }
-}
-
-function isDailyGateMember(status: string, isMember?: boolean) {
-  return status === "creator" || status === "administrator" || status === "member" ||
-    (status === "restricted" && isMember === true);
 }
 
 export async function runDailyRewardSweep(bot: Bot) {
@@ -261,7 +271,7 @@ export async function runDailyRewardSweep(bot: Bot) {
       const chatId = String(candidate.chat_id);
       try {
         const member = await bot.api.getChatMember(channelId, Number(chatId));
-        if (!isDailyGateMember(member.status, member.status === "restricted" ? member.is_member : undefined)) continue;
+        if (!isRequiredChannelMember(member.status, member.status === "restricted" ? member.is_member : undefined)) continue;
         if (!hasRequiredTelegramName(member.user.first_name, member.user.last_name)) continue;
         const result = await grantDailyReward(chatId);
         if (result.status === "paid") {
@@ -298,7 +308,6 @@ async function claimDailyReward(ctx: Context, bot: Bot) {
     await ctx.reply("Check daily rewards in a private chat with the bot.");
     return;
   }
-  if (!(await dailyGate(ctx, bot))) return;
   if (!hasKeyword(ctx)) {
     await ctx.reply(`Keep ${NAME_KEYWORD} in your first or last name to earn the daily reward.`);
     return;
@@ -307,7 +316,9 @@ async function claimDailyReward(ctx: Context, bot: Bot) {
   try {
     const result = await grantDailyReward(chatId);
     if (result.status === "unlinked") {
-      await ctx.reply("Link your OmniMarket account first. Open your profile settings, create a daily-rewards code, then send /link CODE here.");
+      await ctx.reply(
+        "Link your account first: on the OmniMarket website open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to @OmniMarketCCBot in a private chat.",
+      );
       return;
     }
     if (result.status === "ineligible") {
@@ -650,6 +661,10 @@ function registerDropHandlers(bot: Bot, token: string) {
   const schemaReady = Promise.all([ensureDropSchema(), ensureTelegramReferralSchema()]).catch((error) => {
     console.error("[telegram] free-credit schema setup failed:", error);
   });
+  bot.use(async (ctx, next) => {
+    if (!(await requiredChannelGate(ctx, bot))) return;
+    return next();
+  });
   bot.use(async (_ctx, next) => {
     await schemaReady;
     return next();
@@ -660,7 +675,7 @@ function registerDropHandlers(bot: Bot, token: string) {
     const text = (ctx.message as { text?: string } | undefined)?.text ?? "";
     const callback = ctx.callbackQuery?.data ?? "";
     const dailyFlow = text.startsWith("/start") || text.startsWith("/daily") || text.startsWith("/link") ||
-      callback.startsWith("daily_");
+      callback.startsWith("daily_") || callback.startsWith("required_channel_");
     if (dailyFlow) return next();
     if (!groupId || !userId) return next();
     try {
@@ -688,12 +703,22 @@ function registerDropHandlers(bot: Bot, token: string) {
     }
     if (match.startsWith("daily_")) {
       const referrerChatId = match.slice(6).trim();
-      if (/^\d+$/.test(referrerChatId) && referrerChatId !== chatId) {
-        await pool.query(
-          `INSERT INTO telegram_daily_reward_referrals (referrer_chat_id, referred_chat_id)
-           VALUES ($1, $2) ON CONFLICT (referred_chat_id) DO NOTHING`,
+      if (isNew && /^\d+$/.test(referrerChatId) && referrerChatId !== chatId) {
+        const referral = await pool.query(
+          `INSERT INTO telegram_daily_reward_referrals
+             (referrer_chat_id, referred_chat_id, start_bonus_eligible)
+           VALUES ($1, $2, TRUE)
+           ON CONFLICT (referred_chat_id) DO NOTHING
+           RETURNING id`,
           [referrerChatId, chatId],
         );
+        if (referral.rowCount) {
+          try {
+            await payPendingDailyReferralStartBonuses(referrerChatId);
+          } catch (error) {
+            console.error("[telegram] referral start bonus payout failed:", error);
+          }
+        }
       }
     }
     if (match.startsWith("link_")) {
@@ -703,7 +728,9 @@ function registerDropHandlers(bot: Bot, token: string) {
     await ctx.reply(
       `👋 Welcome to OmniMarket rewards!\n\n` +
       `Join our channel, keep *${NAME_KEYWORD}* in your Telegram first or last name, and link your OmniMarket account to receive $1.00 automatically each qualifying day.\n\n` +
-      `/daily — check today's reward status\n/dailyref — get your daily-rewards referral link\n/link CODE — link your OmniMarket account\n\n` +
+      `🔗 *Link your account:* On the OmniMarket website, open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to this bot in a private chat.\n\n` +
+      `💰 *Highly recommended:* Share your /dailyref link. Earn a one-time $1 for each new user who starts the bot through your link. You must link your account to receive referral payouts.\n\n` +
+      `/daily — check today's reward status\n/dailyref — get your recommended $1 referral link\n/link CODE — finish linking with your website code\n\n` +
       `Claim drops with /claim.`,
       { ...MD, reply_markup: botKeyboard() },
     );
@@ -715,16 +742,20 @@ function registerDropHandlers(bot: Bot, token: string) {
       await ctx.reply("Request your referral link in a private chat with the bot.");
       return;
     }
-    if (!(await dailyGate(ctx, bot))) return;
     if (!hasKeyword(ctx)) {
       await ctx.reply(`Keep ${NAME_KEYWORD} in your first or last name before sharing a reward link.`);
       return;
     }
     const chatId = getChatId(ctx);
+    try {
+      await payPendingDailyReferralStartBonuses(chatId);
+    } catch (error) {
+      console.error("[telegram] pending referral bonus payout failed:", error);
+    }
     const info = await bot.api.getMe();
     await ctx.reply(
-      `Share this referral link now—even before linking your OmniMarket account:\nhttps://t.me/${info.username}?start=daily_${chatId}\n\n` +
-      `You and your referred friend can earn an extra $0.10/day while eligible. Link your account with /link CODE to receive rewards.`,
+      `⭐ Highly recommended: share this referral link. You earn $1 once for each new user who starts the bot through it:\nhttps://t.me/${info.username}?start=daily_${chatId}\n\n` +
+      `You can share before linking your account, but link your OmniMarket account to receive the $1 in your balance. Your friend can also earn an extra $0.10 per qualifying day.`,
     );
   });
   bot.callbackQuery("daily_reward", async (ctx) => {
@@ -737,22 +768,27 @@ function registerDropHandlers(bot: Bot, token: string) {
       await ctx.reply("Request your referral link in a private chat with the bot.");
       return;
     }
-    if (!(await dailyGate(ctx, bot))) return;
     if (!hasKeyword(ctx)) {
       await ctx.reply(`Keep ${NAME_KEYWORD} in your Telegram first or last name before sharing your link.`);
       return;
     }
     const chatId = getChatId(ctx);
+    try {
+      await payPendingDailyReferralStartBonuses(chatId);
+    } catch (error) {
+      console.error("[telegram] pending referral bonus payout failed:", error);
+    }
     const info = await bot.api.getMe();
     await ctx.reply(
-      `Your daily-rewards referral link (you can share it before linking your account):\n` +
+      `⭐ Highly recommended: earn $1 once for each new user who starts the bot through your daily-rewards referral link:\n` +
       `https://t.me/${info.username}?start=daily_${chatId}\n\n` +
-      `Link your account with /link CODE to receive eligible daily rewards and referral payouts.`,
+      `You can share this before linking. To receive payouts, open the OmniMarket website → Profile → Link Telegram Account → Generate Telegram link code, then send /link CODE to this bot in a private chat.\n\n` +
+      `Your friend can earn an extra $0.10 per qualifying day.`,
     );
   });
-  bot.callbackQuery("daily_check_join", async (ctx) => {
+  bot.callbackQuery("required_channel_check", async (ctx) => {
     await ctx.answerCallbackQuery();
-    await claimDailyReward(ctx, bot);
+    await ctx.reply("✅ Channel membership confirmed. Send /start or use any bot command.");
   });
   bot.command("claim", sendClaim);
   bot.command("status", sendStatus);
@@ -775,7 +811,15 @@ function registerDropHandlers(bot: Bot, token: string) {
   });
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      `*OmniMarket Drops*\n\n/claim — claim drops once per 24 hours\n/status — view your status\n/ref — get a referral link\n/help — show this help\n\nAdmins can upload a .txt or .csv file with one drop per line.`,
+      `*OmniMarket Bot Help*\n\n` +
+      `*Link your account for daily rewards:*\n` +
+      `On the OmniMarket website open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to this bot in a private chat.\n\n` +
+      `*Daily rewards:*\n` +
+      `/daily — check today's reward\n` +
+      `/dailyref — get a highly recommended referral link; earn $1 once for each new user who starts the bot through it\n\n` +
+      `*Drops:*\n` +
+      `/claim — claim drops once per 24 hours\n/status — view drop status\n/ref — get a drop referral link\n\n` +
+      `Admins can upload a .txt or .csv file with one drop per line.`,
       { ...MD, reply_markup: botKeyboard() },
     );
   });
@@ -799,8 +843,8 @@ export function startTelegramBot() {
   bot.api.setMyCommands([
     { command: "start", description: "Open the OmniMarket Drops menu" },
     { command: "daily", description: "Check today's automatic OmniMarket reward" },
-    { command: "dailyref", description: "Get your daily reward referral link" },
-    { command: "link", description: "Link your OmniMarket account with a one-time code" },
+    { command: "dailyref", description: "Earn $1 for each new user who starts the bot" },
+    { command: "link", description: "Link your account with a code from website Profile" },
     { command: "claim", description: "Claim drops" },
     { command: "status", description: "View credit status" },
     { command: "ref", description: "Get a referral link" },

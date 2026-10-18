@@ -72,9 +72,14 @@ export async function ensureTelegramReferralSchema() {
       id BIGSERIAL PRIMARY KEY,
       referrer_chat_id TEXT NOT NULL,
       referred_chat_id TEXT NOT NULL UNIQUE,
+      start_bonus_eligible BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       CHECK (referrer_chat_id <> referred_chat_id)
     )
+  `);
+  await pool.query(`
+    ALTER TABLE telegram_daily_reward_referrals
+    ADD COLUMN IF NOT EXISTS start_bonus_eligible BOOLEAN NOT NULL DEFAULT FALSE
   `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS telegram_daily_referral_payouts (
@@ -86,6 +91,15 @@ export async function ensureTelegramReferralSchema() {
       amount_cents INTEGER NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       UNIQUE(referral_id, reward_date)
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS telegram_daily_referral_start_payouts (
+      id BIGSERIAL PRIMARY KEY,
+      referral_id BIGINT NOT NULL UNIQUE REFERENCES telegram_daily_reward_referrals(id) ON DELETE CASCADE,
+      referrer_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      amount_cents INTEGER NOT NULL CHECK (amount_cents = 100),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
 }

@@ -14,6 +14,7 @@ import { db, pool } from "./db.js";
 import { eq, and, ne, desc, sql } from "drizzle-orm";
 import { MAX_LICENSE_FILE_BYTES, parseLicenseKeyFile } from "./license-key-file.js";
 import { ensureDropSchema } from "./telegram.js";
+import { ensureTelegramReferralSchema } from "./telegram-referrals.js";
 import { formatOrdersAsText } from "./order-export.js";
 import { authorizeAndVoidCard, getAuthorizeNetClientConfig, getAuthorizeNetConfig } from "./authorize-net.js";
 import {
@@ -756,10 +757,11 @@ export async function registerRoutes(
 
   app.post("/api/telegram/daily-rewards/link-code", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
-    const code = randomBytes(5).toString("hex").toUpperCase();
-    const codeHash = createHash("sha256").update(code).digest("hex");
-    const userId = Number((req.user as any).id);
     try {
+      await ensureTelegramReferralSchema();
+      const code = randomBytes(5).toString("hex").toUpperCase();
+      const codeHash = createHash("sha256").update(code).digest("hex");
+      const userId = Number((req.user as any).id);
       await pool.query(
         `DELETE FROM telegram_daily_reward_link_codes WHERE user_id = $1 AND consumed_at IS NULL`,
         [userId],

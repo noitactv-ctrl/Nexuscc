@@ -173,10 +173,13 @@ function TelegramLinkSettings() {
         </CardHeader>
         <CardContent className="space-y-5">
           <ol className="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
-            <li>Join the OmniMarket rewards channel.</li>
+            <li>In Telegram, join the OmniMarket rewards channel.</li>
             <li>Put <span className="font-semibold text-foreground">OmniMarket</span> in your Telegram first or last name.</li>
-            <li>Generate a code below and send <span className="font-mono text-foreground">/link CODE</span> to the bot in a private chat.</li>
+            <li>Generate a code below, then open the bot in a private chat and send <span className="font-mono text-foreground">/link CODE</span>.</li>
           </ol>
+          <p className="text-sm text-muted-foreground">
+            Link here to receive your $1 referral bonuses in your OmniMarket balance. You can share your referral link before linking.
+          </p>
           <Button size="lg" onClick={createDailyRewardCode} disabled={dailyRewardCodeLoading} className="w-full sm:w-auto">
             {dailyRewardCodeLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2 className="mr-2 h-4 w-4" />}
             {dailyRewardCodeLoading ? "Creating code..." : "Generate Telegram link code"}
