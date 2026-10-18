@@ -55,15 +55,15 @@ export default function ProfilePage() {
       <div className="flex flex-col gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Member workspace</p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="break-words text-2xl font-bold tracking-tight [overflow-wrap:anywhere] sm:text-4xl">
             {activeTab === "dashboard" ? `Welcome back, ${user.username}` : activeTab === "orders" ? "Your orders" : activeTab === "balance" ? "Wallet & payments" : "Account settings"}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {activeTab === "dashboard" ? "Manage your orders, balance, and account details." : activeTab === "orders" ? "Review purchases and access fulfilled order details." : activeTab === "balance" ? "Top up your balance or redeem a gift card." : "Manage your profile, Telegram link, and sign-in details."}
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-2 text-xs text-muted-foreground">
-          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+        <div className="flex w-fit shrink-0 items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-2 text-xs text-muted-foreground">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
           Account active
         </div>
       </div>
@@ -237,7 +237,7 @@ function TelegramLinkSettings() {
   };
 
   return (
-    <div className="max-w-3xl space-y-5">
+      <div className="w-full max-w-3xl space-y-4 sm:space-y-5">
       <Card className="border-primary/30 bg-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
@@ -248,7 +248,7 @@ function TelegramLinkSettings() {
             Connect your Telegram account to receive eligible reward payouts.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-5 p-4 sm:p-6">
           <ol className="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
             <li>In Telegram, join the OmniMarket rewards channel.</li>
             <li>Put <span className="font-semibold text-foreground">OmniMarket</span> in your Telegram first or last name.</li>
@@ -264,7 +264,7 @@ function TelegramLinkSettings() {
           {dailyRewardCode && (
             <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your one-time code</p>
-              <p className="mt-2 break-all font-mono text-3xl font-bold tracking-[0.2em] text-foreground">{dailyRewardCode}</p>
+              <p className="mt-2 break-all font-mono text-2xl font-bold tracking-[0.12em] text-foreground sm:text-3xl sm:tracking-[0.2em]">{dailyRewardCode}</p>
               <p className="mt-2 text-sm text-muted-foreground">Open the bot below within 15 minutes. Your one-time code will be sent securely to finish linking.</p>
               <Button asChild size="lg" className="mt-4 w-full sm:w-auto">
                 <a
@@ -276,7 +276,7 @@ function TelegramLinkSettings() {
                   Open @OmniMarketCCBot
                 </a>
               </Button>
-              <Button variant="outline" className="mt-4 sm:ml-3" onClick={copyLinkCommand}>
+              <Button variant="outline" className="mt-3 w-full sm:ml-3 sm:mt-4 sm:w-auto" onClick={copyLinkCommand}>
                 <Copy className="mr-2 h-4 w-4" />
                 Copy /link command instead
               </Button>
@@ -361,34 +361,34 @@ function SettingsTab({ user }: { user: any }) {
 
       <Card className="bg-card border-border">
         <CardContent className="p-6 space-y-4">
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <Key className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">ID:</span>
-            <span className="font-mono text-xs">{user.id}</span>
+            <span className="break-all font-mono text-xs">{user.id}</span>
           </div>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <User className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Username:</span>
             <span className="text-foreground">{user.username}</span>
           </div>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <Mail className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Email:</span>
             <span className="text-foreground">{user.email || user.username}</span>
           </div>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <Link2 className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Referer:</span>
             <span className="text-foreground">N/A</span>
           </div>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Joined:</span>
             <span className="text-foreground">{formatDate(user.createdAt)} {formatTime(user.createdAt)}</span>
           </div>
           
           <div className="flex items-center gap-3 pt-4">
-            <Button variant="outline" className="border-destructive/30 text-destructive" onClick={() => logout()} data-testid="button-logout">
+            <Button variant="outline" className="w-full border-destructive/30 text-destructive sm:w-auto" onClick={() => logout()} data-testid="button-logout">
               <LogOut className="h-4 w-4 mr-2" /> Logout
             </Button>
           </div>
@@ -418,7 +418,7 @@ function SettingsTab({ user }: { user: any }) {
               data-testid="input-confirm-email"
             />
           </div>
-          <Button variant="outline" className="border-primary/30 text-primary hover:bg-primary/10" onClick={handleUpdateEmail} data-testid="button-update-email">
+          <Button variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/10 sm:w-auto" onClick={handleUpdateEmail} data-testid="button-update-email">
             <Mail className="h-4 w-4 mr-2" /> Update Email
           </Button>
         </CardContent>
@@ -459,7 +459,7 @@ function SettingsTab({ user }: { user: any }) {
               data-testid="input-confirm-password"
             />
           </div>
-          <Button variant="outline" className="border-primary/30 text-primary hover:bg-primary/10" onClick={handleUpdatePassword} data-testid="button-update-password">
+          <Button variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/10 sm:w-auto" onClick={handleUpdatePassword} data-testid="button-update-password">
             <Key className="h-4 w-4 mr-2" /> Update Password
           </Button>
         </CardContent>
@@ -487,7 +487,68 @@ function OrdersTab() {
       ) : (
         <Card className="bg-card border-border">
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <div className="space-y-3 p-3 lg:hidden">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs text-muted-foreground">{orders.length} {orders.length === 1 ? "order" : "orders"}</span>
+                <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => refetch()} data-testid="button-refresh-orders-mobile">
+                  <Clock className="h-4 w-4" /> Refresh
+                </Button>
+              </div>
+              {orders.map((order, index) => {
+                const productItems = order.items.filter((i: any) => i.itemType !== "card");
+                const cardItems = order.items.filter((i: any) => i.itemType === "card");
+                const titleParts: string[] = [];
+                if (productItems.length > 0) titleParts.push(productItems.map((i: any) => i.variant?.name || "Product").join(", "));
+                if (cardItems.length > 0) titleParts.push(`${cardItems.length} Card${cardItems.length > 1 ? "s" : ""}`);
+                const hasCards = cardItems.length > 0;
+                const hasProducts = productItems.length > 0;
+                const typeLabel = hasCards && hasProducts ? "Mixed" : hasCards ? "Cards" : "Order";
+                const status = order.status as string;
+                const statusColor =
+                  status === "fulfilled" || status === "paid" || status === "delivering" || status === "replaced"
+                    ? "text-emerald-400"
+                    : status === "refunded"
+                      ? "text-orange-400"
+                      : status === "unpaid" || status === "waiting_payment"
+                        ? "text-red-400"
+                        : "text-primary";
+                const statusLabel =
+                  status === "fulfilled" || status === "delivering" ? "Fulfilled"
+                    : status === "paid" ? "Paid"
+                      : status === "replaced" ? "Replaced"
+                        : status === "refunded" ? "Refunded"
+                          : status === "pending" ? "Pending"
+                            : status === "unpaid" || status === "waiting_payment" ? "Unpaid"
+                              : status;
+
+                return (
+                  <button
+                    key={order.id}
+                    type="button"
+                    onClick={() => setSelectedOrder(order)}
+                    aria-label={`View order ${index + 1}: ${titleParts.join(" + ")}`}
+                    className="w-full rounded-xl border border-border/80 bg-background/60 p-4 text-left transition-colors hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:bg-white/5"
+                  >
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <Badge variant="outline" className={cn("mb-2", hasCards && !hasProducts ? "border-yellow-500/30 text-yellow-500" : hasCards && hasProducts ? "border-purple-500/30 text-purple-400" : "border-border text-muted-foreground")}>
+                          {typeLabel}
+                        </Badge>
+                        <p className="break-words text-sm font-semibold leading-5">{titleParts.join(" + ")}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Order {index + 1} · {formatDate(order.createdAt)}</p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-semibold">${(order.total / 100).toFixed(2)}</p>
+                        <p className={cn("mt-2 text-xs font-medium", statusColor)}>{statusLabel}</p>
+                      </div>
+                    </div>
+                    <p className="mt-3 border-t border-border/70 pt-3 text-xs font-medium text-primary">View order details <span aria-hidden="true">→</span></p>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="hidden overflow-x-auto lg:block">
               <table className="w-full text-sm">
                 <thead className="border-b border-border">
                   <tr>
@@ -595,7 +656,7 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="w-full sm:max-w-md bg-[#0e0e0e] border-l border-white/10 text-foreground p-0">
-          <div className="p-6 space-y-6 h-full flex flex-col">
+          <div className="flex h-full flex-col space-y-6 p-4 sm:p-6">
             <h2 className="text-lg font-semibold">Order info</h2>
 
             <div className="flex-1 flex flex-col gap-4">
@@ -628,7 +689,7 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-md bg-[#0e0e0e] border-l border-white/10 text-foreground p-0">
-        <div className="p-6 space-y-6 h-full flex flex-col">
+        <div className="flex h-full flex-col space-y-6 p-4 sm:p-6">
           <h2 className="text-lg font-semibold">Order info</h2>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1">
@@ -772,8 +833,8 @@ function BalanceTab({ user }: { user: any }) {
   return (
     <div className="space-y-6">
       <Card className="bg-card border-border">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-muted-foreground font-medium">Current Balance</span>
             <span className="text-red-500 font-bold text-xl">${(user.balance / 100).toFixed(2)}</span>
           </div>
@@ -789,7 +850,7 @@ function BalanceTab({ user }: { user: any }) {
       </Card>
 
       <Card className="bg-card border-border">
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="space-y-5 p-4 sm:space-y-6 sm:p-6">
           <div>
             <h3 className="text-sm font-medium mb-3">Amount to charge</h3>
             <Input 
