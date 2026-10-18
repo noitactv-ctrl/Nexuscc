@@ -425,7 +425,7 @@ export default function CardsPage() {
         </div>
       </section>
 
-      <section className="sticky top-[43px] z-30 space-y-4 border-b border-white/10 bg-background pb-4 pt-2">
+      <section className="sticky top-[43px] z-30 space-y-3 border-b border-white/10 bg-background/95 pb-3 pt-2 backdrop-blur sm:space-y-4 sm:pb-4">
         <button
           type="button"
           onClick={purchaseSelected}
@@ -438,7 +438,7 @@ export default function CardsPage() {
           {selectedCards.length > 0 && <span className="text-sm">${(selectedTotal / 100).toFixed(2)}</span>}
         </button>
 
-        <div className="relative">
+        <div className="relative hidden md:block">
           <p className="mb-2 text-sm font-medium text-white/90">Column Visibility</p>
           <button
             type="button"
@@ -468,7 +468,119 @@ export default function CardsPage() {
         </div>
       </section>
 
-      <div className="mt-2 overflow-x-auto rounded-xl border border-white/15 bg-[#090909]">
+      <section className="mt-2 space-y-3 md:hidden" aria-label="Available cards">
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs text-white/50">{filteredCards.length} cards</p>
+          <button
+            type="button"
+            onClick={toggleAllVisible}
+            disabled={filteredCards.length === 0}
+            className="min-h-10 rounded-lg px-3 text-xs font-medium text-white/75 hover:bg-white/[0.06] disabled:opacity-40"
+            data-testid="btn-select-visible-mobile"
+          >
+            {allVisibleSelected ? "Clear visible" : "Select visible"}
+          </button>
+        </div>
+        {isLoading ? (
+          <div className="flex justify-center rounded-xl border border-white/10 bg-[#090909] py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-white/40" />
+          </div>
+        ) : filteredCards.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-[#090909] px-4 py-12 text-center text-sm text-white/50">
+            No cards match these filters.
+          </div>
+        ) : (
+          filteredCards.map((card) => {
+            const selected = selectedIds.has(card.id);
+            const countryCode = String(card.binData?.countryCode ?? "");
+            const brand = card.binData?.brand || card.binData?.scheme || "";
+            const issuer = card.binData?.bank || "";
+            const cardType = card.binData?.type || "";
+            const level = card.binData?.level || card.level || "";
+            const baseName = card.baseName || "";
+            return (
+              <article
+                key={card.id}
+                data-testid={`card-mobile-${card.id}`}
+                className={`rounded-2xl border bg-[#111] p-4 transition-colors ${
+                  selected ? "border-amber-400/50 bg-amber-400/[0.06]" : "border-white/10"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={() => toggleSelection(card)}
+                    aria-label={`Select card ending ${formatCardNumber(card).slice(-4)}`}
+                    className="mt-1 h-5 w-5 shrink-0 accent-amber-400"
+                    data-testid={`checkbox-card-mobile-${card.id}`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-white">{brand || "Bank card"}</span>
+                      {cardType && <span className="rounded-md bg-white/[0.07] px-2 py-0.5 text-[10px] text-white/65">{cardType}</span>}
+                      {level && <span className="rounded-md bg-white/[0.07] px-2 py-0.5 text-[10px] text-white/65">{level}</span>}
+                    </div>
+                    <p className="mt-1 font-mono text-sm tracking-wide text-sky-300">{formatCardNumber(card)}</p>
+                  </div>
+                  <span className="shrink-0 font-display text-base font-bold text-white">
+                    ${(Number(card.price ?? 0) / 100).toFixed(2)}
+                  </span>
+                </div>
+
+                <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-3 border-t border-white/10 pt-3">
+                  <div className="min-w-0">
+                    <dt className="text-[10px] uppercase tracking-wide text-white/40">BIN</dt>
+                    <dd className="mt-1 truncate font-mono text-xs text-white/80">{extractBin(card.cardNumber) || "—"}</dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-[10px] uppercase tracking-wide text-white/40">Issuer</dt>
+                    <dd className="mt-1 truncate text-xs text-white/80">{issuer || "—"}</dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-[10px] uppercase tracking-wide text-white/40">Country</dt>
+                    <dd className="mt-1 truncate text-xs text-white/80">
+                      {countryFlag(countryCode)} {countryName(card.binData?.country || countryCode) || "—"}
+                    </dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-[10px] uppercase tracking-wide text-white/40">Base</dt>
+                    <dd className="mt-1 truncate text-xs text-white/80">{baseName || "—"}</dd>
+                  </div>
+                </dl>
+
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDetails(toCardDetails(card))}
+                    aria-label="View card details"
+                    className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-medium text-white/85"
+                    data-testid={`btn-card-details-mobile-${card.id}`}
+                  >
+                    <Info className="h-4 w-4" aria-hidden="true" />
+                    Details
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleSelection(card)}
+                    aria-label={selected ? "Remove from selection" : "Add to selection"}
+                    aria-pressed={selected}
+                    className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-black ${
+                      selected ? "bg-amber-300" : "bg-amber-400"
+                    }`}
+                    data-testid={`btn-select-card-mobile-${card.id}`}
+                  >
+                    <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+                    {selected ? "Selected" : "Select"}
+                  </button>
+                </div>
+              </article>
+            );
+          })
+        )}
+      </section>
+
+      <div className="mt-2 hidden overflow-x-auto rounded-xl border border-white/15 bg-[#090909] md:block">
         {isLoading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>
         ) : filteredCards.length === 0 ? (
