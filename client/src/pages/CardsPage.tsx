@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Redirect, useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 import {
   CardFiltersSheet,
   createEmptyCardFilters,
@@ -172,6 +173,7 @@ export default function CardsPage() {
   const [details, setDetails] = useState<CardDetails | null>(null);
   const [purchasing, setPurchasing] = useState<{ current: number; total: number } | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
 
   const { data: features } = useQuery<{ cards: boolean }>({
@@ -200,15 +202,16 @@ export default function CardsPage() {
       }
       return payload;
 */
-  const { data: cards, isLoading } = useQuery<CatalogCard[]>({
+  const { data: cards, isLoading, isError, refetch } = useQuery<CatalogCard[]>({
     queryKey: ["/api/cards", selectedBase],
     queryFn: async () => {
       const response = await fetch(selectedBase ? `/api/cards?baseId=${selectedBase}` : "/api/cards", { credentials: "include" });
       if (!response.ok) throw new Error("Could not load cards");
       return response.json();
     },
-    enabled: features?.cards !== false,
+    enabled: features?.cards !== false || user?.role === "admin",
     refetchInterval: 20000,
+    retry: 1,
   });
 
   const filterOptions = useMemo(() => {
@@ -346,7 +349,7 @@ export default function CardsPage() {
     }
   };
 
-  if (features && features.cards === false) return <Redirect to="/" />;
+  if (features && features.cards === false && user?.role !== "admin") return <Redirect to="/" />;
 
   const visibleColumnDefinitions = COLUMNS.filter((column) => visibleColumns.includes(column.id));
   const cardTableMinWidth =
@@ -481,7 +484,12 @@ export default function CardsPage() {
             {allVisibleSelected ? "Clear visible" : "Select visible"}
           </button>
         </div>
-        {isLoading ? (
+        {isError ? (
+          <div className="rounded-xl border border-red-400/20 bg-red-400/[0.04] px-4 py-8 text-center text-sm text-red-200/80">
+            Cards could not be loaded.{" "}
+            <button type="button" onClick={() => void refetch()} className="underline underline-offset-2">Try again</button>
+          </div>
+        ) : isLoading ? (
           <div className="flex justify-center rounded-xl border border-white/10 bg-[#090909] py-12">
             <Loader2 className="h-6 w-6 animate-spin text-white/40" />
           </div>
@@ -581,7 +589,12 @@ export default function CardsPage() {
       </section>
 
       <div className="mt-2 hidden overflow-x-auto rounded-xl border border-white/15 bg-[#090909] md:block">
-        {isLoading ? (
+        {isError ? (
+          <div className="px-5 py-10 text-center text-sm text-red-200/80">
+            Cards could not be loaded.{" "}
+            <button type="button" onClick={() => void refetch()} className="underline underline-offset-2">Try again</button>
+          </div>
+        ) : isLoading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>
         ) : filteredCards.length === 0 ? (
           <div className="px-5 py-16 text-center text-sm text-white/50">No cards match these filters.</div>

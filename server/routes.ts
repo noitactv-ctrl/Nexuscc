@@ -1792,14 +1792,22 @@ export async function registerRoutes(
       return res.json(await storage.getCardBasesWithCount(Number(user.id)));
     }
 
-    // Customers need the public base list to browse and filter the Buy Cards
-    // catalog, but must not receive seller ownership or revenue details.
-    const publicBases = await storage.getCardBasesWithCount();
-    res.json(
-      publicBases
-        .filter((base) => base.count > 0)
-        .map(({ id, name, count }) => ({ id, name, count })),
-    );
+    // Customers need only names and available counts; avoid seller metadata
+    // columns here so older card-base schemas can still serve the catalog.
+    const result = await db.execute(sql`
+      SELECT cb.id, cb.name,
+             COUNT(c.id) FILTER (WHERE c.is_sold = false) AS count
+      FROM card_bases cb
+      LEFT JOIN cards c ON c.base_id = cb.id
+      GROUP BY cb.id, cb.name
+      HAVING COUNT(c.id) FILTER (WHERE c.is_sold = false) > 0
+      ORDER BY cb.name
+    `);
+    res.json((result.rows as any[]).map((base) => ({
+      id: Number(base.id),
+      name: base.name,
+      count: Number(base.count),
+    })));
   });
 
   app.post("/api/admin/card-bases", async (req, res) => {
@@ -1935,22 +1943,58 @@ export async function registerRoutes(
       if (baseId && baseId !== ownedBase.id) return res.status(403).json({ message: "You do not own this base" });
       baseFilter = sql`AND c.base_id = ${ownedBase.id}`;
     }
-    const { rows } = await db.execute(sql`
-      SELECT c.id, c.card_number, c.masked_card, c.expiry, c.cvv, c.country, c.extras,
-             c.price, c.hr_percent, c.is_sold, c.is_first_hand, c.user_id, c.created_at, c.bin_data,
-             c.base_id, cb.name as base_name, cb.refundable as base_refundable,
-             cb.hr_percent as base_hr_percent, cb.owner_id as base_owner_id,
-              cb.created_by_id as base_created_by_id, cb.seller_name as base_seller_name,
-             base_owner.username as base_owner_name,
-             base_creator.username as base_creator_name,
-             base_creator.role as base_creator_role
-      FROM cards c
-      LEFT JOIN card_bases cb ON cb.id = c.base_id
-       LEFT JOIN users base_owner ON base_owner.id = cb.owner_id
-       LEFT JOIN users base_creator ON base_creator.id = cb.created_by_id
-      WHERE c.is_sold = false ${baseFilter}
-      ORDER BY c.created_at DESC
-    `) as any;
+    let rows: any[];
+    if (user?.role === "admin" || user?.isWorker) {
+      const staffResult = await db.execute(sql`
+        SELECT c.id, c.card_number, c.masked_card, c.expiry, c.cvv, c.country, c.extras,
+               c.price, c.hr_percent, c.is_sold, c.is_first_hand, c.user_id, c.created_at, c.bin_data,
+               c.base_id, cb.name as base_name, cb.refundable as base_refundable,
+               cb.hr_percent as base_hr_percent, cb.owner_id as base_owner_id,
+               cb.created_by_id as base_created_by_id, cb.seller_name as base_seller_name,
+               base_owner.username as base_owner_name,
+               base_creator.username as base_creator_name,
+               base_creator.role as base_creator_role
+        FROM cards c
+        LEFT JOIN card_bases cb ON cb.id = c.base_id
+        LEFT JOIN users base_owner ON base_owner.id = cb.owner_id
+        LEFT JOIN users base_creator ON base_creator.id = cb.created_by_id
+        WHERE c.is_sold = false ${baseFilter}
+        ORDER BY c.created_at DESC
+      `);
+      rows = staffResult.rows as any[];
+    } else {
+      let catalogResult: any;
+      try {
+        catalogResult = await db.execute(sql`
+          SELECT c.id, c.card_number, c.masked_card, c.expiry, c.cvv, c.country, c.extras,
+                 c.price, c.is_sold, c.is_first_hand, c.created_at, c.bin_data, c.base_id,
+                 cb.name as base_name, false as base_refundable
+          FROM cards c
+          LEFT JOIN card_bases cb ON cb.id = c.base_id
+          WHERE c.is_sold = false ${baseFilter}
+          ORDER BY c.created_at DESC
+        `);
+      } catch (error: any) {
+        if (error?.code !== "42703" || baseId) throw error;
+        // A legacy inventory can predate base_id or BIN enrichment. Show
+        // available cards without that optional metadata rather than hiding all.
+        catalogResult = await db.execute(sql`
+          SELECT c.id, c.card_number, c.masked_card, c.expiry, c.cvv, c.country, c.extras,
+                 c.price, c.is_sold, c.is_first_hand, c.created_at
+          FROM cards c
+          WHERE c.is_sold = false
+          ORDER BY c.created_at DESC
+        `);
+        catalogResult.rows = (catalogResult.rows as any[]).map((row) => ({
+          ...row,
+          bin_data: null,
+          base_id: null,
+          base_name: null,
+          base_refundable: false,
+        }));
+      }
+      rows = catalogResult.rows as any[];
+    }
 
     // For cards missing bin_data in DB, kick off background lookups + save results
     const needsLookup = rows.filter((r: any) => !r.bin_data && (r.card_number ?? "").replace(/\D/g, "").length >= 6);
@@ -1975,14 +2019,14 @@ export async function registerRoutes(
     res.json(rows.map((r: any) => ({
       id: r.id, cardNumber: r.card_number, maskedCard: r.masked_card,
        expiry: r.expiry, cvv: r.cvv, country: r.bin_data?.country ?? r.country, extras: r.extras,
-      price: r.price, hrPercent: r.base_hr_percent ?? 80, isSold: r.is_sold, isFirstHand: r.is_first_hand,
-      userId: r.user_id, createdAt: r.created_at,
+       price: r.price, hrPercent: r.base_hr_percent ?? r.hr_percent ?? 80, isSold: r.is_sold, isFirstHand: r.is_first_hand,
+       userId: r.user_id ?? null, createdAt: r.created_at,
       binData: r.bin_data ?? null,
        baseId: r.base_id ?? null, baseName: r.base_name ?? null,
          baseUploaderName: r.base_seller_name || r.base_creator_name || r.base_owner_name || null,
-        baseUploaderType: r.base_id == null
-          ? null
-          : (r.base_creator_role === "admin" || (r.base_created_by_id == null && r.base_owner_id == null) ? "admin" : "seller"),
+         baseUploaderType: r.base_id == null || !r.base_created_by_id && !r.base_owner_id && !r.base_creator_role
+           ? null
+           : (r.base_creator_role === "admin" || (r.base_created_by_id == null && r.base_owner_id == null) ? "admin" : "seller"),
        baseRefundable: Boolean(r.base_refundable),
     })));
   });
