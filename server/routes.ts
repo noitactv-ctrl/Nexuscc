@@ -1369,7 +1369,7 @@ export async function registerRoutes(
         await ensureDropSchema();
         const result = await pool.query(
           `INSERT INTO telegram_license_drops (license_key, created_by)
-           SELECT DISTINCT value, $2
+           SELECT DISTINCT value, $2::integer
            FROM unnest($1::text[]) AS input(value)
            ON CONFLICT (license_key) DO NOTHING
            RETURNING id`,
@@ -1381,7 +1381,11 @@ export async function registerRoutes(
           keyCount: keys.length,
         });
       } catch (error: any) {
-        console.error("[admin] Telegram drop upload failed:", error?.code || error?.name || "unknown error");
+        console.error(
+          "[admin] Telegram drop upload failed:",
+          error?.code || error?.name || "unknown error",
+          error instanceof Error ? error.message : "",
+        );
         res.status(503).json({ message: "Drops could not be uploaded right now." });
       }
     },
