@@ -39,7 +39,7 @@ export default function SubmitReviewPage() {
     onError: (error: Error) => toast({ title: "Could not submit review", description: error.message, variant: "destructive" }),
   });
   return <main className="mx-auto max-w-3xl space-y-7 px-4 py-8 text-foreground">
-    <header><Button variant="ghost" size="sm" asChild><Link href="/reviews"><ArrowLeft className="mr-2 h-4 w-4" />Approved Reviews</Link></Button><p className="mt-4 text-xs font-bold uppercase tracking-[.25em] text-primary">Community</p><h1 className="mt-2 text-3xl font-black">Submit a Review</h1><p className="mt-2 text-sm text-muted-foreground">Choose a completed purchase, add a photo, and share feedback about the product and seller. Reviews are public after admin approval.</p></header>
+    <header><Button variant="ghost" size="sm" asChild><Link href="/reviews"><ArrowLeft className="mr-2 h-4 w-4" />Approved Reviews</Link></Button><p className="mt-4 text-xs font-bold uppercase tracking-[.25em] text-primary">Community</p><h1 className="mt-2 text-3xl font-black">Submit a Review</h1><p className="mt-2 text-sm text-muted-foreground">Choose a completed purchase, add a photo, and share feedback about the product and seller. Reviews are public after admin approval. Each newly approved review earns $0.50 in store credit.</p></header>
     <Card><CardHeader><CardTitle>Your purchase</CardTitle></CardHeader><CardContent className="space-y-4">
       <select aria-label="Purchased product" value={purchaseId} onChange={e => setPurchaseId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
         <option value="">{isLoading ? "Loading purchases…" : "Choose an eligible purchase"}</option>

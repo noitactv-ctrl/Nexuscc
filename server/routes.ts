@@ -187,8 +187,10 @@ export async function registerRoutes(
     status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','denied')),
     admin_note TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    reviewed_at TIMESTAMP
+    reviewed_at TIMESTAMP,
+    credit_awarded_at TIMESTAMP
   )`);
+  await db.execute(sql`ALTER TABLE product_reviews ADD COLUMN IF NOT EXISTS credit_awarded_at TIMESTAMP`);
   await db.execute(sql`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS ach_id INTEGER REFERENCES achs(id)`);
   await db.execute(sql`CREATE TABLE IF NOT EXISTS buy_for_you_requests (
     id SERIAL PRIMARY KEY,
@@ -204,6 +206,8 @@ export async function registerRoutes(
     CONSTRAINT buy_for_you_requests_category_check CHECK (category IN ('food','weed','facebook'))
   )`);
   await db.execute(sql`ALTER TABLE buy_for_you_requests ADD COLUMN IF NOT EXISTS site_url TEXT NOT NULL DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE buy_for_you_requests ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP`);
+  await db.execute(sql`ALTER TABLE buy_for_you_requests ADD COLUMN IF NOT EXISTS charged_amount INTEGER`);
   await db.execute(sql`ALTER TABLE buy_for_you_requests DROP CONSTRAINT IF EXISTS buy_for_you_requests_category_check`);
   await db.execute(sql`ALTER TABLE buy_for_you_requests ADD CONSTRAINT buy_for_you_requests_category_check CHECK (category IN ('food','weed','facebook'))`);
   await db.execute(sql`CREATE TABLE IF NOT EXISTS buy_for_you_messages (
@@ -271,9 +275,52 @@ export async function registerRoutes(
   app.get("/api/admin/eats", requireAdmin, async (_req, res) => {
     const result = await db.execute(sql`SELECT r.id, r.user_id AS "userId", r.category,
       r.customer_name AS "customerName", r.email, r.phone, r.address, r.site_url AS "siteUrl", r.created_at AS "createdAt",
-      r.updated_at AS "updatedAt", u.username
+      r.updated_at AS "updatedAt", r.completed_at AS "completedAt", r.charged_amount AS "chargedAmount",
+      u.username, u.balance
       FROM buy_for_you_requests r JOIN users u ON u.id=r.user_id ORDER BY r.updated_at DESC`);
     res.json((result as any).rows);
+  });
+  app.post("/api/admin/eats/:id/complete", requireAdmin, async (req, res) => {
+    const requestId = Number(req.params.id);
+    const amountCents = Number(req.body?.amountCents);
+    if (!Number.isSafeInteger(requestId) || requestId < 1 ||
+      !Number.isSafeInteger(amountCents) || amountCents < 1 || amountCents > 100000000) {
+      return res.status(400).json({ message: "Enter a valid charge amount between $0.01 and $1,000,000.00." });
+    }
+    const result = await db.transaction(async (tx) => {
+      const requestResult = await tx.execute(sql`SELECT id, user_id, completed_at
+        FROM buy_for_you_requests WHERE id=${requestId} FOR UPDATE`);
+      const request = (requestResult as any).rows[0];
+      if (!request) return { error: "not_found" as const };
+      if (request.completed_at) return { error: "already_completed" as const };
+
+      const [debitedUser] = await tx.update(users)
+        .set({ balance: sql`${users.balance} - ${amountCents}` })
+        .where(and(eq(users.id, Number(request.user_id)), sql`${users.balance} >= ${amountCents}`))
+        .returning({ balance: users.balance });
+      if (!debitedUser) return { error: "insufficient_balance" as const };
+
+      const completedResult = await tx.execute(sql`UPDATE buy_for_you_requests
+        SET completed_at=NOW(), charged_amount=${amountCents}, updated_at=NOW()
+        WHERE id=${requestId}
+        RETURNING id, completed_at AS "completedAt", charged_amount AS "chargedAmount"`);
+      const completed = (completedResult as any).rows[0];
+      if (!completed) throw new Error("Buy For You completion could not be recorded; rolling back balance deduction.");
+      await tx.insert(transactions).values({
+        userId: Number(request.user_id),
+        amount: -amountCents,
+        type: "purchase",
+        description: `Buy For You request #${requestId} completed`,
+        paymentMethod: "Account balance",
+      });
+      return { completed, balance: debitedUser.balance };
+    });
+    if ("error" in result) {
+      if (result.error === "not_found") return res.status(404).json({ message: "Buy For You request not found." });
+      if (result.error === "already_completed") return res.status(409).json({ message: "This request has already been completed and charged." });
+      return res.status(400).json({ message: "The customer does not have enough balance for this charge." });
+    }
+    res.json(result);
   });
   app.get("/api/admin/eats/:id/messages", requireAdmin, async (req, res) => {
     const requestId = Number(req.params.id);
@@ -367,10 +414,33 @@ export async function registerRoutes(
   app.patch("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
     const status = req.body?.status;
     if (status !== "approved" && status !== "denied") return res.status(400).json({ message: "Choose approve or deny." });
-    const result = await db.execute(sql`UPDATE product_reviews SET status=${status}, reviewed_at=NOW()
-      WHERE id=${Number(req.params.id)} RETURNING id, status`);
-    if (!(result as any).rows.length) return res.status(404).json({ message: "Review not found." });
-    res.json((result as any).rows[0]);
+    const reviewId = Number(req.params.id);
+    if (!Number.isSafeInteger(reviewId) || reviewId < 1) return res.status(400).json({ message: "Invalid review." });
+    const result = await db.transaction(async (tx) => {
+      const locked = await tx.execute(sql`SELECT id, user_id, status, credit_awarded_at AS "creditAwardedAt"
+        FROM product_reviews WHERE id=${reviewId} FOR UPDATE`);
+      const review = (locked as any).rows[0];
+      if (!review) return { error: "not_found" as const };
+
+      const awardCredit = status === "approved" && review.status !== "approved" && !review.creditAwardedAt;
+      if (awardCredit) {
+        await tx.execute(sql`UPDATE users SET balance=balance + 50 WHERE id=${Number(review.user_id)}`);
+        await tx.insert(transactions).values({
+          userId: Number(review.user_id),
+          amount: 50,
+          type: "review_reward",
+          description: `Approved review #${reviewId} reward`,
+        });
+      }
+      const updated = await tx.execute(sql`UPDATE product_reviews
+        SET status=${status}, reviewed_at=NOW(),
+            credit_awarded_at=CASE WHEN ${awardCredit} THEN NOW() ELSE credit_awarded_at END
+        WHERE id=${reviewId}
+        RETURNING id, status, credit_awarded_at AS "creditAwardedAt"`);
+      return { review: (updated as any).rows[0], creditAwarded: awardCredit };
+    });
+    if ("error" in result) return res.status(404).json({ message: "Review not found." });
+    res.json({ ...result.review, creditAwarded: result.creditAwarded, creditAmount: result.creditAwarded ? 50 : 0 });
   });
 
   // Keep the admin rate limit, but let each endpoint apply its own access rule.
