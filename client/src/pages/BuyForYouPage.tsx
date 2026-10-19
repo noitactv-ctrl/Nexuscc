@@ -7,15 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-type Category = "food" | "weed" | "facebook";
+type Category = "food";
 type Destination = { name: string; mark: string };
 type RequestItem = { id: number; category: string; customerName: string; siteUrl: string; createdAt: string };
 type ChatMessage = { id: number; senderRole: string; message: string; createdAt: string };
 
 const categories: { id: Category; label: string }[] = [
   { id: "food", label: "Food Sites" },
-  { id: "weed", label: "Weed Sites" },
-  { id: "facebook", label: "Facebook" },
 ];
 
 const destinations: Record<Category, Destination[]> = {
@@ -32,16 +30,6 @@ const destinations: Record<Category, Destination[]> = {
     { name: "Buffalo Wild Wings", mark: "🦅" }, { name: "Wingstop", mark: "🔥" },
     { name: "Firehouse Subs", mark: "🚒" }, { name: "Pizza Hut", mark: "🏠" },
     { name: "Auntie Annes", mark: "🥨" },
-  ],
-  weed: [
-    { name: "Weed site or dispensary", mark: "W" },
-    { name: "Delivery menu", mark: "D" },
-    { name: "Other listing", mark: "+" },
-  ],
-  facebook: [
-    { name: "Facebook Marketplace", mark: "f" },
-    { name: "Facebook shop", mark: "S" },
-    { name: "Facebook listing", mark: "L" },
   ],
 };
 
@@ -129,7 +117,7 @@ export default function BuyForYouPage() {
         {destinations[category].map((item) => (
           <button key={item.name} type="button" onClick={() => setSelected(item)}
             className="group flex min-h-[100px] items-center gap-3 rounded-xl border border-border/80 bg-card/50 px-3 py-3.5 text-left transition-all hover:border-primary/35 hover:bg-primary/[0.04] active:scale-[0.98] sm:min-h-[112px] sm:px-4">
-            <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-primary/15 bg-primary/[0.08] text-xl text-primary ${category === "facebook" ? "font-black" : ""}`} aria-hidden="true">{item.mark}</span>
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-primary/15 bg-primary/[0.08] text-xl text-primary" aria-hidden="true">{item.mark}</span>
             <span className="text-xs font-semibold leading-snug text-foreground/85 group-hover:text-foreground sm:text-sm">{item.name}</span>
           </button>
         ))}
