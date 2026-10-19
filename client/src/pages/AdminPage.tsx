@@ -3065,6 +3065,7 @@ function AdminBasesTab() {
   const [newBaseRefundable, setNewBaseRefundable] = useState(false);
   const [sellerNameDrafts, setSellerNameDrafts] = useState<Record<number, string>>({});
   const [rateDrafts, setRateDrafts] = useState<Record<number, string>>({});
+  const [priceDrafts, setPriceDrafts] = useState<Record<number, string>>({});
   const [expandedBase, setExpandedBase] = useState<number | null>(null);
   const [editingBaseId, setEditingBaseId] = useState<number | null>(null);
   const [editingBaseName, setEditingBaseName] = useState("");
@@ -3156,6 +3157,22 @@ function AdminBasesTab() {
       qc.invalidateQueries({ queryKey: ["/api/card-bases"] });
       qc.invalidateQueries({ queryKey: ["/api/cards"] });
       toast({ title: "Base valid rate updated" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const bulkPriceMutation = useMutation({
+    mutationFn: async ({ id, priceCents }: { id: number; priceCents: number }) => {
+      const res = await apiRequest("PATCH", `/api/admin/card-bases/${id}/price`, { priceCents });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message || "Failed to update card prices"); }
+      return res.json();
+    },
+    onSuccess: (result: { baseId: number; updatedCount: number; priceCents: number }) => {
+      setPriceDrafts(drafts => ({ ...drafts, [result.baseId]: "" }));
+      qc.invalidateQueries({ queryKey: ["/api/card-bases"] });
+      qc.invalidateQueries({ queryKey: ["/api/cards"] });
+      qc.invalidateQueries({ queryKey: ["/api/admin/card-bases", result.baseId, "cards"] });
+      toast({ title: "Base prices updated", description: `${result.updatedCount} available card${result.updatedCount === 1 ? "" : "s"} set to $${(result.priceCents / 100).toFixed(2)}.` });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
@@ -3363,6 +3380,36 @@ function AdminBasesTab() {
               </div>
               {expandedBase === b.id && (
                 <div className="border-t border-white/10 px-4 py-3 space-y-2">
+                  <div className="flex flex-wrap items-end gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                    <label className="min-w-36 flex-1 text-[10px] text-white/55">
+                      Set all available card prices ($)
+                      <Input
+                        type="number"
+                        min="0.01"
+                        max="1000000"
+                        step="0.01"
+                        value={priceDrafts[b.id] ?? ""}
+                        onChange={e => setPriceDrafts(drafts => ({ ...drafts, [b.id]: e.target.value }))}
+                        placeholder="e.g. 10.00"
+                        className="mt-1 h-8 bg-background/50 text-xs"
+                        data-testid={`input-bulk-card-price-${b.id}`}
+                      />
+                    </label>
+                    <Button
+                      size="sm"
+                      disabled={bulkPriceMutation.isPending || !Number.isFinite(Number(priceDrafts[b.id])) || Math.round(Number(priceDrafts[b.id]) * 100) < 1 || Math.round(Number(priceDrafts[b.id]) * 100) > 100000000 || Number(b.count) < 1}
+                      onClick={() => {
+                        const priceCents = Math.round(Number(priceDrafts[b.id]) * 100);
+                        if (window.confirm(`Set all ${b.count} available cards in “${b.name}” to $${(priceCents / 100).toFixed(2)}?`)) {
+                          bulkPriceMutation.mutate({ id: b.id, priceCents });
+                        }
+                      }}
+                      data-testid={`btn-bulk-card-price-${b.id}`}
+                    >
+                      {bulkPriceMutation.isPending ? "Saving…" : "Set all prices"}
+                    </Button>
+                    <p className="w-full text-[10px] text-white/40">Sold cards and order history are unchanged.</p>
+                  </div>
                   {!baseCards || baseCards.length === 0 ? (
                     <p className="text-xs text-white/40 text-center py-3">No cards in this base</p>
                   ) : (

@@ -2250,6 +2250,25 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/admin/card-bases/:id/price", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const baseId = Number(req.params.id);
+    const priceCents = Number(req.body?.priceCents);
+    if (!Number.isSafeInteger(baseId) || baseId < 1 ||
+      !Number.isSafeInteger(priceCents) || priceCents < 1 || priceCents > 100000000) {
+      return res.status(400).json({ message: "Enter a card price between $0.01 and $1,000,000.00." });
+    }
+    const [base] = await db.select({ id: cardBases.id }).from(cardBases).where(eq(cardBases.id, baseId));
+    if (!base) return res.status(404).json({ message: "Card base not found." });
+    const updated = await db.update(cards)
+      .set({ price: priceCents })
+      .where(and(eq(cards.baseId, baseId), eq(cards.isSold, false)))
+      .returning({ id: cards.id });
+    res.json({ baseId, updatedCount: updated.length, priceCents });
+  });
+
   app.patch("/api/worker/card-bases/:id", async (req, res) => {
     if (!req.isAuthenticated() || (req.user as any)?.isWorker !== true) {
       return res.status(403).json({ message: "Worker access required" });
