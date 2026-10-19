@@ -36,6 +36,8 @@ import FreeCardPage from "@/pages/FreeCardPage";
 import HomePage from "@/pages/HomePage";
 import MyDepositsPage from "@/pages/MyDepositsPage";
 import CryptoPaymentPage from "@/pages/CryptoPaymentPage";
+import ReviewsPage from "@/pages/ReviewsPage";
+import AdminReviewsPage from "@/pages/AdminReviewsPage";
 
 function LoadingScreen() {
   return (
@@ -86,6 +88,7 @@ function PageVisibilityGate({ page, children }: { page: string; children: React.
       ["logs", "/shop"],
       ["cart", "/cart"],
       ["orders", "/orders"],
+      ["reviews", "/reviews"],
       ["reseller", "/become-reseller"],
       ["support", "/support"],
       ["profile", "/profile"],
@@ -154,6 +157,8 @@ function Router() {
         <Route path="/product/:name">{() => <PageVisibilityGate page="logs"><ProductDetailPage /></PageVisibilityGate>}</Route>
         <Route path="/order/:id">{() => <PageVisibilityGate page="orders"><OrderDetailPageNew /></PageVisibilityGate>}</Route>
         <Route path="/orders">{() => <PageVisibilityGate page="orders"><OrdersPage /></PageVisibilityGate>}</Route>
+        <Route path="/reviews">{() => <PageVisibilityGate page="reviews"><ReviewsPage /></PageVisibilityGate>}</Route>
+        <Route path="/admin/reviews" component={AdminReviewsPage} />
         <Route path="/my-code">{() => <PageVisibilityGate page="myCode"><MyCodePage /></PageVisibilityGate>}</Route>
         <Route path="/cart">{() => <PageVisibilityGate page="cart"><CartPage /></PageVisibilityGate>}</Route>
         <Route path="/worker" component={WorkerDashboardPage} />

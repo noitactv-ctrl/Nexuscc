@@ -175,6 +175,99 @@ export async function registerRoutes(
 
   // Auth setup (handles /api/login, /api/register, /api/logout, /api/user)
   setupAuth(app);
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS product_reviews (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    order_item_id INTEGER NOT NULL UNIQUE REFERENCES order_items(id),
+    title TEXT NOT NULL,
+    seller_name TEXT NOT NULL,
+    item_type TEXT NOT NULL,
+    content TEXT NOT NULL,
+    image_id INTEGER NOT NULL REFERENCES uploaded_images(id),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','denied')),
+    admin_note TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    reviewed_at TIMESTAMP
+  )`);
+  await db.execute(sql`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS ach_id INTEGER REFERENCES achs(id)`);
+  app.get("/api/reviews", async (_req, res) => {
+    const result = await db.execute(sql`SELECT r.id, r.title, r.seller_name AS "sellerName", r.item_type AS "itemType",
+      r.content, r.image_id AS "imageId", r.created_at AS "createdAt", u.username
+      FROM product_reviews r JOIN users u ON u.id = r.user_id
+      WHERE r.status = 'approved' ORDER BY r.created_at DESC LIMIT 100`);
+    res.json((result as any).rows);
+  });
+  app.get("/api/reviews/eligible", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const result = await db.execute(sql`SELECT oi.id AS "orderItemId", oi.item_type AS "itemType",
+      COALESCE(p.name, cb.name, a.bank_name, CASE WHEN oi.item_type='card' THEN 'Card' ELSE 'Purchased item' END) AS title,
+      COALESCE(cb.seller_name, seller.username, 'OmniMarket') AS "sellerName",
+      EXISTS(SELECT 1 FROM product_reviews r WHERE r.order_item_id=oi.id) AS "hasReview"
+      FROM order_items oi JOIN orders o ON o.id=oi.order_id
+      LEFT JOIN stock_items si ON si.id=oi.stock_item_id
+      LEFT JOIN variants v ON v.id=oi.variant_id LEFT JOIN products p ON p.id=v.product_id
+      LEFT JOIN cards c ON c.id=oi.card_id LEFT JOIN card_bases cb ON cb.id=c.base_id
+      LEFT JOIN achs a ON a.id=oi.ach_id OR (oi.ach_id IS NULL AND oi.item_type='ach' AND a.full_item=o.delivery_content)
+      LEFT JOIN users seller ON seller.id=COALESCE(si.seller_id, cb.owner_id, cb.created_by_id, a.seller_id)
+      WHERE o.user_id=${(req.user as any).id} AND o.status IN ('fulfilled','delivering')
+        AND oi.item_type IN ('card','ach','product') ORDER BY o.created_at DESC`);
+    res.json((result as any).rows);
+  });
+  app.post("/api/reviews/upload", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const validated = validateImageUpload(req.body?.data);
+    if (!validated) return res.status(400).json({ message: "Upload a PNG, JPEG, or WebP image smaller than 4 MB." });
+    const image = await storage.uploadImage(`review-${randomBytes(12).toString("hex")}.${validated.extension}`, validated.mimeType, validated.data);
+    res.status(201).json({ imageId: image.id, url: `/api/images/${image.id}` });
+  });
+  app.post("/api/reviews", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const userId = (req.user as any).id;
+    const orderItemId = Number(req.body?.orderItemId);
+    const content = typeof req.body?.content === "string" ? req.body.content.trim() : "";
+    const imageId = Number(req.body?.imageId);
+    if (!Number.isInteger(orderItemId) || content.length < 1 || content.length > 2000 || !Number.isInteger(imageId)) {
+      return res.status(400).json({ message: "Choose a purchase, add a photo, and write up to 2,000 characters." });
+    }
+    const eligible = await db.execute(sql`SELECT oi.id, oi.item_type, o.user_id, o.status,
+      COALESCE(p.name, cb.name, a.bank_name, 'Card') AS title,
+      COALESCE(cb.seller_name, seller.username, 'OmniMarket') AS seller_name
+      FROM order_items oi JOIN orders o ON o.id=oi.order_id
+      LEFT JOIN stock_items si ON si.id=oi.stock_item_id
+      LEFT JOIN variants v ON v.id=oi.variant_id LEFT JOIN products p ON p.id=v.product_id
+      LEFT JOIN cards c ON c.id=oi.card_id LEFT JOIN card_bases cb ON cb.id=c.base_id
+      LEFT JOIN achs a ON a.id=oi.ach_id OR (oi.ach_id IS NULL AND oi.item_type='ach' AND a.full_item=o.delivery_content)
+      LEFT JOIN users seller ON seller.id=COALESCE(si.seller_id, cb.owner_id, cb.created_by_id, a.seller_id)
+      WHERE oi.id=${orderItemId} AND o.user_id=${userId} AND o.status IN ('fulfilled','delivering')
+        AND oi.item_type IN ('card','ach','product')`);
+    const item = (eligible as any).rows[0];
+    if (!item) return res.status(403).json({ message: "Reviews can only be submitted for your completed card, log, or bank purchases." });
+    const image = await storage.getImage(imageId);
+    if (!image) return res.status(400).json({ message: "Review photo not found." });
+    try {
+      const created = await db.execute(sql`INSERT INTO product_reviews
+        (user_id, order_item_id, title, seller_name, item_type, content, image_id)
+        VALUES (${userId}, ${orderItemId}, ${item.title}, ${item.seller_name}, ${item.item_type}, ${content}, ${imageId})
+        RETURNING id, status`);
+      res.status(201).json((created as any).rows[0]);
+    } catch (error: any) {
+      if (error?.code === "23505") return res.status(409).json({ message: "You already reviewed this purchase." });
+      throw error;
+    }
+  });
+  app.get("/api/admin/reviews", requireAdmin, async (_req, res) => {
+    const result = await db.execute(sql`SELECT r.*, u.username FROM product_reviews r
+      JOIN users u ON u.id=r.user_id ORDER BY CASE WHEN r.status='pending' THEN 0 ELSE 1 END, r.created_at DESC`);
+    res.json((result as any).rows);
+  });
+  app.patch("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
+    const status = req.body?.status;
+    if (status !== "approved" && status !== "denied") return res.status(400).json({ message: "Choose approve or deny." });
+    const result = await db.execute(sql`UPDATE product_reviews SET status=${status}, reviewed_at=NOW()
+      WHERE id=${Number(req.params.id)} RETURNING id, status`);
+    if (!(result as any).rows.length) return res.status(404).json({ message: "Review not found." });
+    res.json((result as any).rows[0]);
+  });
 
   // Keep the admin rate limit, but let each endpoint apply its own access rule.
   // Some worker dashboard endpoints intentionally live under /api/admin for
@@ -3017,6 +3110,7 @@ export async function registerRoutes(
         orderId: achOrder.id,
         variantId: null,
         cardId: null,
+        achId: ach.id,
         itemType: "ach",
         price: ach.price,
         quantity: 1,

@@ -116,9 +116,25 @@ export const orderItems = pgTable("order_items", {
   variantId: integer("variant_id"),
   stockItemId: integer("stock_item_id").references(() => stockItems.id),
   cardId: integer("card_id").references(() => cards.id),
+  achId: integer("ach_id"),
   itemType: text("item_type").default("product").notNull(),
   price: integer("price").notNull(),
   quantity: integer("quantity").default(1).notNull(),
+});
+
+export const productReviews = pgTable("product_reviews", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  orderItemId: integer("order_item_id").notNull().unique().references(() => orderItems.id),
+  title: text("title").notNull(),
+  sellerName: text("seller_name").notNull(),
+  itemType: text("item_type").notNull(),
+  content: text("content").notNull(),
+  imageId: integer("image_id").notNull().references(() => uploadedImages.id),
+  status: text("status", { enum: ["pending", "approved", "denied"] }).default("pending").notNull(),
+  adminNote: text("admin_note").default("").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewed_at"),
 });
 
 // === TRANSACTIONS ===

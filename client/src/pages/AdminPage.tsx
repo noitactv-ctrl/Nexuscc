@@ -2670,6 +2670,7 @@ function FeatureTogglesCard() {
     { key: "logs", label: "Buy Logs" },
     { key: "reseller", label: "Become a Seller" },
     { key: "orders", label: "My Orders" },
+    { key: "reviews", label: "Product Reviews" },
     { key: "myCode", label: "My Code" },
     { key: "cart", label: "Shopping Cart" },
     { key: "checker", label: "Card Checker" },
