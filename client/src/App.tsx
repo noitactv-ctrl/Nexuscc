@@ -31,6 +31,9 @@ import ProfilePage from "@/pages/ProfilePage";
 import SupportPage from "@/pages/SupportPage";
 import RedeemCodePage from "@/pages/RedeemCodePage";
 import PlinkoPage from "@/pages/PlinkoPage";
+import DiceGamePage from "@/pages/DiceGamePage";
+import MinesGamePage from "@/pages/MinesGamePage";
+import GamesPage from "@/pages/GamesPage";
 import RanksPage from "@/pages/RanksPage";
 import FreeCardPage from "@/pages/FreeCardPage";
 import HomePage from "@/pages/HomePage";
@@ -41,6 +44,7 @@ import SubmitReviewPage from "@/pages/SubmitReviewPage";
 import AdminReviewsPage from "@/pages/AdminReviewsPage";
 import BuyForYouPage from "@/pages/BuyForYouPage";
 import AdminEatsPage from "@/pages/AdminEatsPage";
+import AdminProfitsPage from "@/pages/AdminProfitsPage";
 
 function LoadingScreen() {
   return (
@@ -93,6 +97,9 @@ function PageVisibilityGate({ page, children }: { page: string; children: React.
       ["orders", "/orders"],
       ["reviews", "/reviews"],
       ["buyForYou", "/buy-for-you"],
+      ["games", "/games"],
+      ["dice", "/games/dice"],
+      ["mines", "/games/mines"],
       ["reseller", "/become-reseller"],
       ["support", "/support"],
       ["profile", "/profile"],
@@ -165,6 +172,7 @@ function Router() {
         <Route path="/reviews">{() => <PageVisibilityGate page="reviews"><ReviewsPage /></PageVisibilityGate>}</Route>
         <Route path="/buy-for-you">{() => <PageVisibilityGate page="buyForYou"><BuyForYouPage /></PageVisibilityGate>}</Route>
         <Route path="/admin/eats" component={AdminEatsPage} />
+        <Route path="/admin/profits" component={AdminProfitsPage} />
         <Route path="/admin/reviews" component={AdminReviewsPage} />
         <Route path="/my-code">{() => <PageVisibilityGate page="myCode"><MyCodePage /></PageVisibilityGate>}</Route>
         <Route path="/cart">{() => <PageVisibilityGate page="cart"><CartPage /></PageVisibilityGate>}</Route>
@@ -173,6 +181,9 @@ function Router() {
         <Route path="/banks">{() => <PageVisibilityGate page="banks"><AchPage /></PageVisibilityGate>}</Route>
         <Route path="/ach">{() => <PageVisibilityGate page="banks"><AchPage /></PageVisibilityGate>}</Route>
         <Route path="/games/plinko">{() => <PageVisibilityGate page="plinko"><PlinkoPage /></PageVisibilityGate>}</Route>
+        <Route path="/games/dice">{() => <PageVisibilityGate page="dice"><DiceGamePage /></PageVisibilityGate>}</Route>
+        <Route path="/games/mines">{() => <PageVisibilityGate page="mines"><MinesGamePage /></PageVisibilityGate>}</Route>
+        <Route path="/games">{() => <PageVisibilityGate page="games"><GamesPage /></PageVisibilityGate>}</Route>
         <Route path="/checker">{() => <PageVisibilityGate page="checker"><CheckerPage /></PageVisibilityGate>}</Route>
         <Route path="/become-reseller">{() => <PageVisibilityGate page="reseller"><BecomeResellerPage /></PageVisibilityGate>}</Route>
         <Route path="/profile">{() => <PageVisibilityGate page="profile"><ProfilePage /></PageVisibilityGate>}</Route>

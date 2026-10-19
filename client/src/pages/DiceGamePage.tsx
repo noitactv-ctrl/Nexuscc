@@ -23,7 +23,7 @@ export default function DiceGamePage() {
       <Card className="border-primary/20 bg-[#0f1115] backdrop-blur-sm overflow-hidden">
         <CardHeader className="text-center border-b border-white/5 bg-[#111]/5">
           <CardTitle className="text-3xl font-black italic tracking-tighter uppercase text-white">Double or Nothing</CardTitle>
-          <CardDescription className="italic">Roll higher than 7 to win 2x your bet.</CardDescription>
+          <CardDescription className="italic">Beat the house roll to return 1.58x your bet. Theoretical return: about 70% (30% house edge).</CardDescription>
         </CardHeader>
         <CardContent className="p-12 flex flex-col items-center gap-12">
           <div className="h-32 flex items-center gap-6">

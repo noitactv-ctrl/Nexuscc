@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-const MULTIPLIERS = [3, 2.2, 1.3, 0.9, 0.45, 0.9, 1.3, 2.2, 3];
+const MULTIPLIERS = [2.182704, 1.60065, 0.945838, 0.654811, 0.327406, 0.654811, 0.945838, 1.60065, 2.182704];
 const ROWS = 8;
 
 type PlinkoResult = {
@@ -84,7 +84,7 @@ export default function PlinkoPage() {
             <CircleDot className="h-6 w-6" />
           </div>
           <CardTitle className="text-3xl font-black italic tracking-tighter uppercase text-white">Plinko</CardTitle>
-          <CardDescription>Drop through 8 fair rows. The payout table and house edge are shown below.</CardDescription>
+          <CardDescription>Fair 8-row path; fixed payouts. Theoretical return: about 70% (30% house edge).</CardDescription>
         </CardHeader>
 
         <CardContent className="p-5 sm:p-8 space-y-7">
@@ -195,7 +195,7 @@ export default function PlinkoPage() {
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <p>
                 Every row uses a server-side 50/50 step. This published table has a theoretical return of approximately
-                <span className="font-bold text-white"> 96.2%</span> (about a 3.8% house edge). Results are not manually adjusted.
+                <span className="font-bold text-white"> 70%</span> (about a 30% house edge). Results use fair server-generated paths.
               </p>
             </div>
           </div>

@@ -2713,6 +2713,9 @@ function FeatureTogglesCard() {
     { key: "cart", label: "Shopping Cart" },
     { key: "checker", label: "Card Checker" },
     { key: "plinko", label: "Plinko" },
+    { key: "games", label: "Games Hub" },
+    { key: "dice", label: "Dice" },
+    { key: "mines", label: "Mines" },
     { key: "support", label: "Support" },
     { key: "profile", label: "Account Management" },
   ];

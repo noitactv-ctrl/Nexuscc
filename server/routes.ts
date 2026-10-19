@@ -757,6 +757,9 @@ export async function registerRoutes(
   // Games
   app.post(api.games.dice.path, gameLimiter, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    if (await storage.getSetting("feature_games", "true") === "false" || await storage.getSetting("feature_dice", "true") === "false") {
+      return res.status(404).json({ message: "Dice is currently unavailable." });
+    }
     const user = req.user as any;
     const bet = Number(req.body.betAmount);
 
@@ -784,7 +787,7 @@ export async function registerRoutes(
     let payout = 0;
 
     if (won) {
-      payout = bet * 2; // 2x multiplier
+      payout = Math.round(bet * 1.58); // About 70% theoretical RTP for higher-of-two-2d6
       await storage.updateUserBalance(user.id, payout);
       await storage.createTransaction(user.id, payout, "win", "Dice game win");
     }
@@ -806,13 +809,16 @@ export async function registerRoutes(
   // server-side outcome; the full grid is returned for the result animation.
   app.post(api.games.mines.path, gameLimiter, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    if (await storage.getSetting("feature_games", "true") === "false" || await storage.getSetting("feature_mines", "true") === "false") {
+      return res.status(404).json({ message: "Mines is currently unavailable." });
+    }
 
     const bet = Number(req.body?.betAmount);
     const difficulty = req.body?.difficulty;
     const settings = {
-      simple: { mineCount: 3, multiplier: 1.5 },
-      extreme: { mineCount: 7, multiplier: 2.25 },
-      impossible: { mineCount: 11, multiplier: 4 },
+      simple: { mineCount: 3, multiplier: 0.795455 },
+      extreme: { mineCount: 7, multiplier: 0.972222 },
+      impossible: { mineCount: 11, multiplier: 1.25 },
     } as const;
 
     if (!Number.isFinite(bet) || !Number.isInteger(bet) || bet < 1) {
@@ -858,11 +864,10 @@ export async function registerRoutes(
     });
   });
 
-  // Plinko — eight fair server-side left/right steps. Payouts are disclosed in
-  // the client and have a theoretical return of approximately 96.2%.
+  // Plinko — eight fair server-side left/right steps with a disclosed 70% RTP.
   app.post(api.games.plinko.path, gameLimiter, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
-    if (await storage.getSetting("feature_plinko", "true") === "false") {
+    if (await storage.getSetting("feature_games", "true") === "false" || await storage.getSetting("feature_plinko", "true") === "false") {
       return res.status(404).json({ message: "Plinko is currently unavailable." });
     }
 
@@ -877,7 +882,7 @@ export async function registerRoutes(
     const userId = (req.user as any).id;
     const path = Array.from({ length: 8 }, () => randomInt(0, 2));
     const slot = path.reduce((position, step) => position + step, 0);
-    const multipliers = [3, 2.2, 1.3, 0.9, 0.45, 0.9, 1.3, 2.2, 3] as const;
+    const multipliers = [2.182704, 1.60065, 0.945838, 0.654811, 0.327406, 0.654811, 0.945838, 1.60065, 2.182704] as const;
     const multiplier = multipliers[slot];
     const payout = Math.round(bet * multiplier);
 
@@ -1649,6 +1654,61 @@ export async function registerRoutes(
       WHERE o.user_id=${userId}
       GROUP BY o.id ORDER BY o.created_at DESC LIMIT 100`);
     res.json({ balanceHistory, orderHistory: (orderResult as any).rows });
+  });
+
+  app.get("/api/admin/profits", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const result = await db.execute(sql`SELECT
+      seller.id AS "sellerId", seller.username,
+      o.order_id AS "orderId", o.created_at AS "createdAt", o.total AS "orderTotal",
+      oi.item_type AS "itemType", oi.price, oi.quantity,
+      SUM(oi.price * oi.quantity) OVER (PARTITION BY o.id) AS "orderSubtotal",
+      COALESCE(p.name, cb.name, CASE WHEN oi.item_type='ach' THEN 'Bank item'
+        WHEN oi.item_type='card' THEN 'Card' ELSE 'Log' END) AS "itemName"
+      FROM order_items oi
+      JOIN orders o ON o.id=oi.order_id
+      LEFT JOIN stock_items si ON si.id=oi.stock_item_id
+      LEFT JOIN variants v ON v.id=oi.variant_id
+      LEFT JOIN products p ON p.id=v.product_id
+      LEFT JOIN cards c ON c.id=oi.card_id
+      LEFT JOIN card_bases cb ON cb.id=c.base_id
+      LEFT JOIN users card_creator ON card_creator.id=cb.created_by_id
+      LEFT JOIN LATERAL (
+        SELECT seller_id FROM achs
+        WHERE id=oi.ach_id OR (oi.ach_id IS NULL AND oi.item_type='ach' AND full_item=o.delivery_content)
+        ORDER BY id LIMIT 1
+      ) a ON true
+      JOIN users seller ON seller.id=COALESCE(
+        si.seller_id, cb.owner_id,
+        CASE WHEN card_creator.role <> 'admin' THEN cb.created_by_id END,
+        a.seller_id
+      ) AND seller.role <> 'admin'
+      WHERE o.status IN ('fulfilled','delivering','replaced')
+      ORDER BY o.created_at DESC`);
+    const sellers = new Map<number, any>();
+    for (const raw of (result as any).rows) {
+      const orderSubtotal = Number(raw.orderSubtotal);
+      if (orderSubtotal <= 0) continue;
+      const allocatedCents = Math.round(Number(raw.orderTotal) * (Number(raw.price) * Number(raw.quantity)) / orderSubtotal);
+      const sellerShareCents = Math.floor(allocatedCents / 2);
+      const row = sellers.get(Number(raw.sellerId)) ?? {
+        sellerId: Number(raw.sellerId), username: raw.username, sales: 0,
+        grossCents: 0, sellerProfitCents: 0, platformShareCents: 0, items: [],
+      };
+      row.sales += Number(raw.quantity);
+      row.grossCents += allocatedCents;
+      row.sellerProfitCents += sellerShareCents;
+      row.platformShareCents += allocatedCents - sellerShareCents;
+      row.items.push({
+        orderId: raw.orderId, itemType: raw.itemType, itemName: raw.itemName,
+        quantity: Number(raw.quantity), createdAt: raw.createdAt,
+        allocatedCents, sellerProfitCents: sellerShareCents,
+      });
+      sellers.set(row.sellerId, row);
+    }
+    res.json(Array.from(sellers.values()).sort((a, b) => b.sellerProfitCents - a.sellerProfitCents));
   });
 
   // Old Admin Orders (keeping for backward compat)
@@ -3354,6 +3414,9 @@ export async function registerRoutes(
     myCode: "feature_my_code",
     cart: "feature_cart",
     checker: "feature_checker",
+    games: "feature_games",
+    dice: "feature_dice",
+    mines: "feature_mines",
     plinko: "feature_plinko",
     support: "feature_support",
     profile: "feature_profile",

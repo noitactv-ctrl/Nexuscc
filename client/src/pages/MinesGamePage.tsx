@@ -25,7 +25,7 @@ export default function MinesGamePage() {
       <Card className="border-destructive/20 bg-[#0f1115] backdrop-blur-sm">
         <CardHeader className="text-center border-b border-white/5 bg-[#111]/5">
           <CardTitle className="text-3xl font-black italic tracking-tighter uppercase text-white">Minefield</CardTitle>
-          <CardDescription className="italic">Cross the field without hitting a mine.</CardDescription>
+          <CardDescription className="italic">One safe pick wins. Approx. 70% theoretical return (30% house edge) at every difficulty.</CardDescription>
         </CardHeader>
         <CardContent className="p-8 flex flex-col items-center gap-12">
           <div className="grid grid-cols-5 gap-3 bg-black/20 p-4 rounded-2xl border border-white/5">
@@ -54,8 +54,8 @@ export default function MinesGamePage() {
           </div>
 
           {result && (
-             <div className={`text-4xl font-black italic tracking-tighter uppercase ${result.won ? 'text-red-500' : 'text-destructive'}`}>
-              {result.won ? `CLEARED! +$${(result.payout/100).toFixed(2)}` : 'EXPLODED!'}
+              <div className={`text-4xl font-black italic tracking-tighter uppercase ${result.won ? 'text-red-500' : 'text-destructive'}`}>
+               {result.won ? `SAFE · $${(result.payout/100).toFixed(2)} returned` : 'EXPLODED!'}
             </div>
           )}
 

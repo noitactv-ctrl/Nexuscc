@@ -6,6 +6,9 @@ import {
   BookOpen,
   ChevronDown,
   CreditCard,
+  Dice5,
+  Bomb,
+  CircleDot,
   FileText,
   Gift,
   House,
@@ -15,6 +18,7 @@ import {
   MessageSquare,
   MoreVertical,
   Package,
+  CircleDollarSign,
   Plus,
   Settings,
   ShoppingBag,
@@ -60,6 +64,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     deposit: true,
     shop: true,
+    games: true,
     orders: true,
     checker: true,
     support: true,
@@ -161,6 +166,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
         { href: "/reviews/submit", label: "Submit a Review", icon: FileText },
       ] : [],
     },
+    ...(pageVisible("games") ? [{
+      label: "Games",
+      groups: [{
+        id: "games",
+        label: "Play",
+        icon: Dice5,
+        entries: [
+          { href: "/games", label: "Games Hub", icon: Dice5 },
+          ...(pageVisible("dice") ? [{ href: "/games/dice", label: "Dice", icon: Dice5 }] : []),
+          ...(pageVisible("mines") ? [{ href: "/games/mines", label: "Mines", icon: Bomb }] : []),
+          ...(pageVisible("plinko") ? [{ href: "/games/plinko", label: "Plinko", icon: CircleDot }] : []),
+        ],
+      }],
+    }] : []),
     ...(pageVisible("orders") ? [{
       label: "My Orders",
       groups: [
@@ -211,6 +230,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               { href: "/admin", label: "Admin", icon: Settings },
               { href: "/admin/reviews", label: "Review Moderation", icon: MessageSquare },
               { href: "/admin/eats", label: "Eats Dashboard", icon: ShoppingBag },
+              { href: "/admin/profits", label: "Profits Page", icon: CircleDollarSign },
             ] : []),
             ...((user as any)?.isWorker && user?.role !== "admin" ? [{ href: "/worker", label: "Worker Dashboard", icon: Settings }] : []),
           ],

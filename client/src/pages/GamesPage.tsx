@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGames } from "@/hooks/use-games";
 import { useAuth } from "@/hooks/use-auth";
-import { Dice5, Bomb, Loader2 } from "lucide-react";
+import { Dice5, Bomb, CircleDot, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 
 export default function GamesPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const { data: features } = useQuery<{ pages?: Record<string, boolean> }>({ queryKey: ["/api/settings/features"] });
   
   if (!user) return <div className="p-8 text-center">Please login to play.</div>;
 
@@ -20,7 +22,7 @@ export default function GamesPage() {
     {
       id: "dice",
       name: "DICE",
-      description: "Double or nothing. Roll higher than 7 to win 2x your bet.",
+      description: "Beat the house roll. Approx. 70% theoretical return (30% house edge).",
       icon: Dice5,
       color: "from-primary/20 to-primary/5",
       iconColor: "text-primary"
@@ -28,10 +30,18 @@ export default function GamesPage() {
     {
       id: "mines",
       name: "MINES",
-      description: "Cross the minefield without exploding. Higher difficulty = higher multiplier.",
+      description: "One safe pick. Approx. 70% theoretical return (30% house edge).",
       icon: Bomb,
       color: "from-destructive/20 to-destructive/5",
       iconColor: "text-destructive"
+    },
+    {
+      id: "plinko",
+      name: "PLINKO",
+      description: "Drop through 8 rows. Approx. 70% theoretical return (30% house edge).",
+      icon: CircleDot,
+      color: "from-cyan-500/20 to-cyan-500/5",
+      iconColor: "text-cyan-400"
     }
   ];
 
@@ -41,11 +51,11 @@ export default function GamesPage() {
         <h1 className="text-4xl md:text-6xl text-white">
           GAMBLE
         </h1>
-        <p className="text-muted-foreground text-sm font-bold">Test your luck and win credits</p>
+        <p className="text-muted-foreground text-sm font-bold">Each game targets about 70% theoretical return (30% house edge).</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {games.map((game) => (
+        {games.filter(game => features?.pages?.[game.id] !== false).map((game) => (
           <Card 
             key={game.id} 
             className={cn(
@@ -93,7 +103,7 @@ function DiceGame() {
     <Card className="border-primary/20 bg-card/50 backdrop-blur-sm overflow-hidden">
       <CardHeader className="text-center border-b border-border bg-secondary/20">
         <CardTitle>Double or Nothing</CardTitle>
-        <CardDescription>Roll higher than 7 to win 2x your bet.</CardDescription>
+      <CardDescription>Beat the house roll to return 1.58x your bet. About 70% theoretical return.</CardDescription>
       </CardHeader>
       <CardContent className="p-8 flex flex-col items-center gap-8">
         <div className="h-32 flex items-center gap-4">
