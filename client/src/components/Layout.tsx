@@ -148,6 +148,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ...(pageVisible("cards") ? [{ href: "/cards", label: "Buy Cards", icon: CreditCard }] : []),
             ...(pageVisible("banks") ? [{ href: "/banks", label: "Banks", icon: WalletCards }] : []),
             ...(pageVisible("logs") ? [{ href: "/shop", label: "Buy Logs", icon: FileText }] : []),
+            ...(pageVisible("buyForYou") ? [{ href: "/buy-for-you", label: "Buy For You", icon: Gift }] : []),
             ...(pageVisible("reseller") ? [{ href: "/become-reseller", label: "Become a Seller", icon: BookOpen }] : []),
           ],
         },
@@ -209,6 +210,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ...(user?.role === "admin" ? [
               { href: "/admin", label: "Admin", icon: Settings },
               { href: "/admin/reviews", label: "Review Moderation", icon: MessageSquare },
+              { href: "/admin/eats", label: "Eats Dashboard", icon: ShoppingBag },
             ] : []),
             ...((user as any)?.isWorker && user?.role !== "admin" ? [{ href: "/worker", label: "Worker Dashboard", icon: Settings }] : []),
           ],

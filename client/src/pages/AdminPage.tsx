@@ -1705,6 +1705,15 @@ function UsersSection() {
     },
     refetchInterval: 15000,
   });
+  const { data: userHistory, isLoading: historyLoading } = useQuery<any>({
+    queryKey: ["/api/admin/users", selectedUser?.id, "history"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${selectedUser.id}/history`, { credentials: "include" });
+      if (!res.ok) throw new Error("Could not load user history");
+      return res.json();
+    },
+    enabled: !!selectedUser,
+  });
 
   const banMutation = useMutation({
     mutationFn: async (userId: number) => {
@@ -1738,6 +1747,7 @@ function UsersSection() {
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      qc.invalidateQueries({ queryKey: ['/api/admin/users', selectedUser?.id, 'history'] });
       setSelectedUser((u: any) => u ? { ...u, balance: data.balance } : null);
       setBalanceInput("");
       toast({ title: `Balance set to $${(data.balance / 100).toFixed(2)}` });
@@ -1823,6 +1833,33 @@ function UsersSection() {
                 ? <CopyLoginCode code={selectedUser.loginCode} userId={selectedUser.id} />
                 : <p className="text-xs text-white/40">—</p>}
             </div>
+          </div>
+
+          <div className="grid gap-3 border-t border-white/10 pt-3 lg:grid-cols-2">
+            <section className="space-y-2">
+              <p className="text-[9px] text-white/40 uppercase tracking-widest">Balance History</p>
+              <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-lg bg-[#0d0d0d] p-2">
+                {historyLoading ? <p className="text-[10px] text-white/40">Loading history…</p> :
+                  userHistory?.balanceHistory?.length ? userHistory.balanceHistory.map((entry: any) => (
+                    <div key={entry.id} className="flex items-start justify-between gap-2 border-b border-white/5 pb-1.5 text-[10px] last:border-0">
+                      <div className="min-w-0"><p className="font-semibold text-white/80">{entry.description || entry.type}</p><p className="text-white/35">{entry.type} · {formatDate(entry.createdAt)}</p></div>
+                      <span className={`shrink-0 font-mono ${entry.amount >= 0 ? "text-emerald-400" : "text-red-400"}`}>{entry.amount >= 0 ? "+" : "−"}${(Math.abs(entry.amount) / 100).toFixed(2)}</span>
+                    </div>
+                  )) : <p className="text-[10px] text-white/40">No balance activity.</p>}
+              </div>
+            </section>
+            <section className="space-y-2">
+              <p className="text-[9px] text-white/40 uppercase tracking-widest">Order History</p>
+              <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-lg bg-[#0d0d0d] p-2">
+                {historyLoading ? <p className="text-[10px] text-white/40">Loading history…</p> :
+                  userHistory?.orderHistory?.length ? userHistory.orderHistory.map((order: any) => (
+                    <div key={order.id} className="border-b border-white/5 pb-1.5 text-[10px] last:border-0">
+                      <div className="flex justify-between gap-2"><span className="font-semibold text-white/80">#{order.orderId} · {order.status}</span><span className="font-mono text-white/70">${(order.total / 100).toFixed(2)}</span></div>
+                      <p className="text-white/35">{formatDate(order.createdAt)} · {(order.items ?? []).map((item: any) => item.name).join(", ") || "Order"}</p>
+                    </div>
+                  )) : <p className="text-[10px] text-white/40">No orders.</p>}
+              </div>
+            </section>
           </div>
 
           {/* Set Balance */}
@@ -2671,6 +2708,7 @@ function FeatureTogglesCard() {
     { key: "reseller", label: "Become a Seller" },
     { key: "orders", label: "My Orders" },
     { key: "reviews", label: "Product Reviews" },
+    { key: "buyForYou", label: "Buy For You" },
     { key: "myCode", label: "My Code" },
     { key: "cart", label: "Shopping Cart" },
     { key: "checker", label: "Card Checker" },

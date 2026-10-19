@@ -190,6 +190,98 @@ export async function registerRoutes(
     reviewed_at TIMESTAMP
   )`);
   await db.execute(sql`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS ach_id INTEGER REFERENCES achs(id)`);
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS buy_for_you_requests (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    category TEXT NOT NULL CHECK (category IN ('food','weed')),
+    customer_name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    address TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`);
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS buy_for_you_messages (
+    id SERIAL PRIMARY KEY,
+    request_id INTEGER NOT NULL REFERENCES buy_for_you_requests(id),
+    sender_role TEXT NOT NULL CHECK (sender_role IN ('user','admin')),
+    message TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  )`);
+  app.get("/api/buy-for-you", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const result = await db.execute(sql`SELECT id, category, customer_name AS "customerName", email, phone, address,
+      created_at AS "createdAt", updated_at AS "updatedAt"
+      FROM buy_for_you_requests WHERE user_id=${(req.user as any).id} ORDER BY updated_at DESC`);
+    res.json((result as any).rows);
+  });
+  app.post("/api/buy-for-you", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const { category } = req.body ?? {};
+    const customerName = typeof req.body?.name === "string" ? req.body.name.trim() : "";
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const phone = typeof req.body?.phone === "string" ? req.body.phone.trim() : "";
+    const address = typeof req.body?.address === "string" ? req.body.address.trim() : "";
+    if (!["food", "weed"].includes(category) || !customerName || customerName.length > 100 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 ||
+      phone.length < 7 || phone.length > 40 || address.length < 5 || address.length > 500) {
+      return res.status(400).json({ message: "Enter a valid category, name, email, phone number, and address." });
+    }
+    const result = await db.execute(sql`INSERT INTO buy_for_you_requests
+      (user_id, category, customer_name, email, phone, address)
+      VALUES (${(req.user as any).id}, ${category}, ${customerName}, ${email}, ${phone}, ${address})
+      RETURNING id, category, customer_name AS "customerName", email, phone, address, created_at AS "createdAt"`);
+    res.status(201).json((result as any).rows[0]);
+  });
+  app.get("/api/buy-for-you/:id/messages", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const requestId = Number(req.params.id);
+    const owned = await db.execute(sql`SELECT id FROM buy_for_you_requests
+      WHERE id=${requestId} AND user_id=${(req.user as any).id}`);
+    if (!(owned as any).rows.length) return res.status(404).json({ message: "Request not found." });
+    const messages = await db.execute(sql`SELECT id, sender_role AS "senderRole", message, created_at AS "createdAt"
+      FROM buy_for_you_messages WHERE request_id=${requestId} ORDER BY created_at ASC`);
+    res.json((messages as any).rows);
+  });
+  app.post("/api/buy-for-you/:id/messages", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const requestId = Number(req.params.id);
+    const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
+    if (!message || message.length > 2000) return res.status(400).json({ message: "Message must be 1–2,000 characters." });
+    const owned = await db.execute(sql`SELECT id FROM buy_for_you_requests
+      WHERE id=${requestId} AND user_id=${(req.user as any).id}`);
+    if (!(owned as any).rows.length) return res.status(404).json({ message: "Request not found." });
+    const created = await db.execute(sql`INSERT INTO buy_for_you_messages (request_id, sender_role, message)
+      VALUES (${requestId}, 'user', ${message}) RETURNING id`);
+    await db.execute(sql`UPDATE buy_for_you_requests SET updated_at=NOW() WHERE id=${requestId}`);
+    res.status(201).json((created as any).rows[0]);
+  });
+  app.get("/api/admin/eats", requireAdmin, async (_req, res) => {
+    const result = await db.execute(sql`SELECT r.id, r.user_id AS "userId", r.category,
+      r.customer_name AS "customerName", r.email, r.phone, r.address, r.created_at AS "createdAt",
+      r.updated_at AS "updatedAt", u.username
+      FROM buy_for_you_requests r JOIN users u ON u.id=r.user_id ORDER BY r.updated_at DESC`);
+    res.json((result as any).rows);
+  });
+  app.get("/api/admin/eats/:id/messages", requireAdmin, async (req, res) => {
+    const requestId = Number(req.params.id);
+    const found = await db.execute(sql`SELECT id FROM buy_for_you_requests WHERE id=${requestId}`);
+    if (!(found as any).rows.length) return res.status(404).json({ message: "Request not found." });
+    const messages = await db.execute(sql`SELECT id, sender_role AS "senderRole", message, created_at AS "createdAt"
+      FROM buy_for_you_messages WHERE request_id=${requestId} ORDER BY created_at ASC`);
+    res.json((messages as any).rows);
+  });
+  app.post("/api/admin/eats/:id/messages", requireAdmin, async (req, res) => {
+    const requestId = Number(req.params.id);
+    const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
+    if (!message || message.length > 2000) return res.status(400).json({ message: "Message must be 1–2,000 characters." });
+    const found = await db.execute(sql`SELECT id FROM buy_for_you_requests WHERE id=${requestId}`);
+    if (!(found as any).rows.length) return res.status(404).json({ message: "Request not found." });
+    const created = await db.execute(sql`INSERT INTO buy_for_you_messages (request_id, sender_role, message)
+      VALUES (${requestId}, 'admin', ${message}) RETURNING id`);
+    await db.execute(sql`UPDATE buy_for_you_requests SET updated_at=NOW() WHERE id=${requestId}`);
+    res.status(201).json((created as any).rows[0]);
+  });
   app.get("/api/reviews", async (_req, res) => {
     const result = await db.execute(sql`SELECT r.id, r.title, r.seller_name AS "sellerName", r.item_type AS "itemType",
       r.content, r.image_id AS "imageId", r.created_at AS "createdAt", u.username
@@ -1520,6 +1612,43 @@ export async function registerRoutes(
     if (!isAdminOrWorker(req)) return res.status(401).json({ message: "Unauthorized" });
     const allUsers = await storage.getAllUsers();
     res.json(allUsers);
+  });
+
+  app.get("/api/admin/users/:id/history", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const userId = Number(req.params.id);
+    if (!Number.isInteger(userId) || userId <= 0) return res.status(400).json({ message: "Invalid user." });
+    const target = await storage.getUser(userId);
+    if (!target) return res.status(404).json({ message: "User not found." });
+    const balanceHistory = await db.select({
+      id: transactions.id,
+      amount: transactions.amount,
+      type: transactions.type,
+      description: transactions.description,
+      paymentMethod: transactions.paymentMethod,
+      createdAt: transactions.createdAt,
+    }).from(transactions).where(eq(transactions.userId, userId))
+      .orderBy(desc(transactions.createdAt)).limit(100);
+    const orderResult = await db.execute(sql`SELECT o.id, o.order_id AS "orderId", o.status, o.total,
+      o.payment_method AS "paymentMethod", o.created_at AS "createdAt",
+      COALESCE(json_agg(json_build_object(
+        'type', oi.item_type,
+        'name', COALESCE(p.name, cb.name, a.bank_name,
+          CASE WHEN oi.item_type='card' THEN 'Card' WHEN oi.item_type='ach' THEN 'Bank' ELSE 'Item' END),
+        'quantity', oi.quantity
+      )) FILTER (WHERE oi.id IS NOT NULL), '[]'::json) AS items
+      FROM orders o
+      LEFT JOIN order_items oi ON oi.order_id=o.id
+      LEFT JOIN variants v ON v.id=oi.variant_id
+      LEFT JOIN products p ON p.id=v.product_id
+      LEFT JOIN cards c ON c.id=oi.card_id
+      LEFT JOIN card_bases cb ON cb.id=c.base_id
+      LEFT JOIN achs a ON a.id=oi.ach_id
+      WHERE o.user_id=${userId}
+      GROUP BY o.id ORDER BY o.created_at DESC LIMIT 100`);
+    res.json({ balanceHistory, orderHistory: (orderResult as any).rows });
   });
 
   // Old Admin Orders (keeping for backward compat)
