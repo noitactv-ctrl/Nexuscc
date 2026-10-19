@@ -21,3 +21,4 @@
 - [OmniMarket frontend precedence](nexuscc-frontend-precedence.md) — resolve stale conflicts in favor of the user's current brand, design, and removals.
 - [Telegram daily rewards](telegram-daily-rewards.md) — all bot commands require channel membership; $1 daily and $1 per new `/dailyref` starter, with wallet linking.
 - [GitHub push authentication](github-push-authentication.md) — a healthy Replit GitHub connection may still fail to authenticate Git pushes; do not request tokens or retry blindly.
+- [Review approval credits](review-approval-credits.md) — approved reviews earn $0.50 once on future approval; do not retroactively credit reviews already approved.
