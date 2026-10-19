@@ -193,14 +193,19 @@ export async function registerRoutes(
   await db.execute(sql`CREATE TABLE IF NOT EXISTS buy_for_you_requests (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
-    category TEXT NOT NULL CHECK (category IN ('food','weed')),
+    category TEXT NOT NULL,
     customer_name TEXT NOT NULL,
     email TEXT NOT NULL,
     phone TEXT NOT NULL,
     address TEXT NOT NULL,
+    site_url TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT buy_for_you_requests_category_check CHECK (category IN ('food','weed','facebook'))
   )`);
+  await db.execute(sql`ALTER TABLE buy_for_you_requests ADD COLUMN IF NOT EXISTS site_url TEXT NOT NULL DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE buy_for_you_requests DROP CONSTRAINT IF EXISTS buy_for_you_requests_category_check`);
+  await db.execute(sql`ALTER TABLE buy_for_you_requests ADD CONSTRAINT buy_for_you_requests_category_check CHECK (category IN ('food','weed','facebook'))`);
   await db.execute(sql`CREATE TABLE IF NOT EXISTS buy_for_you_messages (
     id SERIAL PRIMARY KEY,
     request_id INTEGER NOT NULL REFERENCES buy_for_you_requests(id),
@@ -210,7 +215,7 @@ export async function registerRoutes(
   )`);
   app.get("/api/buy-for-you", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
-    const result = await db.execute(sql`SELECT id, category, customer_name AS "customerName", email, phone, address,
+    const result = await db.execute(sql`SELECT id, category, customer_name AS "customerName", email, phone, address, site_url AS "siteUrl",
       created_at AS "createdAt", updated_at AS "updatedAt"
       FROM buy_for_you_requests WHERE user_id=${(req.user as any).id} ORDER BY updated_at DESC`);
     res.json((result as any).rows);
@@ -222,15 +227,22 @@ export async function registerRoutes(
     const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
     const phone = typeof req.body?.phone === "string" ? req.body.phone.trim() : "";
     const address = typeof req.body?.address === "string" ? req.body.address.trim() : "";
-    if (!["food", "weed"].includes(category) || !customerName || customerName.length > 100 ||
+    const siteUrl = typeof req.body?.siteUrl === "string" ? req.body.siteUrl.trim() : "";
+    let validSiteUrl = false;
+    try {
+      const parsedSiteUrl = new URL(siteUrl);
+      validSiteUrl = ["http:", "https:"].includes(parsedSiteUrl.protocol);
+    } catch {}
+    if (!["food", "weed", "facebook"].includes(category) || !customerName || customerName.length > 100 ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 ||
-      phone.length < 7 || phone.length > 40 || address.length < 5 || address.length > 500) {
-      return res.status(400).json({ message: "Enter a valid category, name, email, phone number, and address." });
+      phone.length < 7 || phone.length > 40 || address.length < 5 || address.length > 500 ||
+      !validSiteUrl || siteUrl.length > 2048) {
+      return res.status(400).json({ message: "Enter a valid category, name, email, phone number, address, and HTTP(S) site URL." });
     }
     const result = await db.execute(sql`INSERT INTO buy_for_you_requests
-      (user_id, category, customer_name, email, phone, address)
-      VALUES (${(req.user as any).id}, ${category}, ${customerName}, ${email}, ${phone}, ${address})
-      RETURNING id, category, customer_name AS "customerName", email, phone, address, created_at AS "createdAt"`);
+      (user_id, category, customer_name, email, phone, address, site_url)
+      VALUES (${(req.user as any).id}, ${category}, ${customerName}, ${email}, ${phone}, ${address}, ${siteUrl})
+      RETURNING id, category, customer_name AS "customerName", email, phone, address, site_url AS "siteUrl", created_at AS "createdAt"`);
     res.status(201).json((result as any).rows[0]);
   });
   app.get("/api/buy-for-you/:id/messages", async (req, res) => {
@@ -258,7 +270,7 @@ export async function registerRoutes(
   });
   app.get("/api/admin/eats", requireAdmin, async (_req, res) => {
     const result = await db.execute(sql`SELECT r.id, r.user_id AS "userId", r.category,
-      r.customer_name AS "customerName", r.email, r.phone, r.address, r.created_at AS "createdAt",
+      r.customer_name AS "customerName", r.email, r.phone, r.address, r.site_url AS "siteUrl", r.created_at AS "createdAt",
       r.updated_at AS "updatedAt", u.username
       FROM buy_for_you_requests r JOIN users u ON u.id=r.user_id ORDER BY r.updated_at DESC`);
     res.json((result as any).rows);
@@ -3411,6 +3423,8 @@ export async function registerRoutes(
     logs: "feature_logs",
     reseller: "feature_reseller",
     orders: "feature_orders",
+    reviews: "feature_reviews",
+    buyForYou: "feature_buy_for_you",
     myCode: "feature_my_code",
     cart: "feature_cart",
     checker: "feature_checker",

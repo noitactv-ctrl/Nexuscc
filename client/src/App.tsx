@@ -180,9 +180,9 @@ function Router() {
         <Route path="/cards">{() => <PageVisibilityGate page="cards"><CardsPage /></PageVisibilityGate>}</Route>
         <Route path="/banks">{() => <PageVisibilityGate page="banks"><AchPage /></PageVisibilityGate>}</Route>
         <Route path="/ach">{() => <PageVisibilityGate page="banks"><AchPage /></PageVisibilityGate>}</Route>
-        <Route path="/games/plinko">{() => <PageVisibilityGate page="plinko"><PlinkoPage /></PageVisibilityGate>}</Route>
-        <Route path="/games/dice">{() => <PageVisibilityGate page="dice"><DiceGamePage /></PageVisibilityGate>}</Route>
-        <Route path="/games/mines">{() => <PageVisibilityGate page="mines"><MinesGamePage /></PageVisibilityGate>}</Route>
+        <Route path="/games/plinko">{() => <PageVisibilityGate page="games"><PageVisibilityGate page="plinko"><PlinkoPage /></PageVisibilityGate></PageVisibilityGate>}</Route>
+        <Route path="/games/dice">{() => <PageVisibilityGate page="games"><PageVisibilityGate page="dice"><DiceGamePage /></PageVisibilityGate></PageVisibilityGate>}</Route>
+        <Route path="/games/mines">{() => <PageVisibilityGate page="games"><PageVisibilityGate page="mines"><MinesGamePage /></PageVisibilityGate></PageVisibilityGate>}</Route>
         <Route path="/games">{() => <PageVisibilityGate page="games"><GamesPage /></PageVisibilityGate>}</Route>
         <Route path="/checker">{() => <PageVisibilityGate page="checker"><CheckerPage /></PageVisibilityGate>}</Route>
         <Route path="/become-reseller">{() => <PageVisibilityGate page="reseller"><BecomeResellerPage /></PageVisibilityGate>}</Route>
