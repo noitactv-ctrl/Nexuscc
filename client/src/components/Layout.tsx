@@ -155,7 +155,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     },
     {
       label: "Reviews",
-      entries: pageVisible("reviews") ? [{ href: "/reviews", label: "Product Reviews", icon: MessageSquare }] : [],
+      entries: pageVisible("reviews") ? [
+        { href: "/reviews", label: "Approved Reviews", icon: MessageSquare },
+        { href: "/reviews/submit", label: "Submit a Review", icon: FileText },
+      ] : [],
     },
     ...(pageVisible("orders") ? [{
       label: "My Orders",

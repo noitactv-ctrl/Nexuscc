@@ -37,6 +37,7 @@ import HomePage from "@/pages/HomePage";
 import MyDepositsPage from "@/pages/MyDepositsPage";
 import CryptoPaymentPage from "@/pages/CryptoPaymentPage";
 import ReviewsPage from "@/pages/ReviewsPage";
+import SubmitReviewPage from "@/pages/SubmitReviewPage";
 import AdminReviewsPage from "@/pages/AdminReviewsPage";
 
 function LoadingScreen() {
@@ -157,6 +158,7 @@ function Router() {
         <Route path="/product/:name">{() => <PageVisibilityGate page="logs"><ProductDetailPage /></PageVisibilityGate>}</Route>
         <Route path="/order/:id">{() => <PageVisibilityGate page="orders"><OrderDetailPageNew /></PageVisibilityGate>}</Route>
         <Route path="/orders">{() => <PageVisibilityGate page="orders"><OrdersPage /></PageVisibilityGate>}</Route>
+        <Route path="/reviews/submit">{() => <PageVisibilityGate page="reviews"><SubmitReviewPage /></PageVisibilityGate>}</Route>
         <Route path="/reviews">{() => <PageVisibilityGate page="reviews"><ReviewsPage /></PageVisibilityGate>}</Route>
         <Route path="/admin/reviews" component={AdminReviewsPage} />
         <Route path="/my-code">{() => <PageVisibilityGate page="myCode"><MyCodePage /></PageVisibilityGate>}</Route>
