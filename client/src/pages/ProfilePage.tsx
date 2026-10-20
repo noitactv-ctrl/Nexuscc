@@ -48,38 +48,38 @@ export default function ProfilePage() {
     }
   }, [orderId, orders]);
 
-  if (isLoading || !user) return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (isLoading || !user) return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-blue-300" /></div>;
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 pb-20">
-      <div className="flex flex-col gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 pb-20 pt-5 sm:px-6 sm:pt-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Member workspace</p>
-          <h1 className="break-words text-2xl font-bold tracking-tight [overflow-wrap:anywhere] sm:text-4xl">
+          <p className="text-sm font-medium text-white/55">Account</p>
+          <h1 className="mt-1 break-words text-[30px] font-semibold leading-tight tracking-tight text-white [overflow-wrap:anywhere]">
             {activeTab === "dashboard" ? `Welcome back, ${user.username}` : activeTab === "orders" ? "Your orders" : activeTab === "balance" ? "Wallet & payments" : "Account settings"}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-[15px] leading-relaxed text-white/55">
             {activeTab === "dashboard" ? "Manage your orders, balance, and account details." : activeTab === "orders" ? "Review purchases and access fulfilled order details." : activeTab === "balance" ? "Top up your balance or redeem a gift card." : "Manage your profile, Telegram link, and sign-in details."}
           </p>
         </div>
-        <div className="flex w-fit shrink-0 items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-2 text-xs text-muted-foreground">
+        <div className="flex w-fit shrink-0 items-center gap-2 rounded-full border border-white/10 bg-[#171717] px-3.5 py-1.5 text-xs text-muted-foreground">
           <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
           Account active
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl border border-border/80 bg-card/60 p-1 md:grid-cols-4">
-          <TabsTrigger value="dashboard" className="h-11 gap-2 rounded-lg text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-2xl bg-[#171717] p-1.5 md:grid-cols-4">
+          <TabsTrigger value="dashboard" className="h-11 gap-2 rounded-xl border border-transparent text-sm text-white/55 hover:text-white data-[state=active]:border-white/15 data-[state=active]:bg-[#202020] data-[state=active]:text-white data-[state=active]:shadow-sm">
             <User className="h-4 w-4" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="orders" className="h-11 gap-2 rounded-lg text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none">
+          <TabsTrigger value="orders" className="h-11 gap-2 rounded-xl border border-transparent text-sm text-white/55 hover:text-white data-[state=active]:border-white/15 data-[state=active]:bg-[#202020] data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Package className="h-4 w-4" /> Orders
           </TabsTrigger>
-          <TabsTrigger value="balance" className="h-11 gap-2 rounded-lg text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none">
+          <TabsTrigger value="balance" className="h-11 gap-2 rounded-xl border border-transparent text-sm text-white/55 hover:text-white data-[state=active]:border-white/15 data-[state=active]:bg-[#202020] data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Wallet className="h-4 w-4" /> Balance
           </TabsTrigger>
-          <TabsTrigger value="settings" className="h-11 gap-2 rounded-lg text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none">
+          <TabsTrigger value="settings" className="h-11 gap-2 rounded-xl border border-transparent text-sm text-white/55 hover:text-white data-[state=active]:border-white/15 data-[state=active]:bg-[#202020] data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Settings2 className="h-4 w-4" /> Settings
           </TabsTrigger>
         </TabsList>
@@ -129,11 +129,10 @@ function DashboardTab({
   return (
     <div className="space-y-5">
       <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <Card className="relative overflow-hidden border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card">
-          <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full border border-primary/10 shadow-[0_0_0_24px_hsl(var(--primary)/0.025),0_0_0_52px_hsl(var(--primary)/0.02)]" />
+        <Card className="relative overflow-hidden rounded-[22px] border-white/10 bg-[#171717] shadow-none">
           <CardContent className="relative space-y-7 p-5 sm:p-7">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Wallet className="h-4 w-4 text-primary" />
+              <Wallet className="h-4 w-4 text-blue-300" />
               Available balance
             </div>
             <div>
@@ -142,14 +141,14 @@ function DashboardTab({
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
               <span className="text-xs text-muted-foreground">Current account balance</span>
-              <Button onClick={openBalance} className="gap-2">
+              <Button onClick={openBalance} className="gap-2 rounded-xl bg-blue-400 font-semibold text-black hover:bg-blue-500">
                 <ArrowUpRight className="h-4 w-4" /> Manage balance
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border/80 bg-card/70">
+        <Card className="border-border/80 bg-card/70 rounded-[22px] border-white/10 bg-[#171717] shadow-none">
           <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
             <div>
               <CardTitle className="text-base">Account details</CardTitle>
@@ -167,7 +166,7 @@ function DashboardTab({
               { label: "Member since", value: formatDate(user.createdAt), icon: Calendar },
             ].map(({ label, value, icon: Icon }) => (
               <div key={label} className="flex min-w-0 items-center gap-3 border-t border-border/70 py-3.5 first:border-t-0 sm:[&:nth-child(2)]:border-t-0">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="h-4 w-4" /></div>
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-white/70"><Icon className="h-4 w-4" /></div>
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">{label}</p>
                   <p className="truncate text-sm font-medium">{value}</p>
@@ -179,19 +178,19 @@ function DashboardTab({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <button onClick={openOrders} className="group flex items-center justify-between rounded-xl border border-border/80 bg-card/50 p-4 text-left transition-colors hover:border-primary/35 hover:bg-card">
+        <button onClick={openOrders} className="group flex items-center justify-between rounded-[22px] border border-white/10 bg-[#171717] p-5 text-left transition-colors hover:border-blue-400/40 hover:bg-[#1c1c1c]">
           <span className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary"><Package className="h-4 w-4" /></span>
+            <span className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-white/70"><Package className="h-4 w-4" /></span>
             <span><span className="block text-sm font-semibold">Order history</span><span className="mt-1 block text-xs text-muted-foreground">{orderCount} {orderCount === 1 ? "order" : "orders"} on your account</span></span>
           </span>
-          <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+          <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-blue-300" />
         </button>
-        <button onClick={openSettings} className="group flex items-center justify-between rounded-xl border border-border/80 bg-card/50 p-4 text-left transition-colors hover:border-primary/35 hover:bg-card">
+        <button onClick={openSettings} className="group flex items-center justify-between rounded-[22px] border border-white/10 bg-[#171717] p-5 text-left transition-colors hover:border-blue-400/40 hover:bg-[#1c1c1c]">
           <span className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary"><Settings2 className="h-4 w-4" /></span>
+            <span className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-white/70"><Settings2 className="h-4 w-4" /></span>
             <span><span className="block text-sm font-semibold">Security & preferences</span><span className="mt-1 block text-xs text-muted-foreground">Update your email, password, or Telegram link</span></span>
           </span>
-          <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+          <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-blue-300" />
         </button>
       </div>
 
@@ -238,10 +237,10 @@ function TelegramLinkSettings() {
 
   return (
       <div className="w-full max-w-3xl space-y-4 sm:space-y-5">
-      <Card className="border-primary/30 bg-card">
+      <Card className="border-blue-400/30 bg-card rounded-[22px] border-white/10 bg-[#171717] shadow-none">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
-            <Link2 className="h-5 w-5 text-primary" />
+            <Link2 className="h-5 w-5 text-blue-300" />
             Link Telegram Account
           </CardTitle>
           <CardDescription>
@@ -257,16 +256,16 @@ function TelegramLinkSettings() {
           <p className="text-sm text-muted-foreground">
             Link here to receive your $1 referral bonuses in your GorillaCC balance. You can share your referral link before linking.
           </p>
-          <Button size="lg" onClick={createDailyRewardCode} disabled={dailyRewardCodeLoading} className="w-full sm:w-auto">
+          <Button size="lg" onClick={createDailyRewardCode} disabled={dailyRewardCodeLoading} className="w-full rounded-xl bg-blue-400 font-semibold text-black hover:bg-blue-500 sm:w-auto">
             {dailyRewardCodeLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2 className="mr-2 h-4 w-4" />}
             {dailyRewardCodeLoading ? "Creating code..." : "Generate Telegram link code"}
           </Button>
           {dailyRewardCode && (
-            <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-5">
+            <div className="rounded-xl border border-blue-400/30 bg-blue-400/5 p-4 sm:p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your one-time code</p>
               <p className="mt-2 break-all font-mono text-2xl font-bold tracking-[0.12em] text-foreground sm:text-3xl sm:tracking-[0.2em]">{dailyRewardCode}</p>
               <p className="mt-2 text-sm text-muted-foreground">Open the bot below within 15 minutes. Your one-time code will be sent securely to finish linking.</p>
-              <Button asChild size="lg" className="mt-4 w-full sm:w-auto">
+              <Button asChild size="lg" className="mt-4 w-full rounded-xl bg-blue-400 font-semibold text-black hover:bg-blue-500 sm:w-auto">
                 <a
                   href={`https://t.me/OmniMarketCCBot?start=link_${dailyRewardCode}`}
                   target="_blank"
@@ -359,7 +358,7 @@ function SettingsTab({ user }: { user: any }) {
     <div className="space-y-6">
       <TelegramLinkSettings />
 
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-border rounded-[22px] border-white/10 bg-[#171717] shadow-none">
         <CardContent className="p-6 space-y-4">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <Key className="h-4 w-4 text-muted-foreground" />
@@ -395,7 +394,7 @@ function SettingsTab({ user }: { user: any }) {
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-border rounded-[22px] border-white/10 bg-[#171717] shadow-none">
         <CardHeader>
           <CardTitle className="text-foreground text-lg">Change Email</CardTitle>
         </CardHeader>
@@ -403,6 +402,7 @@ function SettingsTab({ user }: { user: any }) {
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">New Email</label>
             <Input 
+              className="h-12 rounded-xl border-white/10 bg-[#111] focus-visible:ring-blue-400/40"
               placeholder="name@example.com" 
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
@@ -412,19 +412,20 @@ function SettingsTab({ user }: { user: any }) {
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">Confirm Email</label>
             <Input 
+              className="h-12 rounded-xl border-white/10 bg-[#111] focus-visible:ring-blue-400/40"
               placeholder="name@example.com" 
               value={confirmEmail}
               onChange={(e) => setConfirmEmail(e.target.value)}
               data-testid="input-confirm-email"
             />
           </div>
-          <Button variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/10 sm:w-auto" onClick={handleUpdateEmail} data-testid="button-update-email">
+          <Button variant="outline" className="w-full rounded-xl border-white/15 bg-white/[0.04] text-white hover:border-blue-400/60 hover:bg-blue-400/10 sm:w-auto" onClick={handleUpdateEmail} data-testid="button-update-email">
             <Mail className="h-4 w-4 mr-2" /> Update Email
           </Button>
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-border rounded-[22px] border-white/10 bg-[#171717] shadow-none">
         <CardHeader>
           <CardTitle className="text-foreground text-lg">Change Password</CardTitle>
         </CardHeader>
@@ -432,6 +433,7 @@ function SettingsTab({ user }: { user: any }) {
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">Current Password</label>
             <Input 
+              className="h-12 rounded-xl border-white/10 bg-[#111] focus-visible:ring-blue-400/40"
               type="password"
               placeholder="Current password" 
               value={currentPassword}
@@ -442,6 +444,7 @@ function SettingsTab({ user }: { user: any }) {
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">New Password</label>
             <Input 
+              className="h-12 rounded-xl border-white/10 bg-[#111] focus-visible:ring-blue-400/40"
               type="password"
               placeholder="********" 
               value={newPassword}
@@ -452,6 +455,7 @@ function SettingsTab({ user }: { user: any }) {
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">Confirm Password</label>
             <Input 
+              className="h-12 rounded-xl border-white/10 bg-[#111] focus-visible:ring-blue-400/40"
               type="password"
               placeholder="********" 
               value={confirmPassword}
@@ -459,7 +463,7 @@ function SettingsTab({ user }: { user: any }) {
               data-testid="input-confirm-password"
             />
           </div>
-          <Button variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/10 sm:w-auto" onClick={handleUpdatePassword} data-testid="button-update-password">
+          <Button variant="outline" className="w-full rounded-xl border-white/15 bg-white/[0.04] text-white hover:border-blue-400/60 hover:bg-blue-400/10 sm:w-auto" onClick={handleUpdatePassword} data-testid="button-update-password">
             <Key className="h-4 w-4 mr-2" /> Update Password
           </Button>
         </CardContent>
@@ -472,7 +476,7 @@ function OrdersTab() {
   const { data: orders, isLoading, refetch } = useOrders();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   
-  if (isLoading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-primary" /></div>;
+  if (isLoading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-blue-300" /></div>;
   
   return (
     <div className="space-y-4">
@@ -481,11 +485,11 @@ function OrdersTab() {
           <Package className="h-12 w-12 mx-auto mb-4" />
           <h3 className="text-sm font-bold mb-2">No orders found</h3>
           <Link href="/">
-            <Button size="sm" className="text-primary">Browse Marketplace</Button>
+            <Button size="sm" className="text-blue-300">Browse Marketplace</Button>
           </Link>
         </div>
       ) : (
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border rounded-[22px] border-white/10 bg-[#171717] shadow-none">
           <CardContent className="p-0">
             <div className="space-y-3 p-3 lg:hidden">
               <div className="flex items-center justify-between px-1">
@@ -511,7 +515,7 @@ function OrdersTab() {
                       ? "text-orange-400"
                       : status === "unpaid" || status === "waiting_payment"
                         ? "text-red-400"
-                        : "text-primary";
+                        : "text-blue-300";
                 const statusLabel =
                   status === "fulfilled" || status === "delivering" ? "Fulfilled"
                     : status === "paid" ? "Paid"
@@ -527,7 +531,7 @@ function OrdersTab() {
                     type="button"
                     onClick={() => setSelectedOrder(order)}
                     aria-label={`View order ${index + 1}: ${titleParts.join(" + ")}`}
-                    className="w-full rounded-xl border border-border/80 bg-background/60 p-4 text-left transition-colors hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:bg-white/5"
+                    className="w-full rounded-xl border border-border/80 bg-background/60 p-4 text-left transition-colors hover:border-blue-400/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:bg-white/5"
                   >
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -542,7 +546,7 @@ function OrdersTab() {
                         <p className={cn("mt-2 text-xs font-medium", statusColor)}>{statusLabel}</p>
                       </div>
                     </div>
-                    <p className="mt-3 border-t border-border/70 pt-3 text-xs font-medium text-primary">View order details <span aria-hidden="true">→</span></p>
+                    <p className="mt-3 border-t border-border/70 pt-3 text-xs font-medium text-blue-300">View order details <span aria-hidden="true">→</span></p>
                   </button>
                 );
               })}
@@ -592,7 +596,7 @@ function OrdersTab() {
                           (order.status as string) === 'fulfilled' || (order.status as string) === 'paid' || (order.status as string) === 'delivering' || (order.status as string) === 'replaced' ? 'text-red-500'
                           : (order.status as string) === 'unpaid' || (order.status as string) === 'waiting_payment' ? 'text-red-500'
                           : (order.status as string) === 'refunded' ? 'text-orange-400'
-                          : 'text-primary'
+                          : 'text-blue-300'
                         }`}>
                           <span className={`w-2 h-2 rounded-full ${
                             (order.status as string) === 'fulfilled' || (order.status as string) === 'paid' || (order.status as string) === 'delivering' || (order.status as string) === 'replaced' ? 'bg-red-500'
@@ -606,7 +610,7 @@ function OrdersTab() {
                         </span>
                       </td>
                       <td className="p-4 text-right">
-                        <Button size="icon" variant="ghost" className="text-primary" data-testid={`button-view-order-${order.id}`}>
+                        <Button size="icon" variant="ghost" className="text-blue-300" data-testid={`button-view-order-${order.id}`}>
                           <Package className="h-4 w-4" />
                         </Button>
                       </td>
@@ -673,7 +677,7 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
                 ))}
               </div>
               <Button
-                className="w-full bg-blue-400 hover:bg-blue-500 text-black font-black uppercase italic tracking-tighter text-xs h-10"
+                className="w-full bg-blue-400 hover:bg-blue-500 text-black font-semibold text-sm h-10 rounded-xl"
                 onClick={() => setViewingStockIdx(null)}
                 data-testid="button-stock-back"
               >
@@ -696,13 +700,13 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
             <TabsList className="w-full bg-transparent border-b border-white/10 rounded-none p-0 h-auto gap-8">
               <TabsTrigger 
                 value="info" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground data-[state=active]:text-primary"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground data-[state=active]:text-blue-300"
               >
                 Info
               </TabsTrigger>
               <TabsTrigger 
                 value="products" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground data-[state=active]:text-primary"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground data-[state=active]:text-blue-300"
               >
                 Products
               </TabsTrigger>
@@ -735,7 +739,7 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
                   order.status === 'fulfilled' || order.status === 'paid' || order.status === 'delivering' || order.status === 'replaced' ? 'text-red-500'
                   : order.status === 'unpaid' || order.status === 'waiting_payment' ? 'text-red-500'
                   : order.status === 'refunded' ? 'text-orange-400'
-                  : 'text-primary'
+                  : 'text-blue-300'
                 }`}>
                   {order.status === 'fulfilled' || order.status === 'delivering' ? 'Fulfilled' : order.status === 'paid' ? 'Paid' : order.status === 'replaced' ? 'Replaced' : order.status === 'refunded' ? 'Refunded' : order.status === 'pending' ? 'Pending' : order.status === 'unpaid' || order.status === 'waiting_payment' ? 'Unpaid' : order.status}
                 </p>
@@ -746,7 +750,7 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
               {order.items?.map((item: any, idx: number) => (
                 <div key={idx} className="space-y-4 border-b border-white/10 pb-6 last:border-0">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={item.itemType === 'card' ? 'border-yellow-500/30 text-yellow-500 text-[9px]' : 'border-primary/30 text-primary text-[9px]'}>
+                    <Badge variant="outline" className={item.itemType === 'card' ? 'border-yellow-500/30 text-yellow-500 text-[9px]' : 'border-blue-400/30 text-blue-300 text-[9px]'}>
                       {item.itemType === 'card' ? '💳 Credit Card' : '📦 Product'}
                     </Badge>
                   </div>
@@ -790,7 +794,7 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
 
                   {(order.status === 'fulfilled' || order.status === 'paid' || order.status === 'delivering' || order.status === 'replaced') && (item.stockItem || (item.itemType === 'card' && item.card)) && (
                     <Button 
-                      className="w-full bg-blue-400 hover:bg-blue-500 text-black font-black uppercase italic tracking-tighter text-xs h-10"
+                      className="w-full bg-blue-400 hover:bg-blue-500 text-black font-semibold text-sm h-10 rounded-xl"
                       onClick={() => setViewingStockIdx(idx)}
                       data-testid={`button-view-stock-${idx}`}
                     >
@@ -798,7 +802,7 @@ function OrderDetailsSheet({ order, open, onOpenChange }: { order: any; open: bo
                     </Button>
                   )}
                   {order.status === 'pending' && (
-                    <p className="text-xs text-primary text-center font-medium">Awaiting payment confirmation</p>
+                    <p className="text-xs text-blue-300 text-center font-medium">Awaiting payment confirmation</p>
                   )}
                   {order.status === 'unpaid' && (
                     <p className="text-xs text-red-500 text-center font-medium">Order cancelled</p>
@@ -832,7 +836,7 @@ function BalanceTab({ user }: { user: any }) {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-border rounded-[22px] border-white/10 bg-[#171717] shadow-none">
         <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-muted-foreground font-medium">Current Balance</span>
@@ -849,11 +853,12 @@ function BalanceTab({ user }: { user: any }) {
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-border rounded-[22px] border-white/10 bg-[#171717] shadow-none">
         <CardContent className="space-y-5 p-4 sm:space-y-6 sm:p-6">
           <div>
             <h3 className="text-sm font-medium mb-3">Amount to charge</h3>
             <Input 
+              className="h-12 rounded-xl border-white/10 bg-[#111] focus-visible:ring-blue-400/40"
               placeholder="amount to charge in $" 
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -862,7 +867,7 @@ function BalanceTab({ user }: { user: any }) {
           </div>
 
           <Button 
-            className="w-full h-12"
+            className="w-full h-12 rounded-xl bg-blue-400 font-semibold text-black hover:bg-blue-500"
             onClick={() => {
               if (!amount || parseFloat(amount) < 0.50) {
                 toast({ title: "Error", description: "Minimum top-up is $0.50", variant: "destructive" });
@@ -878,7 +883,7 @@ function BalanceTab({ user }: { user: any }) {
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-border rounded-[22px] border-white/10 bg-[#171717] shadow-none">
         <CardHeader>
           <CardTitle className="text-foreground text-lg">Redeem Gift Card</CardTitle>
         </CardHeader>
@@ -886,6 +891,7 @@ function BalanceTab({ user }: { user: any }) {
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">Gift Card Code</label>
             <Input 
+              className="h-12 rounded-xl border-white/10 bg-[#111] focus-visible:ring-blue-400/40"
               placeholder="XXXX-XXXX-XXXX-XXXX" 
               value={giftCardCode}
               onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
@@ -894,7 +900,7 @@ function BalanceTab({ user }: { user: any }) {
             />
           </div>
           <Button 
-            className="w-full h-12 bg-blue-400 hover:bg-blue-500 text-black font-bold"
+            className="w-full h-12 bg-blue-400 hover:bg-blue-500 text-black font-semibold rounded-xl"
             onClick={handleRedeem}
             disabled={loading || !giftCardCode.trim()}
             data-testid="button-redeem-gift-card"

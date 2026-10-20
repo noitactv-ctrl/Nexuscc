@@ -78,13 +78,22 @@ function requireSameOrigin(req: Request, res: Response, next: NextFunction) {
     return next();
   }
 
-  const expectedHost = req.get("host");
   const origin = req.get("origin");
   const referer = req.get("referer");
   const source = origin || referer;
 
+  // Behind a reverse proxy the Host header may be rewritten; also accept forwarded/public hosts.
+  const allowedHosts = new Set<string>();
+  const host = req.get("host");
+  if (host) allowedHosts.add(host);
+  for (const h of (req.get("x-forwarded-host") || "").split(",")) if (h.trim()) allowedHosts.add(h.trim());
   try {
-    if (!expectedHost || !source || new URL(source).host !== expectedHost) {
+    if (process.env.PUBLIC_APP_URL) allowedHosts.add(new URL(process.env.PUBLIC_APP_URL).host);
+  } catch {}
+
+  try {
+    if (!source || !allowedHosts.has(new URL(source).host)) {
+      console.warn("[auth] origin rejected", { source, allowed: Array.from(allowedHosts) });
       return res.status(403).json({ message: "Invalid request origin" });
     }
   } catch {
