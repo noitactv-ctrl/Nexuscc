@@ -63,3 +63,11 @@ TELEGRAM_BOT_TOKEN, SMTP creds (for password reset email).
   anon-midtier ($220) for demo. Optional polish deferred: Esc-to-close + thousands separators.
 - Shop hero: replaced the "Logs shop / Browse logs" text hero on /shop (client/src/pages/LogsPage.tsx)
   with the user-supplied banner image client/public/gorillacc-banner.webp (links to #log-products).
+
+## Update (2026-06) — Eats removed, navy theme, navy/silver logo
+- Removed Eats (member /buy-for-you, admin /admin/eats, nav + visibility toggles, page files).
+- Theme: black + navy blue (--primary/--accent/--ring = 224 76% 48%, amber-* -> blue-*).
+- Logo: navy/silver GorillaCC logo + icon (client/public/gorillacc-*-transparent.png), cut out via scripts/logo_cutout.py.
+- Ops: supervisor config backup at /app/scripts/nexuscc.supervisor.conf. If the pod resets and services are
+  down: cp it to /etc/supervisor/conf.d/nexuscc.conf, then `supervisord -c /etc/supervisor/supervisord.conf`
+  (or `supervisorctl reread && supervisorctl update`).
