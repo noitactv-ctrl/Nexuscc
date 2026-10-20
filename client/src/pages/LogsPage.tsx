@@ -1,6 +1,6 @@
 import { useProducts } from "@/hooks/use-products";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ShieldX, Search, FileText, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
+import { Loader2, ShieldX, Search, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
@@ -136,29 +136,15 @@ export default function LogsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-12 pt-5 sm:px-6">
-      <section
-        className="relative mb-7 overflow-hidden rounded-2xl border border-white/10 bg-[#101114] px-6 py-8 sm:px-9 sm:py-10"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 82% 24%, rgba(68, 122, 255, .18), transparent 25%), radial-gradient(circle at 14% 80%, rgba(40, 95, 220, .12), transparent 34%), linear-gradient(125deg, #0a0b0d, #17191e 58%, #090a0c)",
-        }}
-      >
-        <div className="pointer-events-none absolute inset-0 opacity-40" aria-hidden="true">
-          <div className="absolute inset-0 bg-[radial-gradient(1px_1px_at_12%_20%,white_50%,transparent),radial-gradient(1px_1px_at_80%_36%,white_50%,transparent),radial-gradient(1px_1px_at_62%_82%,white_50%,transparent),radial-gradient(1px_1px_at_34%_66%,white_50%,transparent)]" />
-        </div>
-        <div className="relative max-w-xl">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-amber-300">GorillaCC</p>
-          <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Logs shop</h1>
-          <p className="mt-2 text-sm text-white/65 sm:text-base">Browse available log packages from the current inventory.</p>
-          <a
-            href="#log-products"
-            className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground transition hover:brightness-110"
-          >
-            <FileText className="h-4 w-4" aria-hidden="true" />
-            Browse logs
-            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-          </a>
-        </div>
+      <section className="relative mb-7 overflow-hidden rounded-2xl border border-white/10">
+        <a href="#log-products" aria-label="Browse logs" data-testid="hero-banner-link" className="block">
+          <img
+            src="/gorillacc-banner.webp"
+            alt="GorillaCC — Quality over Quantity. Order now."
+            data-testid="hero-banner-image"
+            className="block w-full h-auto"
+          />
+        </a>
       </section>
 
       <div className="relative mb-6">

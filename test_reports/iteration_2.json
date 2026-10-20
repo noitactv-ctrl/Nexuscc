@@ -1,0 +1,30 @@
+{
+  "summary": "Frontend test of the VIP Leaderboard on /ranks. Logged in as tester1 via POST /api/login from the page context. All requested checks passed. The Leaderboard button is enabled (no disabled attribute) and opens leaderboard-modal. It shows 3 rows in the right order: #1 anon-whale01 $1250.00 VIP, #2 anon-7ddc76bd $600.00 VIP with the 'You' tag and amber highlight (border-amber-400/40 bg-amber-400/[0.1]), #3 anon-midtier $220.00 with no VIP tag. Each top-3 row has a lucide Medal icon. The close button closes the modal. Clicking the backdrop closes it, and clicking inside the panel does not. Regression: the VIP badge, the VIP progress section, the 4 stat cards and 'VIP benefits are active' all still render. No page JS errors. At 390px the mobile bottom-sheet layout renders correctly.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Leaderboard modal", "issue": "The Escape key does not close the modal. It has role=dialog and aria-modal, but there is no keydown handler and no focus trap, and focus does not move into the dialog when it opens.", "selector": "[data-testid='leaderboard-modal']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Leaderboard modal", "issues": ["Amounts have no thousands separator ($1250.00 rather than $1,250.00). Minor."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional: close the leaderboard on Escape and move focus into the dialog (or use the shadcn Dialog)",
+    "Optional: format amounts with toLocaleString to add thousands separators"
+  ],
+  "critical_code_review_comments": [
+    "GET /api/leaderboard requires auth, excludes banned users, filters by the current UTC month, and uses the same 50000-cent VIP threshold as getFreeCardStatus, so the two are consistent.",
+    "The leaderboard shows other users' usernames to every logged-in member. That is fine while usernames are anonymised ('anon-*'), but confirm it is acceptable for real usernames.",
+    "The 50000 VIP threshold is hardcoded in several places, including the client progress bar. Consider a shared constant."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend only)", "frontend": "100% of requested checks"},
+  "test_credentials": "tester1@example.com / TestPass123! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "none (used existing seed)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Auth: POST /api/login JSON {email,password} with credentials:'include' from the browser page, then go to /ranks. There are two <main> elements on the page, so scope selectors carefully. Leaderboard testids: leaderboard-open-button, leaderboard-modal, leaderboard-list, leaderboard-row-N, leaderboard-close-button."
+}

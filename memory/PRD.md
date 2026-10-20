@@ -54,3 +54,12 @@ TELEGRAM_BOT_TOKEN, SMTP creds (for password reset email).
   objects into {}, which crashed RanksPage (/ranks) when rendering poolResetAt. Now it only
   sanitizes plain objects, so Dates serialize as ISO strings. Verified by testing_agent (100%).
 - Seeded a $600 deposit for tester1 so VIP branch is active for demo/testing.
+
+## Update (2026-06) — Leaderboard + Shop hero banner
+- VIP Leaderboard: new GET /api/leaderboard (server/routes.ts) returns top 25 depositors for the
+  current UTC month {rank, username, monthDeposits, isVip, isCurrentUser}. RanksPage (/ranks)
+  Leaderboard button now opens a modal listing them (medals for top 3, current user highlighted).
+  Verified by testing_agent iteration_2 (100%). Seeded extra depositors: anon-whale01 ($1250),
+  anon-midtier ($220) for demo. Optional polish deferred: Esc-to-close + thousands separators.
+- Shop hero: replaced the "Logs shop / Browse logs" text hero on /shop (client/src/pages/LogsPage.tsx)
+  with the user-supplied banner image client/public/gorillacc-banner.webp (links to #log-products).
