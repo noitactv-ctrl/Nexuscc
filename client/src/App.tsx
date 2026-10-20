@@ -76,7 +76,9 @@ function PageVisibilityGate({ page, children }: { page: string; children: React.
     staleTime: 30000,
   });
   if (page === "banks" || page === "reviews") return <Redirect to="/" />;
-  if (page === "ranks") return <>{children}</>;
+  // VIP and Free CC were restored as member pages; stale feature flags from
+  // when they were hidden must not redirect users away from them.
+  if (page === "ranks" || page === "freeCard") return <>{children}</>;
   if (isLoading) return <LoadingScreen />;
   if (features?.pages?.[page] === false && user?.role !== "admin") {
     if (page !== "home") return <Redirect to="/" />;

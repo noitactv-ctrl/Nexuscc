@@ -129,7 +129,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       label: "VIP",
       entries: [
         { href: "/ranks", label: "VIP", icon: Trophy },
-        ...(pageVisible("freeCard") ? [{ href: "/free-card", label: "Free CC", icon: Gift }] : []),
+        { href: "/free-card", label: "Free CC", icon: Gift },
       ],
     },
     {
