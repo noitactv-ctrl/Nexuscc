@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 const PERKS = [
-  { icon: Store, label: "Own Storefront", desc: "List your products on OmniMarket" },
+  { icon: Store, label: "Own Storefront", desc: "List your products on GorillaCC" },
   { icon: Zap, label: "Instant Delivery", desc: "Stock-based auto-delivery" },
   { icon: ShieldCheck, label: "Verified Badge", desc: "Trusted seller status" },
 ];
@@ -85,7 +85,7 @@ export default function BecomeSellerPage() {
             <BadgeCheck className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-bold text-white">Become a Seller</h1>
           </div>
-          <p className="text-xs text-white/45">Apply to sell your products on OmniMarket and reach our customer base</p>
+          <p className="text-xs text-white/45">Apply to sell your products on GorillaCC and reach our customer base</p>
         </div>
 
         {/* Perks — only show when not approved */}
@@ -180,7 +180,7 @@ function ApplyForm({ note, setNote, onSubmit, isPending, label }: {
   return (
     <div className="space-y-4">
       <div>
-        <label className="text-xs text-white/45 block mb-1.5">Why do you want to sell on OmniMarket? <span className="text-white/40">(optional)</span></label>
+        <label className="text-xs text-white/45 block mb-1.5">Why do you want to sell on GorillaCC? <span className="text-white/40">(optional)</span></label>
         <Textarea
           placeholder="Tell us a bit about what you plan to sell and your experience..."
           value={note}

@@ -78,7 +78,7 @@ export default function AdminEatsPage() {
       <header className="mb-5 flex flex-wrap items-end justify-between gap-4 sm:mb-7">
         <div>
           <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.24em] text-primary">
-            <span className="h-px w-6 bg-primary/70" /> OmniMarket / Admin
+            <span className="h-px w-6 bg-primary/70" /> GorillaCC / Admin
           </p>
           <h1 className="text-3xl font-bold tracking-tight sm:text-[2.6rem]">Eats inbox</h1>
           <p className="mt-1.5 max-w-lg text-sm text-muted-foreground">Private order conversations, ready for your reply.</p>

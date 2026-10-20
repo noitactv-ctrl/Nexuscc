@@ -343,7 +343,7 @@ export default function HomePage() {
           <Link href="/terms" className="hover:text-white">Terms of Service</Link><span>•</span>
           <a href="/api/health" className="hover:text-white">Status</a>
         </div>
-        <p className="mt-4 text-xs text-white/35">OmniMarket · All rights reserved</p>
+        <p className="mt-4 text-xs text-white/35">GorillaCC · All rights reserved</p>
       </footer>
     </main>
   );

@@ -64,7 +64,7 @@
 
 .ticket-ui { zoom: 0.75; }
 
-/* Public OmniMarket sign-in and policy pages */
+/* Public GorillaCC sign-in and policy pages */
 .spider-entry-page,
 .spider-recovery-page,
 .spider-legal-page {
@@ -659,7 +659,7 @@
   padding-top: 3px;
 }
 
-/* OmniMarket dashboard shell */
+/* GorillaCC dashboard shell */
 .nexus-topbar {
   position: sticky;
   top: 0;

@@ -375,7 +375,7 @@ export async function registerRoutes(
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     const result = await db.execute(sql`SELECT oi.id AS "orderItemId", oi.item_type AS "itemType",
       COALESCE(p.name, cb.name, a.bank_name, CASE WHEN oi.item_type='card' THEN 'Card' ELSE 'Purchased item' END) AS title,
-      COALESCE(cb.seller_name, seller.username, 'OmniMarket') AS "sellerName",
+      COALESCE(cb.seller_name, seller.username, 'GorillaCC') AS "sellerName",
       EXISTS(SELECT 1 FROM product_reviews r WHERE r.order_item_id=oi.id) AS "hasReview"
       FROM order_items oi JOIN orders o ON o.id=oi.order_id
       LEFT JOIN stock_items si ON si.id=oi.stock_item_id
@@ -405,7 +405,7 @@ export async function registerRoutes(
     }
     const eligible = await db.execute(sql`SELECT oi.id, oi.item_type, o.user_id, o.status,
       COALESCE(p.name, cb.name, a.bank_name, 'Card') AS title,
-      COALESCE(cb.seller_name, seller.username, 'OmniMarket') AS seller_name
+      COALESCE(cb.seller_name, seller.username, 'GorillaCC') AS seller_name
       FROM order_items oi JOIN orders o ON o.id=oi.order_id
       LEFT JOIN stock_items si ON si.id=oi.stock_item_id
       LEFT JOIN variants v ON v.id=oi.variant_id LEFT JOIN products p ON p.id=v.product_id

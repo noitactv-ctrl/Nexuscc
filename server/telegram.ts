@@ -75,7 +75,7 @@ async function requiredChannelGate(ctx: Context, bot: Bot) {
   if (!userId) return false;
   if (!channelId) {
     console.error("[telegram] required channel gate blocked an update: channel ID is not configured");
-    await ctx.reply("The required OmniMarket channel is not configured right now. Please try again later.");
+    await ctx.reply("The required GorillaCC channel is not configured right now. Please try again later.");
     return false;
   }
 
@@ -89,7 +89,7 @@ async function requiredChannelGate(ctx: Context, bot: Bot) {
     if (joinUrl) keyboard.url("📣 Join the required channel", joinUrl).row();
     keyboard.text("✅ Check membership", "required_channel_check");
     await ctx.reply(
-      "I couldn't verify your channel membership. Join the required OmniMarket channel if needed, then tap “Check membership” or send /start again.",
+      "I couldn't verify your channel membership. Join the required GorillaCC channel if needed, then tap “Check membership” or send /start again.",
       { reply_markup: keyboard },
     );
     return false;
@@ -100,7 +100,7 @@ async function requiredChannelGate(ctx: Context, bot: Bot) {
   if (joinUrl) keyboard.url("📣 Join the required channel", joinUrl).row();
   keyboard.text("✅ Check membership", "required_channel_check");
   await ctx.reply(
-    "🔒 Join the required OmniMarket channel before using any bot command. After joining, tap “Check membership” or send /start again.",
+    "🔒 Join the required GorillaCC channel before using any bot command. After joining, tap “Check membership” or send /start again.",
     { reply_markup: keyboard },
   );
   return false;
@@ -109,7 +109,7 @@ async function requiredChannelGate(ctx: Context, bot: Bot) {
 async function linkDailyRewards(ctx: Context, bot: Bot, providedCode?: string) {
   if (ctx.chat?.type !== "private") {
     await ctx.reply(
-      "To link your account: on the OmniMarket website open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to @OmniMarketCCBot in a private chat.",
+      "To link your account: on the GorillaCC website open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to @OmniMarketCCBot in a private chat.",
     );
     return;
   }
@@ -120,7 +120,7 @@ async function linkDailyRewards(ctx: Context, bot: Bot, providedCode?: string) {
   const code = (providedCode ?? getMatch(ctx)).replace(/\s+/g, "").toUpperCase();
   if (!/^[A-F0-9]{10}$/.test(code)) {
     await ctx.reply(
-      "Get your one-time code on the OmniMarket website: Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE here in this private chat.",
+      "Get your one-time code on the GorillaCC website: Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE here in this private chat.",
     );
     return;
   }
@@ -138,7 +138,7 @@ async function linkDailyRewards(ctx: Context, bot: Bot, providedCode?: string) {
     if (!userId) {
       await client.query("ROLLBACK");
       await ctx.reply(
-        "That code is invalid or expired. On the OmniMarket website open Profile → Link Telegram Account and generate a new code.",
+        "That code is invalid or expired. On the GorillaCC website open Profile → Link Telegram Account and generate a new code.",
       );
       return;
     }
@@ -149,7 +149,7 @@ async function linkDailyRewards(ctx: Context, bot: Bot, providedCode?: string) {
     );
     if (alreadyLinked.rows[0]) {
       await client.query("ROLLBACK");
-      await ctx.reply("This Telegram account or OmniMarket account is already linked.");
+      await ctx.reply("This Telegram account or GorillaCC account is already linked.");
       return;
     }
     await client.query(
@@ -180,7 +180,7 @@ async function linkDailyRewards(ctx: Context, bot: Bot, providedCode?: string) {
     ? `\n\n💰 We also added $${paidReferralCount.toFixed(2)} for ${paidReferralCount} new referral${paidReferralCount === 1 ? "" : "s"}.`
     : "";
   await ctx.reply(
-    `✅ Your OmniMarket account is securely linked. Eligible daily rewards are credited automatically. Share /dailyref to earn $1 for each new user who starts the bot through your link.${bonusNote}`,
+    `✅ Your GorillaCC account is securely linked. Eligible daily rewards are credited automatically. Share /dailyref to earn $1 for each new user who starts the bot through your link.${bonusNote}`,
   );
 }
 
@@ -277,7 +277,7 @@ export async function runDailyRewardSweep(bot: Bot) {
         if (result.status === "paid") {
           await bot.api.sendMessage(
             Number(chatId),
-            `✅ Your automatic OmniMarket daily reward of $${(result.amountCents / 100).toFixed(2)} has been added to your balance.`,
+            `✅ Your automatic GorillaCC daily reward of $${(result.amountCents / 100).toFixed(2)} has been added to your balance.`,
           ).catch((error) => console.warn("[telegram] could not notify daily reward recipient:", error?.message ?? error));
         }
       } catch (error: any) {
@@ -317,7 +317,7 @@ async function claimDailyReward(ctx: Context, bot: Bot) {
     const result = await grantDailyReward(chatId);
     if (result.status === "unlinked") {
       await ctx.reply(
-        "Link your account first: on the OmniMarket website open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to @OmniMarketCCBot in a private chat.",
+        "Link your account first: on the GorillaCC website open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to @OmniMarketCCBot in a private chat.",
       );
       return;
     }
@@ -330,7 +330,7 @@ async function claimDailyReward(ctx: Context, bot: Bot) {
       return;
     }
     await ctx.reply(
-      `✅ Today's automatic reward of $${(result.amountCents / 100).toFixed(2)} has been added to your OmniMarket balance.`,
+      `✅ Today's automatic reward of $${(result.amountCents / 100).toFixed(2)} has been added to your GorillaCC balance.`,
     );
   } catch (error) {
     console.error("[telegram] daily reward status check failed:", error);
@@ -726,9 +726,9 @@ function registerDropHandlers(bot: Bot, token: string) {
       return;
     }
     await ctx.reply(
-      `👋 Welcome to OmniMarket rewards!\n\n` +
-      `Join our channel, keep *${NAME_KEYWORD}* in your Telegram first or last name, and link your OmniMarket account to receive $1.00 automatically each qualifying day.\n\n` +
-      `🔗 *Link your account:* On the OmniMarket website, open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to this bot in a private chat.\n\n` +
+      `👋 Welcome to GorillaCC rewards!\n\n` +
+      `Join our channel, keep *${NAME_KEYWORD}* in your Telegram first or last name, and link your GorillaCC account to receive $1.00 automatically each qualifying day.\n\n` +
+      `🔗 *Link your account:* On the GorillaCC website, open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to this bot in a private chat.\n\n` +
       `💰 *Highly recommended:* Share your /dailyref link. Earn a one-time $1 for each new user who starts the bot through your link. You must link your account to receive referral payouts.\n\n` +
       `/daily — check today's reward status\n/dailyref — get your recommended $1 referral link\n/link CODE — finish linking with your website code\n\n` +
       `Claim drops with /claim.`,
@@ -755,7 +755,7 @@ function registerDropHandlers(bot: Bot, token: string) {
     const info = await bot.api.getMe();
     await ctx.reply(
       `⭐ Highly recommended: share this referral link. You earn $1 once for each new user who starts the bot through it:\nhttps://t.me/${info.username}?start=daily_${chatId}\n\n` +
-      `You can share before linking your account, but link your OmniMarket account to receive the $1 in your balance. Your friend can also earn an extra $0.10 per qualifying day.`,
+      `You can share before linking your account, but link your GorillaCC account to receive the $1 in your balance. Your friend can also earn an extra $0.10 per qualifying day.`,
     );
   });
   bot.callbackQuery("daily_reward", async (ctx) => {
@@ -782,7 +782,7 @@ function registerDropHandlers(bot: Bot, token: string) {
     await ctx.reply(
       `⭐ Highly recommended: earn $1 once for each new user who starts the bot through your daily-rewards referral link:\n` +
       `https://t.me/${info.username}?start=daily_${chatId}\n\n` +
-      `You can share this before linking. To receive payouts, open the OmniMarket website → Profile → Link Telegram Account → Generate Telegram link code, then send /link CODE to this bot in a private chat.\n\n` +
+      `You can share this before linking. To receive payouts, open the GorillaCC website → Profile → Link Telegram Account → Generate Telegram link code, then send /link CODE to this bot in a private chat.\n\n` +
       `Your friend can earn an extra $0.10 per qualifying day.`,
     );
   });
@@ -811,9 +811,9 @@ function registerDropHandlers(bot: Bot, token: string) {
   });
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      `*OmniMarket Bot Help*\n\n` +
+      `*GorillaCC Bot Help*\n\n` +
       `*Link your account for daily rewards:*\n` +
-      `On the OmniMarket website open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to this bot in a private chat.\n\n` +
+      `On the GorillaCC website open Profile → Link Telegram Account → Generate Telegram link code. Then send /link CODE to this bot in a private chat.\n\n` +
       `*Daily rewards:*\n` +
       `/daily — check today's reward\n` +
       `/dailyref — get a highly recommended referral link; earn $1 once for each new user who starts the bot through it\n\n` +
@@ -841,8 +841,8 @@ export function startTelegramBot() {
   const bot = createTelegramBot();
   if (!bot) return null;
   bot.api.setMyCommands([
-    { command: "start", description: "Open the OmniMarket Drops menu" },
-    { command: "daily", description: "Check today's automatic OmniMarket reward" },
+    { command: "start", description: "Open the GorillaCC Drops menu" },
+    { command: "daily", description: "Check today's automatic GorillaCC reward" },
     { command: "dailyref", description: "Earn $1 for each new user who starts the bot" },
     { command: "link", description: "Link your account with a code from website Profile" },
     { command: "claim", description: "Claim drops" },

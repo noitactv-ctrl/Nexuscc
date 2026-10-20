@@ -25,7 +25,7 @@ const termsSections: LegalSection[] = [
   },
   {
     heading: "Limitation of Liability",
-    content: "To the extent permitted by law, OmniMarket and its suppliers are not liable for damages arising out of the use of, or inability to use, the materials or services on this website.",
+    content: "To the extent permitted by law, GorillaCC and its suppliers are not liable for damages arising out of the use of, or inability to use, the materials or services on this website.",
   },
   {
     heading: "Changes to Terms",

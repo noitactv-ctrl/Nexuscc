@@ -2,8 +2,8 @@ import { Link } from "wouter";
 
 export function SpiderBrand() {
   return (
-    <Link href="/auth" className="nexus-brand" aria-label="OmniMarket home">
-      <img src="/omnimarket-logo-transparent.png" alt="OmniMarket" />
+    <Link href="/auth" className="nexus-brand" aria-label="GorillaCC home">
+      <img src="/gorillacc-logo-transparent.png" alt="GorillaCC" />
     </Link>
   );
 }

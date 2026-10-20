@@ -300,8 +300,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Menu aria-hidden="true" />
           </button>
 
-          <Link href="/" className="nexus-topbar-brand" aria-label="OmniMarket home">
-            OmniMarket
+          <Link href="/" className="nexus-topbar-brand" aria-label="GorillaCC home">
+            GorillaCC
           </Link>
         </div>
 
@@ -348,19 +348,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="nexus-drawer-header">
           <div className="nexus-drawer-user-mark">
-            <img src="/omnimarket-eye-transparent.png" alt="" aria-hidden="true" />
+            <img src="/gorillacc-eye-transparent.png" alt="" aria-hidden="true" />
           </div>
           <div className="nexus-drawer-user-copy">
             <Link
               href="/"
               className="nexus-drawer-brand"
-              aria-label="OmniMarket home"
+              aria-label="GorillaCC home"
               onClick={() => {
                 setNavOpen(false);
                 setAccountOpen(false);
               }}
             >
-              OmniMarket
+              GorillaCC
             </Link>
             <span className="nexus-drawer-greeting">{user?.username || "Welcome"} <span aria-hidden="true">👋</span></span>
           </div>

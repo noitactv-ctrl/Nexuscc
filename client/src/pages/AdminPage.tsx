@@ -79,7 +79,7 @@ export default function AdminPage() {
       <aside className="hidden w-60 shrink-0 flex-col border-r border-white/10 bg-[#101010]/95 md:flex">
         <div className="border-b border-white/10 px-5 py-5">
           <div>
-            <img src="/omnimarket-logo-transparent.png" alt="OmniMarket" className="h-11 w-auto max-w-full object-contain object-left" />
+            <img src="/gorillacc-logo-transparent.png" alt="GorillaCC" className="h-11 w-auto max-w-full object-contain object-left" />
             <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">Admin console</p>
           </div>
         </div>
@@ -121,7 +121,7 @@ export default function AdminPage() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <header className="hidden h-[68px] shrink-0 items-center justify-between border-b border-white/10 bg-black/20 px-6 md:flex lg:px-8">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">OmniMarket · Admin</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">GorillaCC · Admin</p>
             <p className="mt-0.5 font-display text-sm font-semibold text-white">{activeLabel}</p>
           </div>
           <Button
@@ -140,7 +140,7 @@ export default function AdminPage() {
         <header className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#101010]/95 px-4 py-3 md:hidden">
           <div className="flex min-w-0 items-center gap-3">
             <div>
-              <img src="/omnimarket-logo-transparent.png" alt="OmniMarket" className="h-8 w-auto max-w-[145px] object-contain object-left" />
+              <img src="/gorillacc-logo-transparent.png" alt="GorillaCC" className="h-8 w-auto max-w-[145px] object-contain object-left" />
               <p className="text-[10px] text-white/45">{activeLabel} · Admin</p>
             </div>
           </div>

@@ -65,6 +65,12 @@ export function createApp() {
     if (Array.isArray(value)) return value.map(removeSensitiveFields);
     if (!value || typeof value !== "object") return value;
 
+    // Only sanitize plain objects. Non-plain objects such as Date (and other
+    // class instances) must be returned untouched, otherwise destructuring them
+    // below would collapse them into an empty `{}` and break JSON output.
+    const proto = Object.getPrototypeOf(value);
+    if (proto !== Object.prototype && proto !== null) return value;
+
     const hidden = new Set(["password", "loginCode", "smtp_password", "smtpPassword"]);
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>)

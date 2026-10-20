@@ -219,7 +219,7 @@ function TelegramLinkSettings() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Could not create a link code");
       setDailyRewardCode(data.code);
-      toast({ title: "One-time code created", description: "Send /link followed by this code to the OmniMarket Telegram bot." });
+      toast({ title: "One-time code created", description: "Send /link followed by this code to the GorillaCC Telegram bot." });
     } catch (error: any) {
       toast({ title: "Could not create code", description: error.message, variant: "destructive" });
     } finally {
@@ -230,7 +230,7 @@ function TelegramLinkSettings() {
   const copyLinkCommand = async () => {
     try {
       await navigator.clipboard.writeText(`/link ${dailyRewardCode}`);
-      toast({ title: "Telegram command copied", description: "Paste it into your private chat with the OmniMarket bot." });
+      toast({ title: "Telegram command copied", description: "Paste it into your private chat with the GorillaCC bot." });
     } catch {
       toast({ title: "Could not copy command", description: "Select the code and copy it manually.", variant: "destructive" });
     }
@@ -250,12 +250,12 @@ function TelegramLinkSettings() {
         </CardHeader>
         <CardContent className="space-y-5 p-4 sm:p-6">
           <ol className="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
-            <li>In Telegram, join the OmniMarket rewards channel.</li>
+            <li>In Telegram, join the GorillaCC rewards channel.</li>
             <li>Put <span className="font-semibold text-foreground">omnimarket.cc</span> in your Telegram first or last name.</li>
             <li>Generate a code below, then open the bot in a private chat and send <span className="font-mono text-foreground">/link CODE</span>.</li>
           </ol>
           <p className="text-sm text-muted-foreground">
-            Link here to receive your $1 referral bonuses in your OmniMarket balance. You can share your referral link before linking.
+            Link here to receive your $1 referral bonuses in your GorillaCC balance. You can share your referral link before linking.
           </p>
           <Button size="lg" onClick={createDailyRewardCode} disabled={dailyRewardCodeLoading} className="w-full sm:w-auto">
             {dailyRewardCodeLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2 className="mr-2 h-4 w-4" />}
