@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, CircleHelp, Crown, Loader2, Medal, RefreshCw, Trophy, X } from "lucide-react";
 
 type MemberStatus = {
@@ -23,7 +23,8 @@ type LeaderboardEntry = {
   isCurrentUser: boolean;
 };
 
-const money = (cents: number) => `$${(Math.max(0, cents || 0) / 100).toFixed(2)}`;
+const money = (cents: number) =>
+  `$${(Math.max(0, cents || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const dateTime = (value: string | null) => {
   if (!value) return "Resets at midnight UTC";
   const date = new Date(value);
@@ -41,6 +42,14 @@ export default function RanksPage() {
     queryKey: ["/api/leaderboard"],
     enabled: showLeaderboard,
   });
+  useEffect(() => {
+    if (!showLeaderboard) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShowLeaderboard(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showLeaderboard]);
   const month = data?.paidDepositsMonth ?? 0;
   const week = data?.paidDepositsWeek ?? 0;
   const progress = Math.min(100, Math.round((month / 50000) * 100));
