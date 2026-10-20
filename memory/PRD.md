@@ -44,3 +44,13 @@ TELEGRAM_BOT_TOKEN, SMTP creds (for password reset email).
 - Confirm desired new features and bugs from the user (pending).
 - Seed sample products/catalog for a populated demo.
 - Wire real payment/Telegram keys if those flows are to be tested.
+
+## Update (2026-06) — Branding + VIP fix
+- Rebranded all "OmniMarket" display text -> "GorillaCC" across client/server. Kept external
+  identifiers: Telegram bot handle @OmniMarketCCBot and the omnimarket.cc name-policy keyword.
+- New gold "GorillaCC" logo assets generated: client/public/gorillacc-logo-transparent.png,
+  gorillacc-eye-transparent.png; references + favicon + index.html title updated.
+- BUG FIX (VIP page / global serializer): server/app.ts removeSensitiveFields collapsed Date
+  objects into {}, which crashed RanksPage (/ranks) when rendering poolResetAt. Now it only
+  sanitizes plain objects, so Dates serialize as ISO strings. Verified by testing_agent (100%).
+- Seeded a $600 deposit for tester1 so VIP branch is active for demo/testing.
