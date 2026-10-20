@@ -89,7 +89,7 @@ export default function CryptoPaymentPage() {
             <h1 className="text-2xl font-bold sm:text-3xl">Crypto Payment</h1>
             <p className="mt-1 text-sm text-white/50">Send the exact amount using the selected network.</p>
           </div>
-          <span className="rounded-full bg-amber-500/10 px-3 py-1 text-sm capitalize text-amber-300">{statusText}</span>
+          <span className="rounded-full bg-blue-500/10 px-3 py-1 text-sm capitalize text-blue-300">{statusText}</span>
         </header>
 
         <div className="grid grid-cols-2 gap-3 rounded-xl bg-[#222] p-4 text-sm sm:grid-cols-3">
@@ -137,7 +137,7 @@ export default function CryptoPaymentPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm leading-6 text-amber-200">
+        <div className="rounded-xl border border-blue-500/40 bg-blue-500/10 p-4 text-sm leading-6 text-blue-200">
           <strong>Important:</strong> Only send {payment.payCurrency.toUpperCase()} using the {networkName} network to this address. Sending other coins or using another network may result in permanent loss.
         </div>
       </section>

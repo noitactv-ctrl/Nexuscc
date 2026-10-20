@@ -137,7 +137,7 @@ export function CardDetailsDialog({
           type="button"
           onClick={onToggleSelection}
           className={`mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-colors ${
-            selected ? "bg-amber-500 text-black hover:bg-amber-600" : "bg-amber-400 text-black hover:bg-amber-500"
+            selected ? "bg-blue-500 text-black hover:bg-blue-600" : "bg-blue-400 text-black hover:bg-blue-500"
           }`}
         >
           <ShoppingCart className="h-4 w-4" aria-hidden="true" />

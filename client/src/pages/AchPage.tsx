@@ -32,14 +32,14 @@ function AchRow({ ach, inCart, onToggleCart }: { ach: any; inCart: boolean; onTo
   });
 
   return (
-    <article className={`rounded-2xl border p-4 transition-all duration-200 sm:p-5 ${inCart ? "border-amber-400/40 bg-amber-400/[0.06]" : "border-white/10 bg-[#141414] hover:border-white/20"}`}>
+    <article className={`rounded-2xl border p-4 transition-all duration-200 sm:p-5 ${inCart ? "border-blue-400/40 bg-blue-400/[0.06]" : "border-white/10 bg-[#141414] hover:border-white/20"}`}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="font-display text-base font-semibold uppercase tracking-wide text-white">{ach.bankName}</p>
           <p className="mt-1 text-xs text-white/45">Bank account</p>
         </div>
-        <div className="shrink-0 rounded-xl border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-right">
-          <p className="font-display text-base font-bold text-amber-300">${(ach.price / 100).toFixed(2)}</p>
+        <div className="shrink-0 rounded-xl border border-blue-400/20 bg-blue-400/[0.06] px-3 py-2 text-right">
+          <p className="font-display text-base font-bold text-blue-300">${(ach.price / 100).toFixed(2)}</p>
           <p className="text-[10px] text-white/40">price</p>
         </div>
       </div>
@@ -53,8 +53,8 @@ function AchRow({ ach, inCart, onToggleCart }: { ach: any; inCart: boolean; onTo
             aria-pressed={inCart}
             className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${
               inCart
-                ? "border-amber-400/50 bg-amber-400/10 text-amber-300"
-                : "border-white/10 bg-white/[0.03] text-white/65 hover:border-amber-400/30 hover:text-amber-300"
+                ? "border-blue-400/50 bg-blue-400/10 text-blue-300"
+                : "border-white/10 bg-white/[0.03] text-white/65 hover:border-blue-400/30 hover:text-blue-300"
             }`}
             data-testid={`btn-cart-ach-${ach.id}`}
           >
@@ -64,7 +64,7 @@ function AchRow({ ach, inCart, onToggleCart }: { ach: any; inCart: boolean; onTo
           <button
             onClick={() => purchaseMutation.mutate()}
             disabled={purchaseMutation.isPending}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 py-2 text-xs font-bold text-black transition-colors hover:bg-amber-300 disabled:opacity-50"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-400 py-2 text-xs font-bold text-black transition-colors hover:bg-blue-300 disabled:opacity-50"
             data-testid={`btn-buy-ach-${ach.id}`}
           >
             {purchaseMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : `Buy for $${(ach.price / 100).toFixed(2)}`}
@@ -137,21 +137,21 @@ export default function AchPage() {
   };
 
   if (isLoading) {
-    return <div className="flex min-h-[400px] items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-amber-400" /></div>;
+    return <div className="flex min-h-[400px] items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-blue-400" /></div>;
   }
 
   return (
     <main className="mx-auto w-full max-w-[1120px] space-y-5 px-4 pb-20 pt-4 sm:px-6 sm:pt-6">
       <header>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400">Shopping</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-400">Shopping</p>
         <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">Banks</h1>
         <p className="mt-1 text-sm text-white/50">Browse available bank accounts and check their listed balances.</p>
       </header>
       {/* Cart checkout bar */}
       {cartIds.size > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-400/25 bg-amber-400/[0.06] px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-400/25 bg-blue-400/[0.06] px-4 py-3">
           <div><p className="text-sm font-semibold text-white">{cartIds.size} selected</p><p className="mt-0.5 text-xs text-white/50">Total ${(cartTotal / 100).toFixed(2)}</p></div>
-          <button onClick={purchaseCart} className="rounded-xl bg-amber-400 px-4 py-2 text-xs font-bold text-black transition-colors hover:bg-amber-300">Checkout</button>
+          <button onClick={purchaseCart} className="rounded-xl bg-blue-400 px-4 py-2 text-xs font-bold text-black transition-colors hover:bg-blue-300">Checkout</button>
         </div>
       )}
 
@@ -163,7 +163,7 @@ export default function AchPage() {
           placeholder="Search banks or balances"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="h-11 w-full rounded-xl border border-white/10 bg-[#141414] pl-10 pr-3 text-sm text-white outline-none transition-colors placeholder:text-white/30 focus:border-amber-400/40"
+          className="h-11 w-full rounded-xl border border-white/10 bg-[#141414] pl-10 pr-3 text-sm text-white outline-none transition-colors placeholder:text-white/30 focus:border-blue-400/40"
           data-testid="input-search-ach"
         />
       </div>
@@ -174,7 +174,7 @@ export default function AchPage() {
         aria-expanded={showFilters}
         className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium transition-colors ${
           showFilters || activeFilters > 0
-            ? "border-amber-400/35 bg-amber-400/[0.08] text-amber-300"
+            ? "border-blue-400/35 bg-blue-400/[0.08] text-blue-300"
             : "border-white/10 bg-[#141414] text-white/65 hover:border-white/20 hover:text-white"
         }`}
         data-testid="btn-ach-filters"
@@ -198,13 +198,13 @@ export default function AchPage() {
             <div className="space-y-1">
               <label className="text-xs text-white/45">Minimum price</label>
               <input type="number" step="0.01" placeholder="0.00" value={priceMin} onChange={e => setPriceMin(e.target.value)}
-                className="h-10 w-full rounded-lg border border-white/10 bg-black/40 px-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-amber-400/40"
+                className="h-10 w-full rounded-lg border border-white/10 bg-black/40 px-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-blue-400/40"
                 data-testid="input-ach-price-min" />
             </div>
             <div className="space-y-1">
               <label className="text-xs text-white/45">Maximum price</label>
               <input type="number" step="0.01" placeholder="100.00" value={priceMax} onChange={e => setPriceMax(e.target.value)}
-                className="h-10 w-full rounded-lg border border-white/10 bg-black/40 px-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-amber-400/40"
+                className="h-10 w-full rounded-lg border border-white/10 bg-black/40 px-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-blue-400/40"
                 data-testid="input-ach-price-max" />
             </div>
           </div>

@@ -53,7 +53,7 @@ function CashAppModal({ orderId, total, paymentNote, cashappTag, onClose }: {
           <div className="flex items-center justify-between bg-[#0d0d0d] rounded-xl px-3 py-2.5">
             <div>
               <p className="text-[10px] text-white/45 mb-0.5">Send to</p>
-              <p className="text-sm font-bold text-amber-300">{cashappTag || "$YourCashTag"}</p>
+              <p className="text-sm font-bold text-blue-300">{cashappTag || "$YourCashTag"}</p>
             </div>
             <button onClick={() => copy(cashappTag, "CashApp tag")} className="text-white/40 hover:text-white transition-colors">
               <Copy className="h-3.5 w-3.5" />
@@ -89,7 +89,7 @@ function CashAppModal({ orderId, total, paymentNote, cashappTag, onClose }: {
         </div>
 
         <button
-          className="w-full h-9 rounded-xl bg-amber-400 hover:bg-amber-500 text-black text-xs font-bold transition-colors"
+          className="w-full h-9 rounded-xl bg-blue-400 hover:bg-blue-500 text-black text-xs font-bold transition-colors"
           onClick={onClose}
         >
           Done — I've sent it
@@ -407,10 +407,10 @@ export default function CartPage() {
             )}
             {rankDiscountAmount > 0 && (
               <div className="flex justify-between py-2.5 text-xs">
-                <span className="text-amber-400/80 flex items-center gap-1">
+                <span className="text-blue-400/80 flex items-center gap-1">
                   <Tag className="h-3 w-3" /> Rank discount ({rankDiscountPct}% · {rankData?.rank?.toUpperCase()})
                 </span>
-                <span className="text-amber-400 font-bold">-${(rankDiscountAmount / 100).toFixed(2)}</span>
+                <span className="text-blue-400 font-bold">-${(rankDiscountAmount / 100).toFixed(2)}</span>
               </div>
             )}
             {processorFee > 0 && (

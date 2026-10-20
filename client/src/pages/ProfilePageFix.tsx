@@ -16,7 +16,7 @@ const RANKS = [
   { key: "newbie",  label: "Newbie",  emoji: "🌱", color: "text-white/45",  bar: "#ffffff40", bg: "bg-[#0d0d0d]",        discount: 0,  threshold: 0       },
   { key: "regular", label: "Regular", emoji: "⭐", color: "text-red-400",  bar: "#ef4444",   bg: "bg-red-500/10",    discount: 2,  threshold: 10000   },
   { key: "vip",     label: "VIP",     emoji: "💎", color: "text-purple-400",bar: "#c084fc",   bg: "bg-purple-500/10",  discount: 5,  threshold: 50000   },
-  { key: "nyc",     label: "NYC",     emoji: "🫆", color: "text-amber-400", bar: "#fbbf24",   bg: "bg-amber-500/10",   discount: 10, threshold: 100000  },
+  { key: "nyc",     label: "NYC",     emoji: "🫆", color: "text-blue-400", bar: "#2451d6",   bg: "bg-blue-500/10",   discount: 10, threshold: 100000  },
 ] as const;
 
 function RankCard({ rankData }: { rankData: any }) {
@@ -63,7 +63,7 @@ function RankCard({ rankData }: { rankData: any }) {
         </div>
       )}
       {!next && (
-        <p className="text-[10px] text-amber-400/60">Max rank reached — {current.discount}% discount on every order</p>
+        <p className="text-[10px] text-blue-400/60">Max rank reached — {current.discount}% discount on every order</p>
       )}
 
       <div className="grid grid-cols-4 gap-1 pt-1">

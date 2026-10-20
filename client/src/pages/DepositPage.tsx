@@ -172,9 +172,9 @@ function ManualDepositPanel({ result, status, onReset }: { result: ManualResult;
           </div>
         )}
 
-        <div className="rounded-xl border border-amber-400/30 bg-amber-500/[0.08] p-4">
-          <p className="text-sm leading-6 text-amber-100">
-            <span className="font-bold text-amber-300">Important: </span>
+        <div className="rounded-xl border border-blue-400/30 bg-blue-500/[0.08] p-4">
+          <p className="text-sm leading-6 text-blue-100">
+            <span className="font-bold text-blue-300">Important: </span>
             Send only through {name}. Include the exact payment note so staff can match and confirm your deposit.
           </p>
         </div>
@@ -185,7 +185,7 @@ function ManualDepositPanel({ result, status, onReset }: { result: ManualResult;
           <CopyField label="Amount to send" value={(result.amount / 100).toFixed(2)} prefix="$" />
         </div>
 
-        <div className={`flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold ${isComplete ? "bg-emerald-500/10 text-emerald-400" : needsReview ? "bg-amber-500/10 text-amber-300" : "bg-blue-500/10 text-blue-300"}`}>
+        <div className={`flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold ${isComplete ? "bg-emerald-500/10 text-emerald-400" : needsReview ? "bg-blue-500/10 text-blue-300" : "bg-blue-500/10 text-blue-300"}`}>
           {isComplete ? <CheckCircle2 className="h-4 w-4" /> : needsReview ? <AlertTriangle className="h-4 w-4" /> : <Clock className="h-4 w-4 animate-pulse" />}
           {isComplete ? "Deposit confirmed" : needsReview ? "Payment needs review" : "Waiting for confirmation"}
         </div>

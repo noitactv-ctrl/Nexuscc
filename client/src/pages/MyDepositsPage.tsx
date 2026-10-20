@@ -76,7 +76,7 @@ function statusTone(status: string) {
   if (["failed", "expired", "refunded", "cancelled"].includes(normalized)) {
     return "border-rose-500/15 bg-rose-500/10 text-rose-300";
   }
-  if (normalized === "underpaid") return "border-amber-500/15 bg-amber-500/10 text-amber-300";
+  if (normalized === "underpaid") return "border-blue-500/15 bg-blue-500/10 text-blue-300";
   return "border-orange-500/15 bg-orange-500/10 text-orange-300";
 }
 

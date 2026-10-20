@@ -142,7 +142,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           entries: [
             ...(pageVisible("cards") ? [{ href: "/cards", label: "Buy Cards", icon: CreditCard }] : []),
             ...(pageVisible("logs") ? [{ href: "/shop", label: "Buy Logs", icon: FileText }] : []),
-            ...(pageVisible("buyForYou") ? [{ href: "/buy-for-you", label: "Eats", icon: Gift }] : []),
           ],
         },
       ],
@@ -184,7 +183,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           entries: [
             ...(user?.role === "admin" ? [
               { href: "/admin", label: "Admin", icon: Settings },
-              { href: "/admin/eats", label: "Eats Dashboard", icon: ShoppingBag },
             ] : []),
             ...((user as any)?.isWorker && user?.role !== "admin" ? [{ href: "/worker", label: "Worker Dashboard", icon: Settings }] : []),
           ],

@@ -115,7 +115,7 @@ function MetricCard({
 }
 
 function ChartCard({
-  title, subtitle, data, countLabel, amountLabel, countColor = "#eab308", amountColor = "#facc15", showRefunds = false,
+  title, subtitle, data, countLabel, amountLabel, countColor = "#2451d6", amountColor = "#facc15", showRefunds = false,
 }: {
   title: string;
   subtitle: string;
@@ -168,7 +168,7 @@ function StatusCard({ orders }: { orders: any[] }) {
   const rows = [
     { label: "Completed", count: completed, color: "text-emerald-400", icon: CheckCircle2 },
     { label: "Refunded", count: refunded, color: "text-rose-400", icon: CircleAlert },
-    { label: "Partial", count: partial, color: "text-amber-400", icon: CircleAlert },
+    { label: "Partial", count: partial, color: "text-blue-400", icon: CircleAlert },
   ];
   return (
     <article className="rounded-[22px] border border-white/10 bg-[#141414] p-6 sm:p-8">
@@ -249,13 +249,13 @@ export default function HomePage() {
         <p className="mt-1 text-4xl font-semibold tracking-tight text-white sm:text-5xl">{currency(user?.balance ?? 0)}</p>
         <p className="mt-2 text-sm text-white/55 sm:text-base">Account overview · orders, deposits, and spend</p>
         {(pageVisible("deposit") || pageVisible("cards") || pageVisible("support")) && <div className="mt-5 grid grid-cols-2 gap-2.5">
-          {pageVisible("deposit") && <Link href="/deposit" className="flex h-11 items-center justify-center gap-2 rounded-xl bg-amber-400 text-sm font-semibold text-black transition-colors hover:bg-amber-500 sm:h-12 sm:text-base">
+          {pageVisible("deposit") && <Link href="/deposit" className="flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-400 text-sm font-semibold text-black transition-colors hover:bg-blue-500 sm:h-12 sm:text-base">
             <Wallet className="h-4 w-4" />Deposit
           </Link>}
-          {pageVisible("cards") && <Link href="/cards" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-amber-400/60 hover:bg-amber-400/10 sm:h-12 sm:text-base">
+          {pageVisible("cards") && <Link href="/cards" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-blue-400/60 hover:bg-blue-400/10 sm:h-12 sm:text-base">
             <CreditCard className="h-4 w-4" />Buy cards
           </Link>}
-          {pageVisible("support") && <Link href="/support" className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-amber-400/60 hover:bg-amber-400/10 sm:h-12 sm:text-base">
+          {pageVisible("support") && <Link href="/support" className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] text-sm font-semibold text-white transition-colors hover:border-blue-400/60 hover:bg-blue-400/10 sm:h-12 sm:text-base">
             <MessageSquare className="h-4 w-4" />Support
           </Link>}
         </div>}
@@ -278,7 +278,7 @@ export default function HomePage() {
       </nav>
 
       {anyError && (
-        <div className="mt-5 rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-amber-200">
+        <div className="mt-5 rounded-xl border border-blue-500/25 bg-blue-500/5 px-4 py-3 text-sm text-blue-200">
           Some account statistics could not be loaded. Displayed totals may be incomplete.
         </div>
       )}
@@ -296,8 +296,8 @@ export default function HomePage() {
           </div>
           <MetricCard label="Deposit amount" value={currency(paidDepositTotal)} detail={`Avg ${currency(averageDeposit)}`} icon={Activity} />
           <StatusCard orders={purchaseOrders} />
-          <ChartCard title="Daily purchases" subtitle="Last 30 days · purchases & amount" data={dailyPurchases} countLabel="Purchases" amountLabel="Amount ($)" countColor="#eab308" />
-          <ChartCard title="Daily deposits" subtitle="Last 30 days · deposits & paid amount" data={dailyDeposits} countLabel="Deposits" amountLabel="Amount ($)" countColor="#ca8a04" amountColor="#facc15" />
+          <ChartCard title="Daily purchases" subtitle="Last 30 days · purchases & amount" data={dailyPurchases} countLabel="Purchases" amountLabel="Amount ($)" countColor="#2451d6" />
+          <ChartCard title="Daily deposits" subtitle="Last 30 days · deposits & paid amount" data={dailyDeposits} countLabel="Deposits" amountLabel="Amount ($)" countColor="#1b3fae" amountColor="#facc15" />
         </div>
       )}
 
@@ -309,7 +309,7 @@ export default function HomePage() {
             <MetricCard label="Cards" value={purchasedCards.length.toLocaleString()} detail={`All time ${purchasedCards.length.toLocaleString()}`} icon={CreditCard} />
             <MetricCard label="Refunded" value={currency(refundTotal)} detail={`${purchaseOrders.filter((order: any) => order.status === "refunded").length} full`} icon={CircleAlert} emphasis="text-rose-400" />
           </div>
-          {pageVisible("orders") && <Link href="/orders" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-amber-400/60 hover:bg-amber-400/10">
+          {pageVisible("orders") && <Link href="/orders" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-blue-400/60 hover:bg-blue-400/10">
             View my orders <ArrowUpRight className="h-4 w-4" />
           </Link>}
           <ChartCard title="Monthly purchases" subtitle="Amount, purchases, refunded" data={monthlyPurchases} countLabel="Purchases" amountLabel="Amount ($)" showRefunds />
@@ -322,20 +322,20 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-3 sm:gap-5">
             <MetricCard label="Total" value={(creditedDeposits.length + pendingDeposits.length).toLocaleString()} detail="Paid and pending records" icon={WalletCards} />
             <MetricCard label="Paid" value={currency(paidDepositTotal)} detail={`${creditedDeposits.length} deposits`} icon={CheckCircle2} />
-            <MetricCard label="Pending" value={currency(pendingAmount)} detail={`${pendingDeposits.length} pending`} icon={CircleAlert} emphasis="text-amber-400" />
+            <MetricCard label="Pending" value={currency(pendingAmount)} detail={`${pendingDeposits.length} pending`} icon={CircleAlert} emphasis="text-blue-400" />
             <MetricCard label="Average" value={currency(averageDeposit)} detail={`Largest ${currency(largestDeposit)}`} icon={Activity} />
           </div>
-          {pageVisible("myDeposits") && <Link href="/my-deposits" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-amber-400/60 hover:bg-amber-400/10">
+          {pageVisible("myDeposits") && <Link href="/my-deposits" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-blue-400/60 hover:bg-blue-400/10">
             View my deposits <ArrowUpRight className="h-4 w-4" />
           </Link>}
-          <ChartCard title="Monthly deposits" subtitle="Total vs paid amount" data={monthlyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#ca8a04" amountColor="#facc15" />
-          <ChartCard title="Weekly deposits" subtitle="Deposits & paid amount by week" data={weeklyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#ca8a04" amountColor="#facc15" />
+          <ChartCard title="Monthly deposits" subtitle="Total vs paid amount" data={monthlyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#1b3fae" amountColor="#facc15" />
+          <ChartCard title="Weekly deposits" subtitle="Deposits & paid amount by week" data={weeklyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#1b3fae" amountColor="#facc15" />
         </div>
       )}
 
       <footer className="mt-10 border-t border-white/10 py-8 text-center">
         <p className="flex items-center justify-center gap-2 text-sm text-white/55">
-          <span className={`h-2 w-2 rounded-full ${anyError ? "bg-amber-400" : "bg-emerald-400"}`} />
+          <span className={`h-2 w-2 rounded-full ${anyError ? "bg-blue-400" : "bg-emerald-400"}`} />
           {anyError ? "Account data temporarily unavailable" : "Account data connected"}
         </p>
         <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-sm text-white/50">

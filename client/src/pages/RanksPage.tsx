@@ -63,7 +63,7 @@ export default function RanksPage() {
           VIP status, free daily CC, and privileges (UTC)
         </p>
         <div className="mt-5 flex flex-wrap items-center gap-2.5">
-          <span className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${data?.isVip ? "bg-amber-400/15 text-amber-300" : "bg-white/[0.08] text-white/80"}`}>
+          <span className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${data?.isVip ? "bg-blue-400/15 text-blue-300" : "bg-white/[0.08] text-white/80"}`}>
             {isLoading ? "Checking status" : data?.isVip ? "VIP" : "Not VIP"}
           </span>
           <span className="text-sm text-white/45">UTC calendar month</span>
@@ -73,7 +73,7 @@ export default function RanksPage() {
             type="button"
             data-testid="leaderboard-open-button"
             onClick={() => setShowLeaderboard(true)}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-400/[0.08] px-4 text-sm font-medium text-amber-300 transition hover:border-amber-400/50 hover:bg-amber-400/[0.14]"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-400/25 bg-blue-400/[0.08] px-4 text-sm font-medium text-blue-300 transition hover:border-blue-400/50 hover:bg-blue-400/[0.14]"
           >
             <Trophy className="h-[18px] w-[18px]" aria-hidden="true" />
             Leaderboard
@@ -108,14 +108,14 @@ export default function RanksPage() {
         <>
           <section className="rounded-[22px] border border-white/[0.12] bg-[#171717] p-5 sm:p-6">
             <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-xl border border-amber-400/20 bg-amber-400/[0.08] text-amber-300">
+              <span className="grid h-10 w-10 place-items-center rounded-xl border border-blue-400/20 bg-blue-400/[0.08] text-blue-300">
                 <Crown className="h-5 w-5" aria-hidden="true" />
               </span>
               <h2 className="text-[18px] font-semibold text-white">VIP progress this month</h2>
             </div>
             <p className="mt-3 text-[15px] text-white/55">{money(month)} <span className="text-white/35">/</span> $500.00 PAID deposits (UTC month)</p>
             <div className="mt-7 h-2.5 overflow-hidden rounded-full bg-white/[0.13]" role="progressbar" aria-label="VIP deposit progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-              <div className="h-full rounded-full bg-amber-400 transition-[width] duration-500" style={{ width: `${progress}%` }} />
+              <div className="h-full rounded-full bg-blue-400 transition-[width] duration-500" style={{ width: `${progress}%` }} />
             </div>
             <p className="mt-3 text-sm text-white/55">
               {data.isVip ? "VIP unlocked for this month." : `Need ${money(Math.max(0, 50000 - month))} more PAID deposits for auto VIP.`}
@@ -158,7 +158,7 @@ export default function RanksPage() {
                 </p>
               </div>
             </div>
-            {data.isVip && <p className="mt-3 flex items-center gap-2 text-sm text-amber-300"><Check className="h-4 w-4" /> VIP benefits are active</p>}
+            {data.isVip && <p className="mt-3 flex items-center gap-2 text-sm text-blue-300"><Check className="h-4 w-4" /> VIP benefits are active</p>}
           </section>
         </>
       )}
@@ -178,7 +178,7 @@ export default function RanksPage() {
           >
             <div className="flex items-center justify-between border-b border-white/[0.08] px-5 py-4">
               <div className="flex items-center gap-2.5">
-                <span className="grid h-9 w-9 place-items-center rounded-xl border border-amber-400/20 bg-amber-400/[0.08] text-amber-300">
+                <span className="grid h-9 w-9 place-items-center rounded-xl border border-blue-400/20 bg-blue-400/[0.08] text-blue-300">
                   <Trophy className="h-[18px] w-[18px]" aria-hidden="true" />
                 </span>
                 <div>
@@ -221,14 +221,14 @@ export default function RanksPage() {
                       data-testid={`leaderboard-row-${entry.rank}`}
                       className={`flex items-center gap-3 rounded-xl border px-3.5 py-3 ${
                         entry.isCurrentUser
-                          ? "border-amber-400/40 bg-amber-400/[0.1]"
+                          ? "border-blue-400/40 bg-blue-400/[0.1]"
                           : "border-white/[0.07] bg-[#1c1c1c]"
                       }`}
                     >
                       <span
                         className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg text-sm font-semibold ${
                           entry.rank === 1
-                            ? "bg-amber-400/20 text-amber-300"
+                            ? "bg-blue-400/20 text-blue-300"
                             : entry.rank === 2
                             ? "bg-slate-300/15 text-slate-200"
                             : entry.rank === 3
@@ -241,10 +241,10 @@ export default function RanksPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-white">
                           {entry.username}
-                          {entry.isCurrentUser && <span className="ml-2 text-xs text-amber-300">You</span>}
+                          {entry.isCurrentUser && <span className="ml-2 text-xs text-blue-300">You</span>}
                         </p>
                         {entry.isVip && (
-                          <p className="flex items-center gap-1 text-xs text-amber-300/80">
+                          <p className="flex items-center gap-1 text-xs text-blue-300/80">
                             <Crown className="h-3 w-3" aria-hidden="true" /> VIP
                           </p>
                         )}

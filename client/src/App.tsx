@@ -36,9 +36,6 @@ import CryptoPaymentPage from "@/pages/CryptoPaymentPage";
 import ReviewsPage from "@/pages/ReviewsPage";
 import SubmitReviewPage from "@/pages/SubmitReviewPage";
 import AdminReviewsPage from "@/pages/AdminReviewsPage";
-import BuyForYouPage from "@/pages/BuyForYouPage";
-import AdminEatsPage from "@/pages/AdminEatsPage";
-
 function LoadingScreen() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background text-foreground">
@@ -93,7 +90,6 @@ function PageVisibilityGate({ page, children }: { page: string; children: React.
       ["logs", "/shop"],
       ["cart", "/cart"],
       ["orders", "/orders"],
-      ["buyForYou", "/buy-for-you"],
       ["support", "/support"],
       ["profile", "/profile"],
     ].find(([key]) => features?.pages?.[key] !== false)?.[1];
@@ -159,8 +155,6 @@ function Router() {
         <Route path="/orders">{() => <PageVisibilityGate page="orders"><OrdersPage /></PageVisibilityGate>}</Route>
         <Route path="/reviews/submit">{() => <PageVisibilityGate page="reviews"><SubmitReviewPage /></PageVisibilityGate>}</Route>
         <Route path="/reviews">{() => <PageVisibilityGate page="reviews"><ReviewsPage /></PageVisibilityGate>}</Route>
-        <Route path="/buy-for-you">{() => <PageVisibilityGate page="buyForYou"><BuyForYouPage /></PageVisibilityGate>}</Route>
-        <Route path="/admin/eats" component={AdminEatsPage} />
         <Route path="/admin/reviews" component={AdminReviewsPage} />
         <Route path="/my-code">{() => <PageVisibilityGate page="myCode"><MyCodePage /></PageVisibilityGate>}</Route>
         <Route path="/cart">{() => <PageVisibilityGate page="cart"><CartPage /></PageVisibilityGate>}</Route>

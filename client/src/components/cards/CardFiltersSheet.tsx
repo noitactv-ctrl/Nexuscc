@@ -268,7 +268,7 @@ export function CardFiltersSheet({
           <button
             type="button"
             onClick={onClose}
-            className="h-12 w-full rounded-xl bg-amber-400 text-base font-semibold text-black transition-colors hover:bg-amber-500"
+            className="h-12 w-full rounded-xl bg-blue-400 text-base font-semibold text-black transition-colors hover:bg-blue-500"
           >
             Show {resultCount.toLocaleString()} results
           </button>

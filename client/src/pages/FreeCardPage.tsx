@@ -91,7 +91,7 @@ export default function FreeCardPage() {
           type="button"
           onClick={() => setLocation("/profile")}
           aria-label="Back to profile"
-          className="mb-6 inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/10 bg-[#171717] px-3 text-sm text-white/75 transition hover:border-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+          className="mb-6 inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/10 bg-[#171717] px-3 text-sm text-white/75 transition hover:border-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Profile
@@ -137,7 +137,7 @@ export default function FreeCardPage() {
               <p className="text-[15px] text-white/55">Paid deposits (month)</p>
               <p className="mt-2 text-[32px] font-semibold tracking-tight text-white">{money(status.paidDepositsMonth)}</p>
               <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="Progress toward normal Free CC eligibility" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-                <div className="h-full rounded-full bg-amber-400 transition-[width] duration-500" style={{ width: `${progress}%` }} />
+                <div className="h-full rounded-full bg-blue-400 transition-[width] duration-500" style={{ width: `${progress}%` }} />
               </div>
               <p className="mt-3 text-sm text-white/45">VIP auto at $500.00 · Free CC (normal) at $100.00</p>
             </article>
@@ -162,9 +162,9 @@ export default function FreeCardPage() {
           </section>
 
           {!status.eligible && (
-            <section className="mt-5 rounded-[22px] border border-amber-400/40 bg-[#17130d] p-5 sm:p-6">
+            <section className="mt-5 rounded-[22px] border border-blue-400/40 bg-[#17130d] p-5 sm:p-6">
               <div className="flex items-start gap-3">
-                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" aria-hidden="true" />
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" aria-hidden="true" />
                 <div>
                   <h2 className="text-[19px] font-semibold text-white">Free CC locked</h2>
                   <p className="mt-2 text-[15px] leading-relaxed text-white/60">
@@ -191,25 +191,25 @@ export default function FreeCardPage() {
             <p className="mt-2 text-[15px] text-white/55">First come, first served from today’s pool.</p>
 
             {!status.eligible ? (
-              <div className="mt-6 flex gap-3 rounded-xl border border-amber-400/35 bg-amber-400/[0.05] p-4 text-sm leading-relaxed text-white/65" role="note">
-                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" aria-hidden="true" />
+              <div className="mt-6 flex gap-3 rounded-xl border border-blue-400/35 bg-blue-400/[0.05] p-4 text-sm leading-relaxed text-white/65" role="note">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" aria-hidden="true" />
                 <p>Need $100+ in PAID deposits this calendar month for normal free CC. VIP unlocks at $500.</p>
               </div>
             ) : status.poolLeft === 0 ? (
-              <div className="mt-6 flex gap-3 rounded-xl border border-amber-400/35 bg-amber-400/[0.05] p-4 text-sm leading-relaxed text-white/65" role="status">
-                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" aria-hidden="true" />
+              <div className="mt-6 flex gap-3 rounded-xl border border-blue-400/35 bg-blue-400/[0.05] p-4 text-sm leading-relaxed text-white/65" role="status">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" aria-hidden="true" />
                 <p>The shared pool is empty right now. Check back after inventory is replenished.</p>
               </div>
             ) : status.remainingToday === 0 ? (
-              <div className="mt-6 flex gap-3 rounded-xl border border-amber-400/35 bg-amber-400/[0.05] p-4 text-sm leading-relaxed text-white/65" role="status">
-                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" aria-hidden="true" />
+              <div className="mt-6 flex gap-3 rounded-xl border border-blue-400/35 bg-blue-400/[0.05] p-4 text-sm leading-relaxed text-white/65" role="status">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" aria-hidden="true" />
                 <p>You’ve used today’s Free CC allowance. Your next allowance starts at 00:00 UTC.</p>
               </div>
             ) : (
               <>
                 {!status.isVip && (
-                  <div className="mt-6 flex gap-3 rounded-xl border border-amber-400/35 bg-amber-400/[0.05] p-4 text-sm leading-relaxed text-white/65" role="note">
-                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" aria-hidden="true" />
+                  <div className="mt-6 flex gap-3 rounded-xl border border-blue-400/35 bg-blue-400/[0.05] p-4 text-sm leading-relaxed text-white/65" role="note">
+                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" aria-hidden="true" />
                     <p>VIP ($500+ PAID deposits this month) unlocks two daily claims. Your normal Free CC access is active.</p>
                   </div>
                 )}
@@ -226,7 +226,7 @@ export default function FreeCardPage() {
                     const next = Number.parseInt(event.target.value, 10);
                     setQuantity(Number.isFinite(next) ? Math.max(1, Math.min(maxQuantity, next)) : 1);
                   }}
-                  className="mt-2 h-12 w-44 rounded-xl border border-white/[0.14] bg-[#1c1c1c] px-4 text-[15px] text-white outline-none transition focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/15"
+                  className="mt-2 h-12 w-44 rounded-xl border border-white/[0.14] bg-[#1c1c1c] px-4 text-[15px] text-white outline-none transition focus:border-blue-400/60 focus:ring-2 focus:ring-blue-400/15"
                 />
                 <button
                   type="button"
@@ -252,7 +252,7 @@ export default function FreeCardPage() {
             ) : historyError ? (
               <div role="alert" className="mt-6 rounded-xl border border-red-400/20 bg-red-400/[0.04] p-4">
                 <p className="text-sm text-white/65">Could not load claim history.</p>
-                <button type="button" onClick={() => void refreshHistory()} className="mt-2 text-sm font-medium text-amber-300 hover:text-amber-200">Try again</button>
+                <button type="button" onClick={() => void refreshHistory()} className="mt-2 text-sm font-medium text-blue-300 hover:text-blue-200">Try again</button>
               </div>
             ) : !history?.length ? (
               <div className="grid min-h-[120px] place-items-center text-center text-[15px] text-white/45">No claims yet</div>
@@ -270,7 +270,7 @@ export default function FreeCardPage() {
                       className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-white/70 transition hover:border-white/25 hover:text-white"
                       aria-label={`View order ${item.orderId}`}
                     >
-                      <Check className="h-3.5 w-3.5 text-amber-300" aria-hidden="true" />
+                      <Check className="h-3.5 w-3.5 text-blue-300" aria-hidden="true" />
                       Order
                     </button>
                   </li>

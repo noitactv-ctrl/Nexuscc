@@ -71,7 +71,7 @@ export default function AdminPage() {
       className="flex h-screen overflow-hidden bg-[#080808]"
       style={{
         backgroundImage:
-          "radial-gradient(circle at 85% -10%, hsl(45 93% 47% / 0.1), transparent 32rem), radial-gradient(circle at -10% 40%, hsl(45 93% 47% / 0.06), transparent 28rem)",
+          "radial-gradient(circle at 85% -10%, hsl(224 76% 48% / 0.12), transparent 32rem), radial-gradient(circle at -10% 40%, hsl(224 76% 48% / 0.06), transparent 28rem)",
       }}
     >
 
@@ -600,7 +600,7 @@ function DepositsSection() {
                 <TableRow key={d.id} className="border-white/10 hover:bg-[#111]/[0.02]">
                   <TableCell className="text-xs font-mono text-white/60">{d.username}</TableCell>
                   <TableCell className="text-xs">
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${d.type === "crypto" ? "bg-amber-400/15 text-amber-300" : "bg-white/10 text-white/70"}`}>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${d.type === "crypto" ? "bg-blue-400/15 text-blue-300" : "bg-white/10 text-white/70"}`}>
                       {d.type}
                     </span>
                   </TableCell>
@@ -622,7 +622,7 @@ function StatCard({ title, value, icon: Icon, color }: any) {
   const iconTone = color === "red"
     ? "bg-rose-400/10 text-rose-300"
     : color === "orange"
-      ? "bg-amber-400/10 text-amber-300"
+      ? "bg-blue-400/10 text-blue-300"
       : "bg-primary/10 text-primary";
   return (
     <Card className="rounded-2xl border-white/10 bg-[#141414]">
@@ -1976,7 +1976,7 @@ function UsersSection() {
               <button
                 onClick={() => setWorkerMutation.mutate({ userId: selectedUser.id, isWorker: true })}
                 disabled={setWorkerMutation.isPending}
-                className="h-7 px-3 bg-amber-400 hover:bg-amber-500 text-black text-xs font-bold rounded transition-colors disabled:opacity-40"
+                className="h-7 px-3 bg-blue-400 hover:bg-blue-500 text-black text-xs font-bold rounded transition-colors disabled:opacity-40"
                 data-testid={`btn-make-worker-${selectedUser.id}`}
               >
                 Make Worker
@@ -1986,7 +1986,7 @@ function UsersSection() {
               <button
                 onClick={() => unbanMutation.mutate(selectedUser.id)}
                 disabled={unbanMutation.isPending}
-                className="h-7 px-3 bg-amber-400 hover:bg-amber-500 text-black text-xs font-bold rounded transition-colors disabled:opacity-40"
+                className="h-7 px-3 bg-blue-400 hover:bg-blue-500 text-black text-xs font-bold rounded transition-colors disabled:opacity-40"
                 data-testid={`btn-unban-${selectedUser.id}`}
               >
                 Unban
@@ -2538,7 +2538,7 @@ function IntegrationsSection() {
     { id: "chime", label: "Chime", icon: <span className="text-white font-black text-sm">C</span>, bg: "bg-[#00D632]" },
     { id: "applepay", label: "Apple Pay (Apple Cash)", icon: <span className="text-white font-black text-sm"></span>, bg: "bg-white/15" },
     { id: "crypto", label: "Crypto", icon: <SiBitcoin className="h-4 w-4 text-white" />, bg: "bg-primary" },
-    { id: "stars", label: "Telegram Stars", icon: <Star className="h-4 w-4 text-black fill-black" />, bg: "bg-amber-400" },
+    { id: "stars", label: "Telegram Stars", icon: <Star className="h-4 w-4 text-black fill-black" />, bg: "bg-blue-400" },
   ];
 
   return (
@@ -2716,7 +2716,6 @@ function FeatureTogglesCard() {
     { key: "cards", label: "Buy Cards" },
     { key: "logs", label: "Buy Logs" },
     { key: "orders", label: "My Orders" },
-    { key: "buyForYou", label: "Eats" },
     { key: "myCode", label: "My Code" },
     { key: "cart", label: "Shopping Cart" },
     { key: "support", label: "Support" },
@@ -4093,7 +4092,7 @@ function SellersSection() {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      className="flex-1 h-8 text-xs bg-amber-400 hover:bg-amber-500 text-black"
+                      className="flex-1 h-8 text-xs bg-blue-400 hover:bg-blue-500 text-black"
                       onClick={() => approveMutation.mutate(selected.id)}
                       disabled={approveMutation.isPending}
                       data-testid="btn-seller-approve"

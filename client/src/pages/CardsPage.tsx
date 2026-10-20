@@ -433,7 +433,7 @@ export default function CardsPage() {
           type="button"
           onClick={purchaseSelected}
           disabled={selectedCards.length === 0 || !!purchasing}
-          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-amber-400 text-base font-semibold text-black transition-colors hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg"
+          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-blue-400 text-base font-semibold text-black transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg"
           data-testid="btn-add-selected"
         >
           {purchasing ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />}
@@ -511,7 +511,7 @@ export default function CardsPage() {
                 key={card.id}
                 data-testid={`card-mobile-${card.id}`}
                 className={`rounded-2xl border bg-[#111] p-4 transition-colors ${
-                  selected ? "border-amber-400/50 bg-amber-400/[0.06]" : "border-white/10"
+                  selected ? "border-blue-400/50 bg-blue-400/[0.06]" : "border-white/10"
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -520,7 +520,7 @@ export default function CardsPage() {
                     checked={selected}
                     onChange={() => toggleSelection(card)}
                     aria-label={`Select card ending ${formatCardNumber(card).slice(-4)}`}
-                    className="mt-1 h-5 w-5 shrink-0 accent-amber-400"
+                    className="mt-1 h-5 w-5 shrink-0 accent-blue-400"
                     data-testid={`checkbox-card-mobile-${card.id}`}
                   />
                   <div className="min-w-0 flex-1">
@@ -574,7 +574,7 @@ export default function CardsPage() {
                     aria-label={selected ? "Remove from selection" : "Add to selection"}
                     aria-pressed={selected}
                     className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-black ${
-                      selected ? "bg-amber-300" : "bg-amber-400"
+                      selected ? "bg-blue-300" : "bg-blue-400"
                     }`}
                     data-testid={`btn-select-card-mobile-${card.id}`}
                   >
@@ -615,7 +615,7 @@ export default function CardsPage() {
                     checked={allVisibleSelected}
                     onChange={toggleAllVisible}
                     aria-label="Select all visible cards"
-                    className="h-4 w-4 accent-amber-400"
+                    className="h-4 w-4 accent-blue-400"
                     data-testid="checkbox-all"
                   />
                 </th>
@@ -638,7 +638,7 @@ export default function CardsPage() {
                       checked={selectedIds.has(card.id)}
                       onChange={() => toggleSelection(card)}
                       aria-label={`Select card ending ${formatCardNumber(card).slice(-4)}`}
-                      className="h-4 w-4 accent-amber-400"
+                      className="h-4 w-4 accent-blue-400"
                       data-testid={`checkbox-card-${card.id}`}
                     />
                   </td>
@@ -685,7 +685,7 @@ export default function CardsPage() {
                         onClick={() => toggleSelection(card)}
                         aria-label={selectedIds.has(card.id) ? "Remove from selection" : "Add to selection"}
                         className={`grid h-10 w-10 place-items-center rounded-xl transition-colors ${
-                          selectedIds.has(card.id) ? "bg-amber-500 text-black" : "bg-amber-400 text-black hover:bg-amber-500"
+                          selectedIds.has(card.id) ? "bg-blue-500 text-black" : "bg-blue-400 text-black hover:bg-blue-500"
                         }`}
                       >
                         <ShoppingCart className="h-5 w-5" aria-hidden="true" />

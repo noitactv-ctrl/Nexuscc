@@ -652,8 +652,8 @@ export default function WorkerDashboardPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-amber-400/20 border border-amber-400/30 flex items-center justify-center">
-          <Briefcase className="h-4 w-4 text-amber-300" />
+        <div className="w-8 h-8 rounded-lg bg-blue-400/20 border border-blue-400/30 flex items-center justify-center">
+          <Briefcase className="h-4 w-4 text-blue-300" />
         </div>
         <div>
           <h1 className="text-lg font-bold text-white">Worker Dashboard</h1>

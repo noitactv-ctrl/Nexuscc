@@ -202,7 +202,7 @@ export default function CheckerPage() {
         </div>
 
         {!configured && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200/80">
+          <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-xs text-blue-200/80">
             The checker is not configured yet. Add the Authorize.net settings before using it.
           </div>
         )}
