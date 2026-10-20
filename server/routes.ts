@@ -220,9 +220,32 @@ export async function registerRoutes(
   app.get("/api/buy-for-you", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     const result = await db.execute(sql`SELECT id, category, customer_name AS "customerName", email, phone, address, site_url AS "siteUrl",
-      created_at AS "createdAt", updated_at AS "updatedAt"
+      created_at AS "createdAt", updated_at AS "updatedAt", completed_at AS "completedAt"
       FROM buy_for_you_requests WHERE user_id=${(req.user as any).id} ORDER BY updated_at DESC`);
     res.json((result as any).rows);
+  });
+  app.post("/api/buy-for-you/chat", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const userId = Number((req.user as any).id);
+    const chat = await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(92147, ${userId})`);
+      const existing = await tx.execute(sql`SELECT id, category, customer_name AS "customerName",
+        site_url AS "siteUrl", created_at AS "createdAt", updated_at AS "updatedAt", completed_at AS "completedAt"
+        FROM buy_for_you_requests
+        WHERE user_id=${userId} AND completed_at IS NULL
+        ORDER BY updated_at DESC LIMIT 1`);
+      const current = (existing as any).rows[0];
+      if (current) return current;
+      const created = await tx.execute(sql`INSERT INTO buy_for_you_requests
+        (user_id, category, customer_name, email, phone, address, site_url)
+        SELECT id, 'food', COALESCE(NULLIF(username, ''), 'Customer'), '', '', '', ''
+        FROM users WHERE id=${userId}
+        RETURNING id, category, customer_name AS "customerName", site_url AS "siteUrl",
+          created_at AS "createdAt", updated_at AS "updatedAt", completed_at AS "completedAt"`);
+      return (created as any).rows[0] ?? null;
+    });
+    if (!chat) return res.status(404).json({ message: "Could not start an Eats chat." });
+    res.json(chat);
   });
   app.post("/api/buy-for-you", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
@@ -1051,117 +1074,141 @@ export async function registerRoutes(
   });
 
 
-  // User Rank
-  app.get("/api/user/rank", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
-    const userId = (req.user as any).id;
-    const result = await db.select({ total: sql<number>`COALESCE(SUM(amount), 0)` })
-      .from(transactions)
-      .where(and(eq(transactions.userId, userId), sql`amount > 0`, sql`type IN ('deposit', 'manual_deposit')`));
-    const totalDeposited = Number(result[0]?.total ?? 0);
+  const getFreeCardStatus = async (userId: number) => {
+    const result = await pool.query(
+      `SELECT
+         COALESCE(SUM(amount) FILTER (WHERE amount > 0 AND type IN ('deposit','manual_deposit')), 0)::int AS lifetime_deposits,
+         COALESCE(SUM(amount) FILTER (WHERE amount > 0 AND type IN ('deposit','manual_deposit') AND created_at >= date_trunc('month', timezone('UTC', now()))), 0)::int AS month_deposits,
+         COALESCE(SUM(amount) FILTER (WHERE amount > 0 AND type IN ('deposit','manual_deposit') AND created_at >= date_trunc('week', timezone('UTC', now()))), 0)::int AS week_deposits,
+         COUNT(*) FILTER (WHERE type = 'free_card_claim' AND created_at >= date_trunc('day', timezone('UTC', now())))::int AS claimed_today
+       FROM transactions WHERE user_id = $1`,
+      [userId],
+    );
+    const inventory = await pool.query(`SELECT COUNT(*)::int AS available FROM cards WHERE is_sold = false`);
+    const monthDeposits = Number(result.rows[0]?.month_deposits ?? 0);
+    const totalDeposited = Number(result.rows[0]?.lifetime_deposits ?? 0);
+    const claimedToday = Number(result.rows[0]?.claimed_today ?? 0);
+    const isVip = monthDeposits >= 50000;
+    const eligible = monthDeposits >= 10000;
+    const dailyAllowance = isVip ? 2 : eligible ? 1 : 0;
     const rank = totalDeposited >= 100000 ? "nyc" : totalDeposited >= 50000 ? "vip" : totalDeposited >= 10000 ? "regular" : "newbie";
     const discountPct = rank === "nyc" ? 10 : rank === "vip" ? 5 : rank === "regular" ? 2 : 0;
     const nextRankAt = rank === "newbie" ? 10000 : rank === "regular" ? 50000 : rank === "vip" ? 100000 : null;
-    res.json({ rank, discountPct, totalDeposited, nextRankAt });
+    return {
+      totalDeposited,
+      rank,
+      discountPct,
+      nextRankAt,
+      paidDepositsMonth: monthDeposits,
+      paidDepositsWeek: Number(result.rows[0]?.week_deposits ?? 0),
+      isVip,
+      eligible,
+      dailyAllowance,
+      claimedToday,
+      remainingToday: Math.max(0, dailyAllowance - claimedToday),
+      poolLeft: Number(inventory.rows[0]?.available ?? 0),
+      poolResetAt: await pool.query(`SELECT (date_trunc('day', timezone('UTC', now())) + INTERVAL '1 day') AS reset_at`).then((value) => value.rows[0]?.reset_at),
+    };
+  };
+
+  app.get("/api/user/rank", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    try {
+      res.json(await getFreeCardStatus(Number((req.user as any).id)));
+    } catch (error) {
+      console.error("VIP status lookup failed:", error);
+      res.status(503).json({ message: "VIP status is temporarily unavailable." });
+    }
   });
   app.get("/api/user/free-card/status", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
-    const userId = Number((req.user as any).id);
     try {
-      const result = await pool.query(
-        `SELECT
-           COALESCE(SUM(amount) FILTER (WHERE amount > 0 AND type IN ('deposit', 'manual_deposit')), 0)::int AS deposited,
-           COUNT(*) FILTER (WHERE type = 'free_card_claim')::int AS claimed
-         FROM transactions
-         WHERE user_id = $1
-           AND created_at >= date_trunc('week', timezone('UTC', now()))`,
-        [userId],
-      );
-      const inventory = await pool.query(`SELECT COUNT(*)::int AS available FROM cards WHERE is_sold = false`);
-      const deposited = Number(result.rows[0]?.deposited ?? 0);
-      res.json({
-        deposited,
-        required: 1000,
-        eligible: deposited >= 1000,
-        claimed: Number(result.rows[0]?.claimed ?? 0) > 0,
-        available: Number(inventory.rows[0]?.available ?? 0) > 0,
-      });
+      res.json(await getFreeCardStatus(Number((req.user as any).id)));
     } catch (error) {
       console.error("Free card status lookup failed:", error);
-      res.status(503).json({ message: "Free Card status is temporarily unavailable." });
+      res.status(503).json({ message: "Free CC status is temporarily unavailable." });
     }
+  });
+  app.get("/api/user/free-card/history", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const history = await pool.query(
+      `SELECT t.id, t.description, t.created_at AS "createdAt", o.order_id AS "orderId"
+       FROM transactions t LEFT JOIN orders o ON o.id = t.order_id
+       WHERE t.user_id = $1 AND t.type = 'free_card_claim'
+       ORDER BY t.created_at DESC LIMIT 50`,
+      [Number((req.user as any).id)],
+    );
+    res.json(history.rows);
   });
 
   app.post("/api/user/free-card/claim", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     const userId = Number((req.user as any).id);
+    const quantity = Number(req.body?.quantity);
+    if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 2) {
+      return res.status(400).json({ message: "Choose a quantity from 1 to 2." });
+    }
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
       await client.query("SELECT id FROM users WHERE id = $1 FOR UPDATE", [userId]);
-      const depositResult = await client.query(
-        `SELECT COALESCE(SUM(amount), 0)::int AS deposited
-         FROM transactions
-         WHERE user_id = $1 AND amount > 0
-           AND type IN ('deposit', 'manual_deposit')
-           AND created_at >= date_trunc('week', timezone('UTC', now()))`,
+      const statusResult = await client.query(
+        `SELECT
+           COALESCE(SUM(amount) FILTER (WHERE amount > 0 AND type IN ('deposit','manual_deposit') AND created_at >= date_trunc('month', timezone('UTC', now()))), 0)::int AS month_deposits,
+           COUNT(*) FILTER (WHERE type = 'free_card_claim' AND created_at >= date_trunc('day', timezone('UTC', now())))::int AS claimed_today
+         FROM transactions WHERE user_id = $1`,
         [userId],
       );
-      if (Number(depositResult.rows[0]?.deposited ?? 0) < 1000) {
+      const monthDeposits = Number(statusResult.rows[0]?.month_deposits ?? 0);
+      const allowance = monthDeposits >= 50000 ? 2 : monthDeposits >= 10000 ? 1 : 0;
+      const remaining = Math.max(0, allowance - Number(statusResult.rows[0]?.claimed_today ?? 0));
+      if (!allowance) {
         await client.query("ROLLBACK");
-        return res.status(403).json({ message: "Deposit at least $10 this UTC week to claim a free card." });
+        return res.status(403).json({ message: "Deposit at least $100 this UTC month to unlock Free CC." });
       }
-
-      const claimResult = await client.query(
-        `SELECT id FROM transactions
-         WHERE user_id = $1 AND type = 'free_card_claim'
-           AND created_at >= date_trunc('week', timezone('UTC', now()))
-         LIMIT 1`,
-        [userId],
-      );
-      if (claimResult.rowCount) {
+      if (quantity > remaining) {
         await client.query("ROLLBACK");
-        return res.status(409).json({ message: "You have already claimed this week's free card." });
+        return res.status(409).json({ message: `You can claim up to ${remaining} more Free CC today.` });
       }
-
       const cardResult = await client.query(
         `SELECT id, card_number, masked_card, expiry, cvv, country, extras
-         FROM cards WHERE is_sold = false
-         ORDER BY random() LIMIT 1 FOR UPDATE SKIP LOCKED`,
+         FROM cards WHERE is_sold = false ORDER BY random() LIMIT $1 FOR UPDATE SKIP LOCKED`,
+        [quantity],
       );
-      const card = cardResult.rows[0];
-      if (!card) {
+      const cards = cardResult.rows;
+      if (cards.length < quantity) {
         await client.query("ROLLBACK");
-        return res.status(409).json({ message: "No cards are available to claim right now." });
+        return res.status(409).json({ message: "The daily Free CC pool does not have enough cards remaining." });
       }
 
-      const publicOrderId = `FREE-CARD-${randomBytes(8).toString("hex").toUpperCase()}`;
-      const deliveryContent = [card.card_number, card.expiry, card.cvv, card.country, card.extras].filter(Boolean).join("|");
+      const publicOrderId = `FREE-CC-${randomBytes(8).toString("hex").toUpperCase()}`;
+      const deliveryContent = cards.map((card: any) => [card.card_number, card.expiry, card.cvv, card.country, card.extras].filter(Boolean).join("|")).join("\n");
       const orderResult = await client.query(
         `INSERT INTO orders (order_id, user_id, status, total, paid_amount, delivery_content, payment_method)
          VALUES ($1, $2, 'fulfilled', 0, 0, $3, 'free-card') RETURNING id`,
         [publicOrderId, userId, deliveryContent],
       );
       const orderDbId = orderResult.rows[0].id;
-      const updatedCard = await client.query(
-        `UPDATE cards SET is_sold = true, user_id = $1 WHERE id = $2 AND is_sold = false RETURNING id`,
-        [userId, card.id],
+      const cardIds = cards.map((card: any) => Number(card.id));
+      const updatedCards = await client.query(
+        `UPDATE cards SET is_sold = true, user_id = $1 WHERE id = ANY($2::int[]) AND is_sold = false RETURNING id`,
+        [userId, cardIds],
       );
-      if (!updatedCard.rowCount) throw new Error("Card was claimed by another user.");
-
-      await client.query(
-        `INSERT INTO order_items (order_id, variant_id, stock_item_id, card_id, item_type, price, quantity)
-         VALUES ($1, NULL, NULL, $2, 'card', 0, 1)`,
-        [orderDbId, card.id],
-      );
-      await client.query(
-        `INSERT INTO transactions (user_id, amount, type, description, order_id, created_at)
-         VALUES ($1, 0, 'free_card_claim', $2, $3, timezone('UTC', now()))`,
-        [userId, `Free Card weekly claim (${card.masked_card})`, orderDbId],
-      );
-
+      if (updatedCards.rowCount !== quantity) throw new Error("Some cards were claimed by another user.");
+      for (const card of cards) {
+        await client.query(
+          `INSERT INTO order_items (order_id, variant_id, stock_item_id, card_id, item_type, price, quantity)
+           VALUES ($1, NULL, NULL, $2, 'card', 0, 1)`,
+          [orderDbId, card.id],
+        );
+        await client.query(
+          `INSERT INTO transactions (user_id, amount, type, description, order_id, created_at)
+           VALUES ($1, 0, 'free_card_claim', $2, $3, timezone('UTC', now()))`,
+          [userId, `Free CC daily claim (${card.masked_card})`, orderDbId],
+        );
+      }
       await client.query("COMMIT");
-      res.json({ orderId: publicOrderId });
+      res.json({ orderId: publicOrderId, quantity });
     } catch (error) {
       await client.query("ROLLBACK").catch(() => {});
       console.error("Free card claim failed:", error);

@@ -27,7 +27,6 @@ const adminSections = [
   { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { id: "products",  label: "Products",  Icon: Package },
   { id: "cards", label: "Cards",      Icon: CreditCard },
-  { id: "ach", label: "Banks (ACH)", Icon: Wallet },
   { id: "orders",   label: "Orders",     Icon: ShoppingBag },
   { id: "cashapp",  label: "Payments",   Icon: DollarSign },
   { id: "deposits", label: "Deposits",   Icon: Wallet },
@@ -158,7 +157,6 @@ export default function AdminPage() {
           {activeSection === "dashboard"    && <DashboardSection />}
           {activeSection === "products"     && <ProductsSection />}
           {activeSection === "cards"        && <AdminCardsSection />}
-          {activeSection === "ach"          && <AdminAchSection />}
           {activeSection === "orders"       && <OrdersSection />}
           {activeSection === "cashapp"      && <CashAppSection />}
           {activeSection === "users"        && <UsersSection />}
@@ -2700,20 +2698,14 @@ function FeatureTogglesCard() {
     { key: "deposit", label: "Deposit Money" },
     { key: "myDeposits", label: "My Deposits" },
     { key: "redeem", label: "Redeem Code" },
-    { key: "ranks", label: "Ranks" },
-    { key: "freeCard", label: "Free Card" },
+    { key: "ranks", label: "VIP" },
+    { key: "freeCard", label: "Free CC" },
     { key: "cards", label: "Buy Cards" },
     { key: "logs", label: "Buy Logs" },
-    { key: "reseller", label: "Become a Seller" },
     { key: "orders", label: "My Orders" },
     { key: "buyForYou", label: "Eats" },
     { key: "myCode", label: "My Code" },
     { key: "cart", label: "Shopping Cart" },
-    { key: "checker", label: "Card Checker" },
-    { key: "plinko", label: "Plinko" },
-    { key: "games", label: "Games Hub" },
-    { key: "dice", label: "Dice" },
-    { key: "mines", label: "Mines" },
     { key: "support", label: "Support" },
     { key: "profile", label: "Account Management" },
   ];

@@ -3,22 +3,16 @@ import { Link, useLocation, useSearch } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import {
-  BookOpen,
   ChevronDown,
   CreditCard,
-  Dice5,
-  Bomb,
-  CircleDot,
   FileText,
   Gift,
   House,
-  Layers,
   LogOut,
   Menu,
   MessageSquare,
   MoreVertical,
   Package,
-  CircleDollarSign,
   Plus,
   Settings,
   ShoppingBag,
@@ -64,9 +58,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     deposit: true,
     shop: true,
-    games: true,
     orders: true,
-    checker: true,
     support: true,
   });
 
@@ -97,8 +89,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const balanceDollars = user ? (user.balance / 100).toFixed(2) : "0.00";
 
   const { data: features } = useQuery<{
-    checker: boolean;
-    reseller: boolean;
     ranks: boolean;
     logs: boolean;
     cards: boolean;
@@ -138,8 +128,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     ...((pageVisible("ranks") || pageVisible("freeCard")) ? [{
       label: "VIP",
       entries: [
-        ...(pageVisible("ranks") ? [{ href: "/ranks", label: "Ranks", icon: Trophy }] : []),
-        ...(pageVisible("freeCard") ? [{ href: "/free-card", label: "Free Card", icon: Gift }] : []),
+        ...(pageVisible("ranks") ? [{ href: "/ranks", label: "VIP", icon: Trophy }] : []),
+        ...(pageVisible("freeCard") ? [{ href: "/free-card", label: "Free CC", icon: Gift }] : []),
       ],
     }] : []),
     {
@@ -153,25 +143,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ...(pageVisible("cards") ? [{ href: "/cards", label: "Buy Cards", icon: CreditCard }] : []),
             ...(pageVisible("logs") ? [{ href: "/shop", label: "Buy Logs", icon: FileText }] : []),
             ...(pageVisible("buyForYou") ? [{ href: "/buy-for-you", label: "Eats", icon: Gift }] : []),
-            ...(pageVisible("reseller") ? [{ href: "/become-reseller", label: "Become a Seller", icon: BookOpen }] : []),
           ],
         },
       ],
     },
-    ...(pageVisible("games") ? [{
-      label: "Games",
-      groups: [{
-        id: "games",
-        label: "Play",
-        icon: Dice5,
-        entries: [
-          { href: "/games", label: "Games Hub", icon: Dice5 },
-          ...(pageVisible("dice") ? [{ href: "/games/dice", label: "Dice", icon: Dice5 }] : []),
-          ...(pageVisible("mines") ? [{ href: "/games/mines", label: "Mines", icon: Bomb }] : []),
-          ...(pageVisible("plinko") ? [{ href: "/games/plinko", label: "Plinko", icon: CircleDot }] : []),
-        ],
-      }],
-    }] : []),
     ...(pageVisible("orders") ? [{
       label: "My Orders",
       groups: [
@@ -185,17 +160,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         },
       ],
     }] : []),
-    {
-      label: "Tools",
-      groups: pageVisible("checker")
-        ? [{
-            id: "checker",
-            label: "Checker",
-            icon: Layers,
-            entries: [{ href: "/checker", label: "Card Checker", icon: CreditCard }],
-          }]
-        : [],
-    },
     ...(pageVisible("support") ? [{
       label: "Support",
       groups: [
@@ -221,7 +185,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ...(user?.role === "admin" ? [
               { href: "/admin", label: "Admin", icon: Settings },
               { href: "/admin/eats", label: "Eats Dashboard", icon: ShoppingBag },
-              { href: "/admin/profits", label: "Profits Page", icon: CircleDollarSign },
             ] : []),
             ...((user as any)?.isWorker && user?.role !== "admin" ? [{ href: "/worker", label: "Worker Dashboard", icon: Settings }] : []),
           ],

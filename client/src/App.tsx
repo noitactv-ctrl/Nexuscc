@@ -25,15 +25,9 @@ import CartPage from "@/pages/CartPage";
 import WorkerDashboardPage from "@/pages/WorkerDashboardPage";
 import CardsPage from "@/pages/CardsPage";
 import AchPage from "@/pages/AchPage";
-import CheckerPage from "@/pages/CheckerPage";
-import BecomeResellerPage from "@/pages/BecomeSellerPage";
 import ProfilePage from "@/pages/ProfilePage";
 import SupportPage from "@/pages/SupportPage";
 import RedeemCodePage from "@/pages/RedeemCodePage";
-import PlinkoPage from "@/pages/PlinkoPage";
-import DiceGamePage from "@/pages/DiceGamePage";
-import MinesGamePage from "@/pages/MinesGamePage";
-import GamesPage from "@/pages/GamesPage";
 import RanksPage from "@/pages/RanksPage";
 import FreeCardPage from "@/pages/FreeCardPage";
 import HomePage from "@/pages/HomePage";
@@ -44,7 +38,6 @@ import SubmitReviewPage from "@/pages/SubmitReviewPage";
 import AdminReviewsPage from "@/pages/AdminReviewsPage";
 import BuyForYouPage from "@/pages/BuyForYouPage";
 import AdminEatsPage from "@/pages/AdminEatsPage";
-import AdminProfitsPage from "@/pages/AdminProfitsPage";
 
 function LoadingScreen() {
   return (
@@ -92,22 +85,14 @@ function PageVisibilityGate({ page, children }: { page: string; children: React.
       ["redeem", "/redeem"],
       ["myCode", "/my-code"],
       ["cards", "/cards"],
-      ["banks", "/banks"],
+      ["ranks", "/ranks"],
+      ["freeCard", "/free-card"],
       ["logs", "/shop"],
       ["cart", "/cart"],
       ["orders", "/orders"],
-      ["reviews", "/reviews"],
       ["buyForYou", "/buy-for-you"],
-      ["games", "/games"],
-      ["dice", "/games/dice"],
-      ["mines", "/games/mines"],
-      ["reseller", "/become-reseller"],
       ["support", "/support"],
       ["profile", "/profile"],
-      ["ranks", "/ranks"],
-      ["freeCard", "/free-card"],
-      ["checker", "/checker"],
-      ["plinko", "/games/plinko"],
     ].find(([key]) => features?.pages?.[key] !== false)?.[1];
     if (fallback) return <Redirect to={fallback} />;
     return (
@@ -173,7 +158,6 @@ function Router() {
         <Route path="/reviews">{() => <PageVisibilityGate page="reviews"><ReviewsPage /></PageVisibilityGate>}</Route>
         <Route path="/buy-for-you">{() => <PageVisibilityGate page="buyForYou"><BuyForYouPage /></PageVisibilityGate>}</Route>
         <Route path="/admin/eats" component={AdminEatsPage} />
-        <Route path="/admin/profits" component={AdminProfitsPage} />
         <Route path="/admin/reviews" component={AdminReviewsPage} />
         <Route path="/my-code">{() => <PageVisibilityGate page="myCode"><MyCodePage /></PageVisibilityGate>}</Route>
         <Route path="/cart">{() => <PageVisibilityGate page="cart"><CartPage /></PageVisibilityGate>}</Route>
@@ -181,12 +165,6 @@ function Router() {
         <Route path="/cards">{() => <PageVisibilityGate page="cards"><CardsPage /></PageVisibilityGate>}</Route>
         <Route path="/banks">{() => <PageVisibilityGate page="banks"><AchPage /></PageVisibilityGate>}</Route>
         <Route path="/ach">{() => <PageVisibilityGate page="banks"><AchPage /></PageVisibilityGate>}</Route>
-        <Route path="/games/plinko">{() => <PageVisibilityGate page="games"><PageVisibilityGate page="plinko"><PlinkoPage /></PageVisibilityGate></PageVisibilityGate>}</Route>
-        <Route path="/games/dice">{() => <PageVisibilityGate page="games"><PageVisibilityGate page="dice"><DiceGamePage /></PageVisibilityGate></PageVisibilityGate>}</Route>
-        <Route path="/games/mines">{() => <PageVisibilityGate page="games"><PageVisibilityGate page="mines"><MinesGamePage /></PageVisibilityGate></PageVisibilityGate>}</Route>
-        <Route path="/games">{() => <PageVisibilityGate page="games"><GamesPage /></PageVisibilityGate>}</Route>
-        <Route path="/checker">{() => <PageVisibilityGate page="checker"><CheckerPage /></PageVisibilityGate>}</Route>
-        <Route path="/become-reseller">{() => <PageVisibilityGate page="reseller"><BecomeResellerPage /></PageVisibilityGate>}</Route>
         <Route path="/profile">{() => <PageVisibilityGate page="profile"><ProfilePage /></PageVisibilityGate>}</Route>
         <Route path="/ranks">{() => <PageVisibilityGate page="ranks"><RanksPage /></PageVisibilityGate>}</Route>
         <Route path="/free-card">{() => <PageVisibilityGate page="freeCard"><FreeCardPage /></PageVisibilityGate>}</Route>
