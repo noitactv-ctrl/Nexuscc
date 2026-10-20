@@ -201,6 +201,7 @@ export default function AdminPage() {
 function DashboardSection() {
   const { toast } = useToast();
   const [confirmClear, setConfirmClear] = useState(false);
+  const [clearConfirmation, setClearConfirmation] = useState("");
 
   const { data: stats, isLoading } = useQuery({
     queryKey: [api.admin.dashboard.path],
@@ -213,14 +214,15 @@ function DashboardSection() {
 
   const clearAllMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/admin/clear-all-data", {});
+      const res = await apiRequest("POST", "/api/admin/clear-all-data", { confirmation: clearConfirmation });
       if (!res.ok) { const err = await res.json(); throw new Error(err.message || "Failed"); }
       return res.json();
     },
     onSuccess: () => {
       setConfirmClear(false);
+      setClearConfirmation("");
       queryClient.invalidateQueries();
-      toast({ title: "All data cleared", description: "Products, orders, cards, and balances have been wiped." });
+      toast({ title: "Production data erased", description: "Non-admin accounts and app data were deleted. Admin accounts remain with zero balances." });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
@@ -245,7 +247,7 @@ function DashboardSection() {
       <div className="space-y-3 rounded-2xl border border-rose-500/20 bg-rose-500/[0.04] p-4 sm:p-5">
         <div>
           <p className="text-sm font-bold text-rose-300">Danger Zone</p>
-          <p className="text-xs text-white/45 mt-0.5">Permanently wipe all products, orders, cards, and reset all user balances to $0.</p>
+          <p className="text-xs text-white/45 mt-0.5">Production only. Permanently deletes non-admin accounts, orders, inventory, codes, payments, messages, settings, and sessions. Admin accounts remain with balances reset to $0.</p>
         </div>
         {!confirmClear ? (
           <button
@@ -256,22 +258,35 @@ function DashboardSection() {
             Clear All Site Data
           </button>
         ) : (
-          <div className="flex items-center gap-3">
-            <p className="text-xs text-red-300 font-mono">Are you sure? This cannot be undone.</p>
+          <div className="space-y-3">
+            <p className="text-xs text-red-300">This cannot be undone. Type <strong>ERASE ALL PRODUCTION DATA</strong> to enable the production wipe.</p>
+            <Input
+              value={clearConfirmation}
+              onChange={(event) => setClearConfirmation(event.target.value)}
+              placeholder="ERASE ALL PRODUCTION DATA"
+              autoComplete="off"
+              disabled={clearAllMutation.isPending}
+              aria-label="Type ERASE ALL PRODUCTION DATA to confirm"
+              data-testid="input-clear-all-confirmation"
+              className="max-w-md"
+            />
+            <div className="flex items-center gap-3">
             <button
               onClick={() => clearAllMutation.mutate()}
-              disabled={clearAllMutation.isPending}
+              disabled={clearAllMutation.isPending || clearConfirmation !== "ERASE ALL PRODUCTION DATA"}
               className="rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-black text-white transition-colors hover:bg-rose-600 disabled:opacity-50"
               data-testid="btn-clear-confirm"
             >
-              {clearAllMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes, wipe everything"}
+              {clearAllMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Erase all production data"}
             </button>
             <button
-              onClick={() => setConfirmClear(false)}
+              onClick={() => { setConfirmClear(false); setClearConfirmation(""); }}
+              disabled={clearAllMutation.isPending}
               className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-white/60 transition-colors hover:bg-white/[0.07]"
             >
               Cancel
             </button>
+            </div>
           </div>
         )}
       </div>

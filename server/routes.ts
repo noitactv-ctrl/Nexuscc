@@ -1573,27 +1573,61 @@ export async function registerRoutes(
     if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
       return res.status(401).json({ message: "Unauthorized" });
     }
+    if (process.env.NODE_ENV !== "production") {
+      return res.status(403).json({ message: "Full data wipe is only available on the production site." });
+    }
+    if (req.body?.confirmation !== "ERASE ALL PRODUCTION DATA") {
+      return res.status(400).json({ message: "Type ERASE ALL PRODUCTION DATA to confirm." });
+    }
     try {
-      await db.transaction(async (tx) => {
-        await tx.delete(vouchTokens);
-        await tx.delete(vouches);
-        await tx.delete(orderItems);
-        await tx.delete(cryptoPayments);
-        await tx.delete(stockItems);
-        await tx.delete(transactions);
-        await tx.delete(orders);
-        await tx.delete(variants);
-        await tx.delete(products);
-        await tx.delete(cards);
+      const deletedUsers = await db.transaction(async (tx) => {
+        // Clear public app data without touching the user table, migration history,
+        // or tables owned by PostgreSQL extensions.
+        await tx.execute(sql.raw(`
+          DO $wipe$
+          DECLARE target_tables text;
+          BEGIN
+            SELECT string_agg(format('%I.%I', n.nspname, c.relname), ', ' ORDER BY c.relname)
+              INTO target_tables
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = 'public'
+              AND c.relkind IN ('r', 'p')
+              AND NOT c.relispartition
+              AND c.relname NOT IN ('users', '__drizzle_migrations', 'drizzle_migrations')
+              AND NOT EXISTS (
+                SELECT 1
+                FROM pg_depend d
+                WHERE d.classid = 'pg_class'::regclass
+                  AND d.objid = c.oid
+                  AND d.deptype = 'e'
+              );
+
+            IF target_tables IS NOT NULL THEN
+              EXECUTE 'TRUNCATE TABLE ' || target_tables || ' RESTART IDENTITY';
+            END IF;
+          END;
+          $wipe$;
+        `));
+        const removedUsers = await tx.delete(users).where(ne(users.role, "admin")).returning({ id: users.id });
         await tx.update(users).set({ balance: 0, protectedBalance: 0 });
+        return removedUsers.length;
       });
-      res.json({ success: true });
+      await new Promise<void>((resolve) => {
+        if (!req.session) return resolve();
+        req.session.destroy((error: Error | null) => {
+          if (error) console.warn("[admin] session invalidation after data wipe failed");
+          resolve();
+        });
+      });
+      res.clearCookie("uc_session");
+      res.json({ success: true, deletedUsers });
     } catch (error: any) {
       console.error("[admin] clear-all-data failed:", error?.code || error?.name || "unknown database error");
       if (error?.code === "23503") {
-        return res.status(409).json({ message: "Site history could not be cleared because related records still exist. No changes were applied." });
+        return res.status(409).json({ message: "The wipe was cancelled because related data could not be safely cleared. No changes were applied." });
       }
-      res.status(500).json({ message: "Site data could not be cleared. No changes were applied." });
+      res.status(500).json({ message: "Production data could not be cleared. No changes were applied." });
     }
   });
 
