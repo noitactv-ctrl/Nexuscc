@@ -244,6 +244,9 @@ export default function HomePage() {
 
   return (
     <main className="mx-auto w-full max-w-[1120px] px-4 pb-10 pt-4 sm:px-6 sm:pt-6">
+      <Link href="/shop" aria-label="Order now" data-testid="home-hero-banner" className="mb-5 block overflow-hidden rounded-[22px] border border-white/10">
+        <img src="/gorillacc-banner.webp" alt="gorillacc.at — Quality over Quantity. Order now." className="block h-auto w-full" />
+      </Link>
       <section className="rounded-[22px] border border-white/10 bg-[#171717] p-5 sm:p-7">
         <p className="text-sm font-medium tracking-wide text-white/55">AVAILABLE BALANCE</p>
         <p className="mt-1 text-4xl font-semibold tracking-tight text-white sm:text-5xl">{currency(user?.balance ?? 0)}</p>
