@@ -115,7 +115,7 @@ function MetricCard({
 }
 
 function ChartCard({
-  title, subtitle, data, countLabel, amountLabel, countColor = "#2451d6", amountColor = "#facc15", showRefunds = false,
+  title, subtitle, data, countLabel, amountLabel, countColor = "#2451d6", amountColor = "#93c5fd", showRefunds = false,
 }: {
   title: string;
   subtitle: string;
@@ -243,11 +243,12 @@ export default function HomePage() {
   ];
 
   return (
-    <main className="mx-auto w-full max-w-[1120px] px-4 pb-10 pt-4 sm:px-6 sm:pt-6">
-      <Link href="/shop" aria-label="Order now" data-testid="home-hero-banner" className="mb-5 block overflow-hidden rounded-[22px] border border-white/10">
-        <img src="/gorillacc-banner.webp" alt="gorillacc.at — Quality over Quantity. Order now." className="block h-auto w-full" />
+    <main className="mx-auto w-full max-w-[1120px] px-4 pb-10 pt-4 sm:px-6 sm:pt-6 lg:max-w-[1480px] lg:px-10 lg:pt-8">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.85fr)_minmax(360px,1fr)] lg:items-stretch">
+      <Link href="/shop" aria-label="Order now" data-testid="home-hero-banner" className="group block overflow-hidden rounded-[22px] border border-white/10 transition-colors hover:border-blue-400/40">
+        <img src="/gorillacc-banner.webp" alt="gorillacc.at — Quality over Quantity. Order now." className="block h-auto w-full transition-transform duration-500 group-hover:scale-[1.015] lg:h-full lg:min-h-[300px] lg:object-cover lg:object-left" />
       </Link>
-      <section className="rounded-[22px] border border-white/10 bg-[#171717] p-5 sm:p-7">
+      <section className="flex flex-col justify-center rounded-[22px] border border-white/10 bg-[#171717] p-5 sm:p-7">
         <p className="text-sm font-medium tracking-wide text-white/55">AVAILABLE BALANCE</p>
         <p className="mt-1 text-4xl font-semibold tracking-tight text-white sm:text-5xl">{currency(user?.balance ?? 0)}</p>
         <p className="mt-2 text-sm text-white/55 sm:text-base">Account overview · orders, deposits, and spend</p>
@@ -263,6 +264,7 @@ export default function HomePage() {
           </Link>}
         </div>}
       </section>
+      </div>
 
       <nav aria-label="Account dashboard sections" className="mt-6 grid grid-cols-3 rounded-2xl bg-[#171717] p-1.5">
         {tabs.map(({ id, label }) => (
@@ -291,22 +293,26 @@ export default function HomePage() {
 
       {tab === "overview" && (
         <div className="mt-6 space-y-5">
-          <div className="grid grid-cols-2 gap-3 sm:gap-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
             <MetricCard label="Orders" value={purchaseOrders.length.toLocaleString()} detail={`${purchaseOrders.filter((order: any) => ["fulfilled", "delivering", "replaced"].includes(order.status)).length.toLocaleString()} completed`} icon={ShoppingBag} />
             <MetricCard label="Spent" value={currency(purchaseTotal)} detail={`${currency(refundTotal)} refunded`} icon={Activity} />
             <MetricCard label="Cards" value={purchasedCards.length.toLocaleString()} detail="Total purchased" icon={CreditCard} />
             <MetricCard label="Deposits" value={(creditedDeposits.length + pendingDeposits.length).toLocaleString()} detail={`${creditedDeposits.length} paid · ${pendingDeposits.length} pending`} icon={WalletCards} />
           </div>
-          <MetricCard label="Deposit amount" value={currency(paidDepositTotal)} detail={`Avg ${currency(averageDeposit)}`} icon={Activity} />
+          <div className="grid gap-5 lg:grid-cols-2">
+            <MetricCard label="Deposit amount" value={currency(paidDepositTotal)} detail={`Avg ${currency(averageDeposit)}`} icon={Activity} />
           <StatusCard orders={purchaseOrders} />
-          <ChartCard title="Daily purchases" subtitle="Last 30 days · purchases & amount" data={dailyPurchases} countLabel="Purchases" amountLabel="Amount ($)" countColor="#2451d6" />
-          <ChartCard title="Daily deposits" subtitle="Last 30 days · deposits & paid amount" data={dailyDeposits} countLabel="Deposits" amountLabel="Amount ($)" countColor="#1b3fae" amountColor="#facc15" />
+          </div>
+          <div className="grid gap-5 lg:grid-cols-2">
+            <ChartCard title="Daily purchases" subtitle="Last 30 days · purchases & amount" data={dailyPurchases} countLabel="Purchases" amountLabel="Amount ($)" countColor="#2451d6" />
+          <ChartCard title="Daily deposits" subtitle="Last 30 days · deposits & paid amount" data={dailyDeposits} countLabel="Deposits" amountLabel="Amount ($)" countColor="#1b3fae" amountColor="#93c5fd" />
+          </div>
         </div>
       )}
 
       {tab === "purchases" && (
         <div className="mt-6 space-y-5">
-          <div className="grid grid-cols-2 gap-3 sm:gap-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
             <MetricCard label="Orders" value={purchaseOrders.length.toLocaleString()} detail={`All time ${purchaseOrders.length.toLocaleString()}`} icon={ShoppingBag} />
             <MetricCard label="Spent" value={currency(purchaseTotal)} detail={`All time ${currency(purchaseTotal)}`} icon={Activity} />
             <MetricCard label="Cards" value={purchasedCards.length.toLocaleString()} detail={`All time ${purchasedCards.length.toLocaleString()}`} icon={CreditCard} />
@@ -315,14 +321,16 @@ export default function HomePage() {
           {pageVisible("orders") && <Link href="/orders" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-blue-400/60 hover:bg-blue-400/10">
             View my orders <ArrowUpRight className="h-4 w-4" />
           </Link>}
-          <ChartCard title="Monthly purchases" subtitle="Amount, purchases, refunded" data={monthlyPurchases} countLabel="Purchases" amountLabel="Amount ($)" showRefunds />
+          <div className="grid gap-5 lg:grid-cols-2">
+            <ChartCard title="Monthly purchases" subtitle="Amount, purchases, refunded" data={monthlyPurchases} countLabel="Purchases" amountLabel="Amount ($)" showRefunds />
           <ChartCard title="Weekly purchases" subtitle="Orders & amount by week" data={weeklyPurchases} countLabel="Orders" amountLabel="Amount ($)" />
+          </div>
         </div>
       )}
 
       {tab === "deposits" && (
         <div className="mt-6 space-y-5">
-          <div className="grid grid-cols-2 gap-3 sm:gap-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
             <MetricCard label="Total" value={(creditedDeposits.length + pendingDeposits.length).toLocaleString()} detail="Paid and pending records" icon={WalletCards} />
             <MetricCard label="Paid" value={currency(paidDepositTotal)} detail={`${creditedDeposits.length} deposits`} icon={CheckCircle2} />
             <MetricCard label="Pending" value={currency(pendingAmount)} detail={`${pendingDeposits.length} pending`} icon={CircleAlert} emphasis="text-blue-400" />
@@ -331,8 +339,10 @@ export default function HomePage() {
           {pageVisible("myDeposits") && <Link href="/my-deposits" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#141414] text-sm font-medium text-white hover:border-blue-400/60 hover:bg-blue-400/10">
             View my deposits <ArrowUpRight className="h-4 w-4" />
           </Link>}
-          <ChartCard title="Monthly deposits" subtitle="Total vs paid amount" data={monthlyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#1b3fae" amountColor="#facc15" />
-          <ChartCard title="Weekly deposits" subtitle="Deposits & paid amount by week" data={weeklyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#1b3fae" amountColor="#facc15" />
+          <div className="grid gap-5 lg:grid-cols-2">
+            <ChartCard title="Monthly deposits" subtitle="Total vs paid amount" data={monthlyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#1b3fae" amountColor="#93c5fd" />
+          <ChartCard title="Weekly deposits" subtitle="Deposits & paid amount by week" data={weeklyDeposits} countLabel="Deposits" amountLabel="Paid amount ($)" countColor="#1b3fae" amountColor="#93c5fd" />
+          </div>
         </div>
       )}
 
