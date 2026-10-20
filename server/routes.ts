@@ -305,18 +305,18 @@ export async function registerRoutes(
         WHERE id=${requestId}
         RETURNING id, completed_at AS "completedAt", charged_amount AS "chargedAmount"`);
       const completed = (completedResult as any).rows[0];
-      if (!completed) throw new Error("Buy For You completion could not be recorded; rolling back balance deduction.");
+      if (!completed) throw new Error("Eats completion could not be recorded; rolling back balance deduction.");
       await tx.insert(transactions).values({
         userId: Number(request.user_id),
         amount: -amountCents,
         type: "purchase",
-        description: `Buy For You request #${requestId} completed`,
+        description: `Eats request #${requestId} completed`,
         paymentMethod: "Account balance",
       });
       return { completed, balance: debitedUser.balance };
     });
     if ("error" in result) {
-      if (result.error === "not_found") return res.status(404).json({ message: "Buy For You request not found." });
+      if (result.error === "not_found") return res.status(404).json({ message: "Eats request not found." });
       if (result.error === "already_completed") return res.status(409).json({ message: "This request has already been completed and charged." });
       return res.status(400).json({ message: "The customer does not have enough balance for this charge." });
     }

@@ -82,6 +82,7 @@ function PageVisibilityGate({ page, children }: { page: string; children: React.
     queryKey: ["/api/settings/features"],
     staleTime: 30000,
   });
+  if (page === "banks" || page === "reviews") return <Redirect to="/" />;
   if (isLoading) return <LoadingScreen />;
   if (features?.pages?.[page] === false && user?.role !== "admin") {
     if (page !== "home") return <Redirect to="/" />;

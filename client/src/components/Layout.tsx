@@ -151,20 +151,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           icon: ShoppingBag,
           entries: [
             ...(pageVisible("cards") ? [{ href: "/cards", label: "Buy Cards", icon: CreditCard }] : []),
-            ...(pageVisible("banks") ? [{ href: "/banks", label: "Banks", icon: WalletCards }] : []),
             ...(pageVisible("logs") ? [{ href: "/shop", label: "Buy Logs", icon: FileText }] : []),
-            ...(pageVisible("buyForYou") ? [{ href: "/buy-for-you", label: "Buy For You", icon: Gift }] : []),
+            ...(pageVisible("buyForYou") ? [{ href: "/buy-for-you", label: "Eats", icon: Gift }] : []),
             ...(pageVisible("reseller") ? [{ href: "/become-reseller", label: "Become a Seller", icon: BookOpen }] : []),
           ],
         },
       ],
-    },
-    {
-      label: "Reviews",
-      entries: pageVisible("reviews") ? [
-        { href: "/reviews", label: "Approved Reviews", icon: MessageSquare },
-        { href: "/reviews/submit", label: "Submit a Review", icon: FileText },
-      ] : [],
     },
     ...(pageVisible("games") ? [{
       label: "Games",
@@ -228,7 +220,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           entries: [
             ...(user?.role === "admin" ? [
               { href: "/admin", label: "Admin", icon: Settings },
-              { href: "/admin/reviews", label: "Review Moderation", icon: MessageSquare },
               { href: "/admin/eats", label: "Eats Dashboard", icon: ShoppingBag },
               { href: "/admin/profits", label: "Profits Page", icon: CircleDollarSign },
             ] : []),

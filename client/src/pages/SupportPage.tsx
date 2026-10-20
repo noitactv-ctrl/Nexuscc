@@ -112,7 +112,6 @@ function Footer() {
   return (
     <div className="border-t border-white/8 py-6 px-4 text-center space-y-2 mt-10">
       <div className="flex items-center justify-center gap-5 text-xs font-semibold text-white/50 tracking-widest uppercase">
-        <span>Reviews</span>
         <a
           href="https://t.me/+3-lMkt-idutkOTIx"
           target="_blank"

@@ -104,7 +104,7 @@ export default function BuyForYouPage() {
         <p className="mt-2 text-xs text-muted-foreground sm:text-sm">Choose a restaurant below to start a private order chat with our team.</p>
       </section>
 
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Buy for you categories">
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Eats categories">
         {categories.map((item) => (
           <button key={item.id} role="tab" aria-selected={category === item.id} onClick={() => setCategory(item.id)}
             className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${category === item.id ? "border-primary/40 bg-primary/10 text-primary" : "border-border/80 bg-card/50 text-muted-foreground hover:border-primary/30 hover:text-foreground"}`}>
