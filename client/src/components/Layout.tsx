@@ -125,13 +125,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       ],
       entries: pageVisible("redeem") ? [{ href: "/redeem", label: "Redeem Code", icon: Gift }] : [],
     },
-    ...((pageVisible("ranks") || pageVisible("freeCard")) ? [{
+    {
       label: "VIP",
       entries: [
-        ...(pageVisible("ranks") ? [{ href: "/ranks", label: "VIP", icon: Trophy }] : []),
+        { href: "/ranks", label: "VIP", icon: Trophy },
         ...(pageVisible("freeCard") ? [{ href: "/free-card", label: "Free CC", icon: Gift }] : []),
       ],
-    }] : []),
+    },
     {
       label: "Shopping",
       groups: [

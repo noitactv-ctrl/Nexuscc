@@ -2698,7 +2698,6 @@ function FeatureTogglesCard() {
     { key: "deposit", label: "Deposit Money" },
     { key: "myDeposits", label: "My Deposits" },
     { key: "redeem", label: "Redeem Code" },
-    { key: "ranks", label: "VIP" },
     { key: "freeCard", label: "Free CC" },
     { key: "cards", label: "Buy Cards" },
     { key: "logs", label: "Buy Logs" },
