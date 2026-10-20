@@ -1,5 +1,7 @@
+import json
 import re
 import secrets
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -24,7 +26,7 @@ def pick(body: dict, keys: list[str]) -> dict:
 # ---------- Dashboard ----------
 @router.get("/dashboard")
 async def dashboard(_: dict = Depends(admin_user)):
-    sales = await db.orders.aggregate([{"$match": {"status": "fulfilled"}}, {"$group": {"_id": None, "t": {"$sum": "$total"}}}]).to_list(1)
+    sales = await db.orders.aggregate([{"$match": {"status": {"$in": ["fulfilled", "delivering"]}}}, {"$group": {"_id": None, "t": {"$sum": "$total"}}}]).to_list(1)
     total = int(sales[0]["t"]) if sales else 0
     worth = 0
     for s in await find("stock_items", {"isSold": False, "isReserved": False}):
@@ -136,7 +138,6 @@ async def orders(_: dict = Depends(staff_user)):
 @router.post("/orders/{oid}/deliver")
 async def deliver(oid: int, body: dict, _: dict = Depends(admin_user)):
     await must("orders", oid)
-    import json
     content = json.dumps(body["deliveryContents"]) if isinstance(body.get("deliveryContents"), dict) else body.get("deliveryContent", "")
     return await update("orders", {"id": oid}, {"deliveryContent": content, "status": "fulfilled"})
 
@@ -149,13 +150,34 @@ async def patch_order(oid: int, body: dict, _: dict = Depends(admin_user)):
 
 @router.post("/orders/{oid}/refund")
 async def refund(oid: int, _: dict = Depends(admin_user)):
-    o = await must("orders", oid)
-    if o["status"] == "refunded":
+    await must("orders", oid)
+    o = await db.orders.find_one_and_update({"id": oid, "status": {"$ne": "refunded"}}, {"$set": {"status": "refunded"}},
+                                            projection={"_id": 0})
+    if not o:
         raise HTTPException(400, "Order already refunded")
     if o.get("paidAmount"):
         await db.users.update_one({"id": o["userId"]}, {"$inc": {"balance": o["paidAmount"]}})
         await tx(o["userId"], o["paidAmount"], "refund", f"Refund for order {o['orderId']}", order_id=oid)
-    return await update("orders", {"id": oid}, {"status": "refunded"})
+    return await find_one("orders", {"id": oid})
+
+
+@router.post("/orders/{oid}/replace")
+async def replace(oid: int, _: dict = Depends(admin_user)):
+    o = await must("orders", oid)
+    parts = json.loads(o["deliveryContent"]) if (o.get("deliveryContent") or "").startswith("{") else {}
+    replaced = 0
+    for item in await find("order_items", {"orderId": oid, "itemType": "product"}):
+        new = await db.stock_items.find_one_and_update(
+            {"variantId": item["variantId"], "isSold": False, "isReserved": False},
+            {"$set": {"isSold": True, "orderId": oid, "replacementForId": item.get("stockItemId")}}, projection={"_id": 0})
+        if not new:
+            raise HTTPException(400, "Not enough stock to replace this order")
+        key = str(item["variantId"])
+        parts[key] = (parts.get(key, "") + "\n\n[Replacement]\n" + new["content"]).strip()
+        replaced += 1
+    if not replaced:
+        raise HTTPException(400, "Only product orders can be replaced")
+    return await update("orders", {"id": oid}, {"deliveryContent": json.dumps(parts), "status": "fulfilled"})
 
 
 @router.post("/orders/{oid}/mark-unpaid")
@@ -333,7 +355,6 @@ async def discount_codes(_: dict = Depends(admin_user)):
 
 @router.post("/discount-codes", status_code=201)
 async def create_discount(body: dict, _: dict = Depends(admin_user)):
-    from datetime import datetime
     code, kind, value = str(body.get("code") or "").strip().upper(), body.get("type"), body.get("value")
     if not code or not kind or not value:
         raise HTTPException(400, "Code, type, and value required")

@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from auth import MIN_PASSWORD_LENGTH, current_user, hash_password, public_user, verify_password
@@ -35,7 +37,6 @@ async def free_card_status(uid: int) -> dict:
     rank, pct, next_at = rank_for(total)
     is_vip, eligible = month >= 50000, month >= 10000
     allowance = 2 if is_vip else 1 if eligible else 0
-    from datetime import timedelta
     return {
         "totalDeposited": total, "rank": rank, "discountPct": pct, "nextRankAt": next_at,
         "paidDepositsMonth": month, "paidDepositsWeek": await deposit_sum(uid, week_start()),
@@ -146,9 +147,7 @@ async def change_telegram(body: dict, user: dict = Depends(current_user)):
 
 
 @router.get("/deposits")
-async def my_deposits(user: dict = Depends(current_user)):
-    rows = await find("transactions", {"userId": user["id"], "type": {"$in": ["deposit", "manual_deposit"]}}, sort=[("createdAt", -1)])
-    return [{"id": t["id"], "amount": t["amount"], "status": "completed", "method": t.get("paymentMethod") or "Code",
-             "description": t["description"], "createdAt": t["createdAt"]} for t in rows]
+async def my_deposits(_: dict = Depends(current_user)):
+    return []
 
 

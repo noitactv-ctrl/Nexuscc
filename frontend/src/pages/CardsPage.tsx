@@ -622,7 +622,7 @@ export default function CardsPage() {
                 {visibleColumnDefinitions.map((column) => (
                   <th key={column.id} className="whitespace-nowrap px-4 py-4 text-left font-medium">{column.label}</th>
                 ))}
-                <th className="whitespace-nowrap px-3 py-4 text-right font-medium">Actions</th>
+                <th className="sticky right-0 z-10 whitespace-nowrap bg-[#090909] px-3 py-4 text-right font-medium shadow-[-12px_0_16px_-12px_rgba(0,0,0,0.9)]">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -670,7 +670,7 @@ export default function CardsPage() {
                       </td>
                     );
                   })}
-                  <td className="px-3 py-2.5">
+                  <td className="sticky right-0 z-10 bg-[#090909] px-3 py-2.5 shadow-[-12px_0_16px_-12px_rgba(0,0,0,0.9)]">
                     <div className="flex justify-end gap-2">
                       <button
                         type="button"

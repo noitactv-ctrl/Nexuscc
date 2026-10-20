@@ -68,7 +68,7 @@ export default function AdminPage() {
 
   return (
     <div
-      className="flex h-screen overflow-hidden bg-[#080808]"
+      className="flex h-[calc(133.333333vh-54px)] overflow-hidden bg-[#080808]"
       style={{
         backgroundImage:
           "radial-gradient(circle at 85% -10%, hsl(224 76% 48% / 0.12), transparent 32rem), radial-gradient(circle at -10% 40%, hsl(224 76% 48% / 0.06), transparent 28rem)",

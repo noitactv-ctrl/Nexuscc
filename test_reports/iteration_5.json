@@ -1,0 +1,60 @@
+{
+  "summary": "First test of the new FastAPI+Mongo backend (Phase 1). Backend: 24 pytest cases in /app/backend/tests/test_phase1_api.py, 21 pass and 3 fail. The 3 failures are a CRITICAL price exploit using negative quantity, a broken brute-force lockout behind the ingress, and a missing POST /api/ach. UI checks via Playwright: login with the captcha, register (password of 12+ chars), sidebar logout, product purchase from /shop (wallet charged, order shown on /orders), card purchase on /cards with the rank discount applied ($2.00 -> $1.96), redeem code once then 'Invalid or used code' toast, /ranks with the leaderboard modal, /profile tabs and password change, /support, /cart, /free-card, /my-deposits and all 13 admin sections. None of these crashed. One page breaks: /deposit crashes for any user who has a redeem deposit (DepositRow reads deposit.type, but /api/deposits does not return 'type'). It also shows the inline error '[\"/api/payments/crypto/currencies\"] data is undefined' for every user.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/orders", "issue": "SECURITY/PRICE EXPLOIT: quantity is not validated. items:[{variantId:A(qty 1,$10)},{variantId:B(qty -1,$9)}] creates an order for total $1.00, and the buyer still receives A's stock. Verified live: order total=100 for a $10 item. raw += price*qty accepts negative and zero values. Fix: require isinstance(qty,int) and qty>=1 (and >= variant.minQuantity), and reject unknown fields such as a negative-priced card list.", "priority": "CRITICAL"},
+      {"endpoint": "POST /api/login (brute-force lockout)", "issue": "The lockout identifier uses request.client.host. That is the ingress pod IP (seen as 10.211.1.135 and 10.211.1.136 for the same client), so failures are spread across several identifiers. 6 wrong passwords in a row all returned 401 and never 429. Fix: take the first IP from X-Forwarded-For, or also add an email-only counter. Also reset 'count' when lockedUntil has passed; today the count stays at 5 or more forever, so one later failure locks the account again right away.", "priority": "HIGH"},
+      {"endpoint": "GET /api/deposits", "issue": "Rows are returned as {id,amount,status,method,description,createdAt} with no 'type' field. DepositPage's DepositRow calls deposit.type.charAt() and the whole /deposit page crashes (React error, page goes blank) for any user with a redeem-code deposit, e.g. buyer1. The old Node endpoint returned only crypto/manual deposit rows, each with a 'type'. Fix: add type (e.g. 'code' or 'manual'), or return [] for code redeems as the old API did.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "POST /api/ach", "issue": "Not implemented, so the catch-all returns 501 'coming soon'. AdminPage 'Add ACH' (single) calls POST /api/ach {bankName,balance,fullItem,price dollars}. The old routes.ts:3422 had this endpoint. Only bulk add works."},
+      {"endpoint": "GET /api/payments/crypto/currencies (Phase 2 stub)", "issue": "The stub returns []. The hook use-crypto-currencies.ts reads response.currencies, so the query data is undefined and /deposit shows red text: '[\"/api/payments/crypto/currencies\"] data is undefined'. The stub should return {\"currencies\": []}."},
+      {"endpoint": "Password min length", "issue": "The backend accepts 8 characters (MIN_PASSWORD_LENGTH=8). The old backend and the frontend AuthPage enforce 12, so register/reset/change behave differently in the UI and the API. Align them (12 for parity)."},
+      {"endpoint": "Phase-1 admin endpoints missing", "issue": "POST /api/admin/orders/{id}/replace, POST /api/admin/test-order, POST /api/admin/clear-all-data and POST /api/upload (product image) all fall through to 501, but the old server and the Admin UI have them. Confirm whether they are intentionally deferred."},
+      {"endpoint": "POST /api/orders discount", "issue": "valid_discount() used during order creation does not enforce minOrder. Only /discount/validate checks it, so a client can send discountCodeId directly on a cart below the minimum."},
+      {"endpoint": "POST /api/admin/orders/{id}/refund", "issue": "Not atomic: it reads the status, then credits. Two concurrent refunds can both credit the wallet. Use find_one_and_update({id, status:{$ne:'refunded'}}) before crediting."},
+      {"endpoint": "POST /api/user/free-card/claim", "issue": "Check-then-act race: claimedToday is counted before the cards are claimed, so parallel requests can go over the daily allowance."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "DepositPage / DepositRow", "issue": "The page crashes with 'Cannot read properties of undefined (reading charAt)' for users with deposits. The root cause is the backend /api/deposits response shape.", "selector": "/deposit", "priority": "HIGH"},
+      {"component": "DepositPage crypto coin select", "issue": "Shows the error text '[\"/api/payments/crypto/currencies\"] data is undefined' because the stub returns the wrong shape.", "selector": "/deposit", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Admin > Cards/ACH > Add single ACH", "issue": "POST /api/ach returns 501, so admins cannot add a single ACH from the UI.", "affected_selectors": ["AdminPage ACH form"]},
+      {"flow": "Orders page member tier", "issue": "OrdersPage uses hard-coded tiers: $50 deposits shows 'Bronze 5% off' and $600 shows 'Gold 15% off'. The backend applies 0%/2%/5%/10% at <$100/$100/$500/$1000, so the label misleads buyers about their discount. This is in the unchanged frontend, but it no longer matches /api/user/rank."}
+    ],
+    "design_issues": [
+      {"screen": "/cards table (1920 desktop)", "issues": ["The table is cut off on the right: the Price, PricePerCard and Actions columns are hidden past 'Base / Uploader', so per-card buy buttons are not visible without horizontal scroll."]},
+      {"screen": "/admin", "issues": ["The admin console uses h-screen inside the site Layout header, which leaves a ~200px empty black band at the bottom of the viewport."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_phase1_api.py", "/app/backend/tests/seed_ui_user.py", "/app/test_reports/pytest/pytest_phase1.xml"],
+  "action_items": [
+    "CRITICAL: validate item quantity in POST /api/orders (int >= 1, >= minQuantity, sane upper bound). Reject negative or zero values. Re-run TestShop::test_negative_quantity_rejected.",
+    "Fix the login lockout key so it works behind the ingress (X-Forwarded-For first hop, or an email-based counter), and reset the counter after lockedUntil expires.",
+    "Add a 'type' field to /api/deposits rows, or exclude code redeems as the old API did, so /deposit stops crashing.",
+    "Change the /api/payments/crypto/currencies stub to return {currencies: []}.",
+    "Implement POST /api/ach (admin single add, price in dollars converted to cents, 201).",
+    "Align password min length with the frontend and old backend (12).",
+    "Make the refund idempotent/atomic; enforce discount minOrder in create_order.",
+    "Optionally implement or confirm deferral of admin orders replace, test-order, clear-all-data and /api/upload."
+  ],
+  "critical_code_review_comments": [
+    "routes_shop.create_order: quantity is trusted from the client (negative/zero/huge). It is also not checked against variant.minQuantity on the server.",
+    "auth.login: request.client.host behind the k8s ingress is not the client IP. Lockout is ineffective, and with a single ingress IP it would lock all users of the same email together.",
+    "routes_admin.refund and routes_user.free_claim have check-then-act races. Use conditional find_one_and_update.",
+    "routes_user.free_card_status imports timedelta inside the function; move it to module level (minor). routes_shop.create_order imports json inside the handler (minor).",
+    "GET /api/admin/users is available to workers (staff_user) and exposes every user's email and balance. This matches the old server, but consider limiting it to admins.",
+    "Dashboard totalSales counts only status 'fulfilled'. Product orders are created as 'delivering', so sales are under-reported. The old server did the same; consider including 'delivering'."
+  ],
+  "updated_files": ["/app/backend/tests/test_phase1_api.py", "/app/backend/tests/seed_ui_user.py"],
+  "success_rate": {"backend": "87.5% (21/24)", "frontend": "~90% (all tested pages and flows work except the /deposit crash for users with deposits)"},
+  "test_credentials": "Read from /app/memory/test_credentials.md: admin@gorillacc.at / GorillaAdmin!2026, buyer1@example.com / BuyerPass123!. The bcrypt hash starts with $2b$. The cookie is httpOnly+secure. CORS allows FRONTEND_URL with credentials. A foreign Origin gets 403. seed_admin re-hashes the password if it changed.",
+  "seed_data_creation": "Created many test_*@example.com users (funded via VOUCH redeem codes), products/variants named TEST_*, card bases TEST_Base/TEST_Free/TEST_UI Base with cards, TEST_Chase ACH, discount and announcement test data (most deleted). UI user test_ui_7015a1@example.com now has password TestPass456! (changed during the test). Product 'TEST_UI Logs' (id 5) still has stock.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Run: REACT_APP_BACKEND_URL=... pytest /app/backend/tests/test_phase1_api.py. The 3 expected failures until fixed are test_login_wrong_and_lockout, test_negative_quantity_rejected and test_ach_single_create. For UI, avoid page.goto reloads (Cloudflare returns 429 and a challenge after ~6 full navigations). Log in once via /auth (captcha = text of '.spider-captcha svg text' nodes) and navigate with history.pushState + popstate. The register UI requires a password of 12+ characters. In the browser tool, avoid backslash-n in Python strings and str.replace (the tool rewrites scripts).",
+  "rca of the issue": "1) Negative qty: create_order sums v.price*int(quantity) with no lower bound, and range(negative) reserves nothing, so a negative line subtracts from the total. 2) Lockout: identifier=f'{request.client.host}:{email}', and client.host varies between ingress pods (login_attempts collection shows 2 docs for one email with counts 2 and 4). 3) /deposit crash: routes_user.my_deposits emits 'method' but DepositPage's Deposit type needs 'type'; DepositRow calls deposit.type.charAt(0)."
+}

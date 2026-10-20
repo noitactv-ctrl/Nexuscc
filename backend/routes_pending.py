@@ -7,11 +7,11 @@ router = APIRouter(prefix="/api")
 # Phase 2 endpoints (payments, vouches, Telegram, support, reviews, sellers) are not migrated yet.
 # Read-only lists return empty data so pages render; actions return 501.
 EMPTY_LISTS = ["/reviews", "/reviews/eligible", "/support", "/mails", "/user/crypto-addresses",
-               "/payments/crypto/currencies", "/worker/orders", "/worker/card-bases", "/admin/support",
+               "/worker/orders", "/worker/card-bases", "/admin/support",
                "/admin/reviews", "/admin/deposits", "/admin/seller-applications", "/admin/telegram-drops",
                "/admin/verifications", "/admin/sellers", "/admin/logs", "/admin/profits"]
 EMPTY_OBJECTS = {"/verification/me": None, "/seller/me": None, "/vouches/status": None,
-                 "/checker/config": {"enabled": False}, "/admin/smtp": {}}
+                 "/checker/config": {"enabled": False}, "/payments/crypto/currencies": {"currencies": []}, "/admin/smtp": {}}
 
 
 def _list_route(path):

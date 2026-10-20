@@ -13,7 +13,7 @@ from db import db, find_one, insert, now, update
 router = APIRouter(prefix="/api")
 JWT_ALGORITHM = "HS256"
 COOKIE = "access_token"
-MIN_PASSWORD_LENGTH = 8
+MIN_PASSWORD_LENGTH = 12
 
 
 def hash_password(password: str) -> str:
@@ -90,8 +90,11 @@ class RegisterBody(BaseModel):
 
 async def check_lockout(identifier: str):
     doc = await db.login_attempts.find_one({"identifier": identifier})
-    if doc and doc.get("count", 0) >= 5 and doc.get("lockedUntil") and doc["lockedUntil"] > now():
+    if not doc or not doc.get("lockedUntil"):
+        return
+    if doc["lockedUntil"] > now():
         raise HTTPException(429, "Too many login attempts. Try again in 15 minutes.")
+    await db.login_attempts.delete_one({"identifier": identifier})
 
 
 async def record_failure(identifier: str):
@@ -107,7 +110,8 @@ async def record_failure(identifier: str):
 @router.post("/login")
 async def login(body: LoginBody, request: Request, response: Response):
     email = body.email.strip().lower()
-    identifier = f"{request.client.host if request.client else 'unknown'}:{email}"
+    forwarded = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+    identifier = f"{forwarded or (request.client.host if request.client else 'unknown')}:{email}"
     await check_lockout(identifier)
     user = await find_one("users", {"email": email})
     if not user or user.get("isBanned") or not verify_password(body.password, user.get("password", "")):

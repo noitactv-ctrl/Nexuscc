@@ -13,10 +13,10 @@ type TabType = "all" | "cards" | "ach" | "logs";
 
 function getTier(totalDepositsCents: number): { label: string; discount: string } {
   const dollars = totalDepositsCents / 100;
-  if (dollars >= 500) return { label: "Gold", discount: "15% off" };
-  if (dollars >= 200) return { label: "Silver", discount: "10% off" };
-  if (dollars >= 50) return { label: "Bronze", discount: "5% off" };
-  return { label: "Starter", discount: "0% off" };
+  if (dollars >= 1000) return { label: "NYC", discount: "10% off" };
+  if (dollars >= 500) return { label: "VIP", discount: "5% off" };
+  if (dollars >= 100) return { label: "Regular", discount: "2% off" };
+  return { label: "Newbie", discount: "0% off" };
 }
 
 function isAchOrder(order: any): boolean {

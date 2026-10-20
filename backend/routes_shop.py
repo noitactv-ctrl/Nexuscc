@@ -1,7 +1,10 @@
+import base64
+import json
 import re
 import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import Response
 
 from auth import current_user, staff_user
 from db import db, find, find_one, get_setting, insert, now
@@ -190,6 +193,8 @@ async def valid_discount(code_id: int | None, total: int) -> tuple[dict | None, 
         return None, 0
     if dc.get("expiresAt") and dc["expiresAt"] < now():
         return None, 0
+    if dc.get("minOrder") and total < dc["minOrder"]:
+        return None, 0
     off = round(total * dc["value"] / 100) if dc["type"] == "percent" else min(dc["value"], total)
     return dc, off
 
@@ -205,8 +210,11 @@ async def create_order(body: dict, user: dict = Depends(current_user)):
         v = await find_one("variants", {"id": int(it["variantId"])})
         if not v:
             raise HTTPException(400, "Variant not found")
+        qty = it.get("quantity", 1)
+        if not isinstance(qty, int) or isinstance(qty, bool) or qty < max(1, v.get("minQuantity") or 1) or qty > 1000:
+            raise HTTPException(400, f"Invalid quantity for {v['name']}")
         variants[v["id"]] = v
-        raw += v["price"] * int(it.get("quantity") or 1)
+        raw += v["price"] * qty
     cards = []
     for cid in card_ids:
         c = await find_one("cards", {"id": cid})
@@ -251,7 +259,6 @@ async def create_order(body: dict, user: dict = Depends(current_user)):
     parts: dict[str, list[str]] = {}
     for v, s in reserved:
         parts.setdefault(str(v["id"]), []).append(s.get("content", ""))
-    import json
     delivery = json.dumps({k: "\n\n".join(v) for k, v in parts.items()})
     order = await new_order(uid, total, delivery, status="delivering")
     await tx(uid, -total, "purchase", "Order purchase", "wallet", order["id"])
@@ -443,6 +450,48 @@ async def my_cards(user: dict = Depends(current_user)):
 async def achs(_: dict = Depends(current_user)):
     rows = await find("achs", {"isSold": False}, sort=[("createdAt", -1)])
     return [{k: a.get(k) for k in ["id", "bankName", "balance", "price", "isSold", "sellerId", "createdAt"]} for a in rows]
+
+
+@router.post("/ach", status_code=201)
+async def create_ach(body: dict, user: dict = Depends(staff_user)):
+    if user.get("role") != "admin":
+        raise HTTPException(403, "Unauthorized")
+    fields = [str(body.get(k) or "").strip() for k in ("bankName", "balance", "fullItem", "price")]
+    if not all(fields):
+        raise HTTPException(400, "Missing fields")
+    try:
+        price = round(float(fields[3].replace("$", "").replace(",", "")) * 100)
+    except ValueError:
+        price = 0
+    if price <= 0:
+        raise HTTPException(400, "Invalid price")
+    return await insert("achs", {"bankName": fields[0], "balance": fields[1], "fullItem": fields[2], "price": price,
+                                 "isSold": False, "sellerId": None})
+
+
+@router.post("/upload", status_code=201)
+async def upload(body: dict, _: dict = Depends(staff_user)):
+    mime = str(body.get("mimeType") or "")
+    data = str(body.get("data") or "")
+    if mime not in ("image/png", "image/jpeg", "image/webp", "image/gif"):
+        raise HTTPException(400, "Only PNG, JPEG, WEBP or GIF images are allowed")
+    try:
+        raw = base64.b64decode(data, validate=True)
+    except ValueError:
+        raise HTTPException(400, "Invalid image data")
+    if len(raw) > 5 * 1024 * 1024:
+        raise HTTPException(400, "Image must be 5MB or smaller")
+    img = await insert("uploaded_images", {"filename": str(body.get("filename") or "image"), "mimeType": mime, "data": data})
+    return {"id": img["id"], "url": f"/api/images/{img['id']}"}
+
+
+@router.get("/images/{image_id}")
+async def image(image_id: int):
+    img = await find_one("uploaded_images", {"id": image_id})
+    if not img:
+        raise HTTPException(404, "Image not found")
+    return Response(base64.b64decode(img["data"]), media_type=img["mimeType"],
+                    headers={"Cache-Control": "public, max-age=86400"})
 
 
 @router.post("/ach/{ach_id}/purchase")
