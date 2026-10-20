@@ -71,3 +71,25 @@ TELEGRAM_BOT_TOKEN, SMTP creds (for password reset email).
 - Ops: supervisor config backup at /app/scripts/nexuscc.supervisor.conf. If the pod resets and services are
   down: cp it to /etc/supervisor/conf.d/nexuscc.conf, then `supervisord -c /etc/supervisor/supervisord.conf`
   (or `supervisorctl reread && supervisorctl update`).
+
+## MIGRATION (2026-06) — Phase 1 DONE: FastAPI + MongoDB (Emergent-native)
+User chose a full rebuild on FastAPI + MongoDB in phases, starting fresh (test data only).
+- Backend: /app/backend (server.py, auth.py cookie-JWT+bcrypt+lockout, db.py counters for integer ids,
+  pricing.py rank discounts, routes_shop.py, routes_user.py, routes_admin.py, routes_pending.py Phase-2 stubs).
+  Mongo docs keep camelCase fields + integer `id`, so the React app is unchanged.
+- Frontend: moved to /app/frontend (Vite; `yarn start` = vite :3000; build -> /app/frontend/build).
+  shared/ copied to /app/frontend/shared. Default supervisor programs backend/frontend/mongodb are used.
+- Old Node/Express + Postgres stack is retired (kept in /app/server, /app/client, /app/shared ONLY as the
+  reference for Phase 2; its supervisor conf is disabled at /app/scripts/nexuscc.supervisor.conf.disabled).
+- Phase 1 scope live: auth (register/login/logout/forgot/reset), products/variants/stock, card bases/cards
+  (buyers see BIN only until purchase), ACH (single+bulk), orders + rank discounts, discount codes, redeem codes,
+  wallet transactions, VIP/free CC claim, leaderboard, announcements, page visibility, payment handles/fees,
+  image upload, admin users/orders(refund/replace)/dashboard.
+- Tests: iteration_5 (found exploit etc.) -> fixed; iteration_6 retest passed; backend pytest 45 pass
+  (/app/backend/tests, run with REACT_APP_BACKEND_URL set).
+
+## Phase 2 backlog (NOT migrated — GETs return empty, actions return 501 "coming soon")
+- P0 Deposits/payments: NOWPayments crypto, CashApp/Chime/Zelle/Venmo/ApplePay manual deposits + admin approval,
+  Stripe, Authorize.Net, crypto order checkout (/api/orders/crypto, /api/orders/cashapp)
+- P1 Vouches + Telegram bot (referrals, daily rewards, license drops), support tickets, reviews, seller applications,
+  worker portal, mails, verification, card checker, admin clear-all-data/test-order, SMTP emails for password reset

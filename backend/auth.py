@@ -97,11 +97,11 @@ async def check_lockout(identifier: str):
     await db.login_attempts.delete_one({"identifier": identifier})
 
 
-async def record_failure(identifier: str):
+async def record_failure(identifier: str, limit: int = 5):
     doc = await db.login_attempts.find_one_and_update(
         {"identifier": identifier}, {"$inc": {"count": 1}}, upsert=True, return_document=True
     )
-    if doc and doc.get("count", 0) >= 5:
+    if doc and doc.get("count", 0) >= limit:
         await db.login_attempts.update_one(
             {"identifier": identifier}, {"$set": {"lockedUntil": now() + timedelta(minutes=15)}}
         )
@@ -112,12 +112,15 @@ async def login(body: LoginBody, request: Request, response: Response):
     email = body.email.strip().lower()
     forwarded = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
     identifier = f"{forwarded or (request.client.host if request.client else 'unknown')}:{email}"
+    email_key = f"email:{email}"
     await check_lockout(identifier)
+    await check_lockout(email_key)
     user = await find_one("users", {"email": email})
     if not user or user.get("isBanned") or not verify_password(body.password, user.get("password", "")):
         await record_failure(identifier)
+        await record_failure(email_key, limit=10)
         raise HTTPException(401, "Invalid email or password")
-    await db.login_attempts.delete_one({"identifier": identifier})
+    await db.login_attempts.delete_many({"identifier": {"$in": [identifier, email_key]}})
     set_session(response, user, body.rememberMe)
     return public_user(user)
 

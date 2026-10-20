@@ -39,9 +39,6 @@ export default function ProductDetailPage() {
     if (selectedVariant) setQuantity(Math.min(Math.max(minQty, 1), maxQty));
   }, [selectedVariantId, minQty, maxQty]);
 
-  if (isLoading) return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
-  if (!product) return <div className="p-8 text-center text-muted-foreground text-sm">Product not found</div>;
-
   const purchaseMutation = useMutation({
     mutationFn: async () => {
       if (!selectedVariant) throw new Error("Select an option first");
@@ -67,6 +64,9 @@ export default function ProductDetailPage() {
       toast({ title: "Purchase failed", description: e.message, variant: "destructive" });
     },
   });
+
+  if (isLoading) return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+  if (!product) return <div className="p-8 text-center text-muted-foreground text-sm">Product not found</div>;
 
   return (
     <div className="min-h-screen bg-background flex items-start justify-center p-4 pt-8">

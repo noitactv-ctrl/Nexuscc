@@ -27,6 +27,7 @@ const adminSections = [
   { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { id: "products",  label: "Products",  Icon: Package },
   { id: "cards", label: "Cards",      Icon: CreditCard },
+  { id: "ach",   label: "ACH",        Icon: Wallet },
   { id: "orders",   label: "Orders",     Icon: ShoppingBag },
   { id: "cashapp",  label: "Payments",   Icon: DollarSign },
   { id: "deposits", label: "Deposits",   Icon: Wallet },
@@ -157,6 +158,7 @@ export default function AdminPage() {
           {activeSection === "dashboard"    && <DashboardSection />}
           {activeSection === "products"     && <ProductsSection />}
           {activeSection === "cards"        && <AdminCardsSection />}
+          {activeSection === "ach"          && <AdminAchSection />}
           {activeSection === "orders"       && <OrdersSection />}
           {activeSection === "cashapp"      && <CashAppSection />}
           {activeSection === "users"        && <UsersSection />}
@@ -660,10 +662,15 @@ function ProductsSection() {
       const reader = new FileReader();
       reader.onload = async (event) => {
         const base64 = (event.target?.result as string).split(",")[1];
-        const res = await apiRequest("POST", "/api/upload", { filename: file.name, mimeType: file.type, data: base64 });
-        const data = await res.json();
-        form.setValue("image", data.url);
-        setUploading(false);
+        try {
+          const res = await apiRequest("POST", "/api/upload", { filename: file.name, mimeType: file.type, data: base64 });
+          const data = await res.json();
+          form.setValue("image", data.url);
+        } catch (error: any) {
+          toast({ title: "Upload failed", description: error?.message || "Could not upload image", variant: "destructive" });
+        } finally {
+          setUploading(false);
+        }
       };
       reader.readAsDataURL(file);
     } catch {

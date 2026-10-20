@@ -676,6 +676,7 @@ export default function CardsPage() {
                         type="button"
                         onClick={() => setDetails(toCardDetails(card))}
                         aria-label="View card details"
+                        data-testid={`btn-card-details-${card.id}`}
                         className="grid h-10 w-10 place-items-center rounded-xl border border-white/15 bg-[#141414] text-white/80 hover:bg-white/10"
                       >
                         <Info className="h-5 w-5" aria-hidden="true" />
@@ -684,6 +685,7 @@ export default function CardsPage() {
                         type="button"
                         onClick={() => toggleSelection(card)}
                         aria-label={selectedIds.has(card.id) ? "Remove from selection" : "Add to selection"}
+                        data-testid={`btn-select-card-${card.id}`}
                         className={`grid h-10 w-10 place-items-center rounded-xl transition-colors ${
                           selectedIds.has(card.id) ? "bg-blue-500 text-black" : "bg-blue-400 text-black hover:bg-blue-500"
                         }`}

@@ -202,8 +202,11 @@ async def valid_discount(code_id: int | None, total: int) -> tuple[dict | None, 
 @router.post("/orders", status_code=201)
 async def create_order(body: dict, user: dict = Depends(current_user)):
     uid = user["id"]
-    items = [i for i in body.get("items") or [] if not i.get("cardId") and int(i.get("variantId") or 0) > 0]
-    card_ids = [int(c) for c in body.get("cardIds") or []]
+    try:
+        items = [i for i in body.get("items") or [] if not i.get("cardId") and int(i.get("variantId") or 0) > 0]
+        card_ids = [int(c) for c in body.get("cardIds") or []]
+    except (TypeError, ValueError, AttributeError):
+        raise HTTPException(400, "Invalid order items")
     raw = 0
     variants = {}
     for it in items:
@@ -227,6 +230,8 @@ async def create_order(body: dict, user: dict = Depends(current_user)):
     if raw < 100:
         raise HTTPException(400, "Order total must be at least $1.00")
     dc, off = await valid_discount(body.get("discountCodeId"), raw)
+    if body.get("discountCodeId") and not dc:
+        raise HTTPException(400, "This discount code can't be applied to your order")
     total = apply_pct(max(0, raw - off), await rank_discount_pct(uid))
 
     reserved = []

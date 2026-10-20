@@ -36,12 +36,12 @@ function isLogOrder(order: any): boolean {
 
 function statusBadge(status: string) {
   const map: Record<string, { label: string; cls: string }> = {
-    fulfilled: { label: "FULFILLED", cls: "bg-red-900/40 text-red-400" },
-    delivering: { label: "FULFILLED", cls: "bg-red-900/40 text-red-400" },
+    fulfilled: { label: "FULFILLED", cls: "bg-emerald-900/40 text-emerald-400" },
+    delivering: { label: "FULFILLED", cls: "bg-emerald-900/40 text-emerald-400" },
     pending: { label: "PENDING", cls: "bg-yellow-900/40 text-yellow-400" },
     waiting_payment: { label: "UNPAID", cls: "bg-orange-900/40 text-orange-400" },
     refunded: { label: "REFUNDED", cls: "bg-red-900/40 text-red-400" },
-    replaced: { label: "REPLACED", cls: "bg-red-900/40 text-red-400" },
+    replaced: { label: "REPLACED", cls: "bg-blue-900/40 text-blue-300" },
   };
   const entry = map[status] ?? { label: status?.toUpperCase() ?? "—", cls: "bg-[#0d0d0d] text-white/45" };
   return (

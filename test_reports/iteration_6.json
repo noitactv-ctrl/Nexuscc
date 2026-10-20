@@ -1,0 +1,48 @@
+{
+  "summary": "Retest of the iteration_5 fixes plus a regression run. Backend: 45/46 pytest pass (24 in the existing test_phase1_api.py and 21/22 in the new test_iteration6_fixes.py). All the CRITICAL/HIGH fixes are confirmed. The quantity exploit is closed: 0, -1, -5, 1.5, '2', 1001, true, null and below-minQuantity are all rejected with 'Invalid quantity' and no charge. Lockout returns 429 on attempt 6, also for the correct password, and resets after lockedUntil expires (checked by moving lockedUntil into the past in the DB). /api/deposits returns [] and the crypto currencies stub returns {currencies: []}. POST /api/ach returns 201 with price in cents and validates its input. /api/upload + /api/images/{id} work, with mime/base64/auth checks. Replace adds new stock with a [Replacement] tag, and replacing a card order gives 400. A second refund gives 400. Dashboard totalSales includes delivering orders. Password minimum is 12 for register/change/reset. The one failing test is a new finding: the lockout can be bypassed by rotating the X-Forwarded-For header. Frontend: /deposit renders with no crash or 'data is undefined' text. The /orders Member tier shows VIP 5%, same as the backend rank. On /cards at 1920 the sticky Actions column is visible even though the table scrolls (1526px table in a 1237px container); select + Buy Selected charged $0.95 for a $1 card (VIP 5%). /shop purchase charged $2.85 for $3. /redeem added $5. Leaderboard modal opens (25 rows) and closes. All 4 /profile tabs work. Logout leaves /api/user at 401. All 13 admin sections load with no errors. Admin shell fills the 1080 viewport with no black band. Admin product image upload sets the image to /api/images/N and the preview shows. Admin order Replace shows the toast and returns 200. I found and fixed a crash on direct load/refresh of /product/:name ('Rendered more hooks than during the previous render'). The 'Add ACH' admin form could NOT be tested in the UI: AdminAchSection is defined but never rendered.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/login", "issue": "The lockout key uses the first X-Forwarded-For value, which the client controls and the ingress passes through. 6 failures with XFF=9.9.9.9, then a request with XFF=8.8.4.4 got 401 (not 429). An attacker can brute-force a single email without limit by rotating the header. Fix: also keep a per-email counter, or use the right-most trusted hop."},
+      {"endpoint": "POST /api/orders", "issue": "If the discount code's minOrder is not met, the order is still created at full price with no discount and no message (usedCount is not incremented, so the behaviour is safe). Consider returning 400 so the UI can tell the user."},
+      {"endpoint": "POST /api/orders", "issue": "A non-numeric variantId (e.g. 'abc') would raise in int() and give a 500 instead of a 400 (code review, not executed)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ProductDetailPage (/product/:name)", "issue": "Direct navigation or refresh gave a blank page with 'Rendered more hooks than during the previous render': useMutation was called after the early returns for loading / not found. FIXED by the testing agent (early returns moved below useMutation). Verified that direct load now renders, and an unknown product shows 'Product not found'.", "selector": "[data-testid='select-variant']", "priority": "HIGH (fixed)"}
+    ],
+    "integration_issues": [
+      {"flow": "Admin > Add ACH", "issue": "AdminAchSection (inputs input-ach-bank/balance/full-item/price, btn-add-ach, btn-bulk-add-ach) is defined in AdminPage.tsx (~line 3656) but no adminSections entry or activeSection branch renders it. Admins cannot reach the Add ACH / bulk ACH form in the UI. The backend endpoint itself works.", "affected_selectors": ["[data-testid='btn-add-ach']", "[data-testid='input-ach-bank']"]},
+      {"flow": "Admin product image upload", "issue": "handleProductImageUpload has no error handling inside reader.onload. A 400 from /api/upload (wrong type or >5MB) leaves the spinner running forever and shows no toast (code review).", "affected_selectors": ["input[type='file']"]}
+    ],
+    "design_issues": [
+      {"screen": "/orders and Admin Orders", "issues": ["The 'FULFILLED' status badge uses red (error-like) styling, and 'replaced' is also red. A green or neutral style would read better for success."]},
+      {"screen": "/admin", "issues": ["The shell bottom is at 1087.5px in a 1080px viewport (document height 1088), so the page scrolls about 8px. Minor."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_phase1_api.py", "/app/backend/tests/test_iteration6_fixes.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Render AdminAchSection in the admin console (e.g. add an 'ACH' nav entry, or a tab under Cards) so the Add ACH / bulk ACH form can be reached.",
+    "Harden the login lockout against X-Forwarded-For spoofing: add an email-only failure counter, or take the right-most trusted proxy hop.",
+    "Add error handling (toast + reset the spinner) in handleProductImageUpload's onload when /api/upload fails.",
+    "Optional: return 400 when a discount code's minOrder is not met at order creation, and return 400 for a non-int variantId.",
+    "Optional: use a success color for the FULFILLED status badge."
+  ],
+  "critical_code_review_comments": [
+    "routes_admin.py and routes_shop.py are both above 500 lines; AdminPage.tsx is about 4400 lines and should be split into one module per section.",
+    "create_order: stock reservation is a sequence of single find_one_and_update calls with compensation on HTTPException only. An unexpected exception (e.g. a DB error) would leave items marked isSold without an order. Consider catching Exception in the rollback.",
+    "auth.py lockout identifier depends on a client-supplied header (see backend minor issue)."
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/ProductDetailPage.tsx (hooks-order fix)",
+    "/app/frontend/src/pages/CardsPage.tsx (added data-testid btn-card-details-{id} and btn-select-card-{id} to the desktop table action buttons)",
+    "/app/backend/tests/test_iteration6_fixes.py (new)"
+  ],
+  "success_rate": {"backend": "98% (45/46; the 1 failure is the XFF spoof finding)", "frontend": "92% (all requested flows pass except Add ACH, which is not reachable in the UI)"},
+  "seed_data_creation": "TEST_It6 products (deleted by fixture teardown), many test_*@example.com users, TEST_ACH_* entries (deleted), product 'TEST_UI ImgProd' (image /api/images/2), 2 uploaded images, VOUCH code redeemed by buyer1 (+$5). buyer1 bought 1 card and 1 TEST_UI log; order 46 was replaced.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run with: set -a; . backend/.env; set +a; export REACT_APP_BACKEND_URL=... ; pytest backend/tests/. The lockout-expiry test writes to Mongo directly (MONGO_URL/DB_NAME). test_xff_spoof_bypass is expected to fail until the lockout is hardened. Login UI captcha: read the svg[aria-label='Verification code'] text nodes and fill [data-testid='input-captcha']. Admin orders: search by orderId, then click the truncated id text in the row to open the detail with button-replace-{id}. Desktop card select buttons are inside a table (use the 'table' scope or btn-select-card-{id}; the mobile variants are btn-select-card-mobile-{id}).",
+  "test_credentials": "admin@gorillacc.at / GorillaAdmin!2026; buyer1@example.com / BuyerPass123! (from /app/memory/test_credentials.md)"
+}
