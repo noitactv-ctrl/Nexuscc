@@ -25,7 +25,7 @@ function getGroupId() {
 }
 
 function getJoinUrl() {
-  return process.env.TELEGRAM_JOIN_URL ?? "https://t.me/+3-lMkt-idutkOTIx";
+  return process.env.TELEGRAM_JOIN_URL ?? "https://t.me/+uh_mmVGlIZFjM2Ux";
 }
 
 function getDailyJoinUrl() {

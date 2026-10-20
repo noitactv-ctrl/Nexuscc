@@ -1,0 +1,29 @@
+{
+  "summary": "Frontend-only testing on the preview URL (desktop 1920 and mobile 390). Every requested item passes: sidebar logout, /profile Sign out, the same-origin regression check (redeem), the /auth logo without 'THE APEX VAULT', the /profile and /redeem restyle with working tabs, and the home desktop and mobile layout.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/profile Orders tab (empty state)", "issues": ["The 'Browse Marketplace' button is small and dark navy with low-contrast text. It does not match the light-blue primary buttons with black text used elsewhere."]},
+      {"screen": "/profile Settings tab", "issues": ["The 'Link Telegram Account' card is about 2/3 width while the cards below it are full width, so the layout looks uneven.", "The account info card has a red 'Logout' button and the Overview tab also has 'Sign out'. This duplication is minor."]},
+      {"screen": "Sidebar account popover", "issues": ["The account/Log out popover partly covers the 'Account Management' nav item behind it. This is cosmetic only."]},
+      {"screen": "/ home desktop", "issues": ["In one run, a screenshot taken about 3s after navigation came out blank white, but later loads rendered fine. It may be a brief white flash before the dark theme applies; worth a quick check."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional: restyle the empty-state 'Browse Marketplace' button on /profile Orders to the light-blue primary style",
+    "Optional: make the Telegram card on /profile Settings full width"
+  ],
+  "critical_code_review_comments": [
+    "server/auth.ts requireSameOrigin trusts the x-forwarded-host header. That is fine behind the ingress, but if the app is exposed without a proxy, a client could spoof that header and get past the CSRF origin check. Consider relying on PUBLIC_APP_URL alone in production, or a trust-proxy setting."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "test_credentials": "tester1@example.com / TestPass123! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Results: sidebar logout (btn-menu -> .nexus-account-trigger -> .nexus-logout-button) sends POST /api/logout and gets 200, shows a 'Logged out' toast, redirects to /auth, and afterwards /api/user returns 401 and / and /profile redirect to /auth. /profile [data-testid=button-logout] behaves the same way. On /redeem, VOUCH-TEST1234 gives POST /api/wallet/redeem 400 'Invalid or used code' (not 'Invalid request origin'). The /auth logo is gorilla crest + GORILLACC wordmark with no tagline. Home at 1920: banner (x=435, w=672) sits beside the balance card (x=1144), there are 4 stat cards in one row, and clicking the banner goes to /shop. At 390 the page stacks with no horizontal overflow. To log in, POST /api/login from the page context."
+}

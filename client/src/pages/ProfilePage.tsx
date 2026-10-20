@@ -485,7 +485,7 @@ function OrdersTab() {
           <Package className="h-12 w-12 mx-auto mb-4" />
           <h3 className="text-sm font-bold mb-2">No orders found</h3>
           <Link href="/">
-            <Button size="sm" className="text-blue-300">Browse Marketplace</Button>
+            <Button size="sm" className="rounded-xl bg-blue-400 font-semibold text-black hover:bg-blue-500">Browse Marketplace</Button>
           </Link>
         </div>
       ) : (

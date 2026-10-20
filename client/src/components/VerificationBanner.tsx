@@ -180,7 +180,7 @@ export function VerificationBanner() {
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1.5">Your Telegram channel link</label>
                   <Input
-                    placeholder="https://t.me/yourchannel"
+                    placeholder="https://t.me/+uh_mmVGlIZFjM2Ux"
                     value={channelLink}
                     onChange={e => setChannelLink(e.target.value)}
                     className="bg-black/50 border-white/10"

@@ -211,7 +211,7 @@ export default function OrdersPage() {
             {isExporting ? "Exporting..." : "Export"}
           </button>
           <a
-            href="https://t.me/+3-lMkt-idutkOTIx"
+            href="https://t.me/+uh_mmVGlIZFjM2Ux"
             target="_blank"
             rel="noopener noreferrer"
             className="col-span-2 inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-card px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground sm:col-span-1"
