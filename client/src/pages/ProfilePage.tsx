@@ -251,7 +251,7 @@ function TelegramLinkSettings() {
         <CardContent className="space-y-5 p-4 sm:p-6">
           <ol className="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
             <li>In Telegram, join the GorillaCC rewards channel.</li>
-            <li>Put <span className="font-semibold text-foreground">omnimarket.cc</span> in your Telegram first or last name.</li>
+            <li>Put <span className="font-semibold text-foreground">gorillacc.at</span> in your Telegram first or last name.</li>
             <li>Generate a code below, then open the bot in a private chat and send <span className="font-mono text-foreground">/link CODE</span>.</li>
           </ol>
           <p className="text-sm text-muted-foreground">
