@@ -1120,6 +1120,43 @@ export async function registerRoutes(
       res.status(503).json({ message: "VIP status is temporarily unavailable." });
     }
   });
+  app.get("/api/leaderboard", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    try {
+      const currentUserId = Number((req.user as any).id);
+      const result = await pool.query(
+        `SELECT u.id,
+                u.username,
+                COALESCE(SUM(t.amount) FILTER (
+                  WHERE t.amount > 0 AND t.type IN ('deposit','manual_deposit')
+                  AND t.created_at >= date_trunc('month', timezone('UTC', now()))
+                ), 0)::int AS month_deposits
+         FROM users u
+         JOIN transactions t ON t.user_id = u.id
+         WHERE u.is_banned = false
+         GROUP BY u.id, u.username
+         HAVING COALESCE(SUM(t.amount) FILTER (
+                  WHERE t.amount > 0 AND t.type IN ('deposit','manual_deposit')
+                  AND t.created_at >= date_trunc('month', timezone('UTC', now()))
+                ), 0) > 0
+         ORDER BY month_deposits DESC, u.id ASC
+         LIMIT 25`,
+      );
+      const entries = result.rows.map((row: any, index: number) => ({
+        rank: index + 1,
+        userId: row.id,
+        username: row.username,
+        monthDeposits: Number(row.month_deposits ?? 0),
+        isVip: Number(row.month_deposits ?? 0) >= 50000,
+        isCurrentUser: Number(row.id) === currentUserId,
+      }));
+      res.json({ entries });
+    } catch (error) {
+      console.error("Leaderboard lookup failed:", error);
+      res.status(503).json({ message: "Leaderboard is temporarily unavailable." });
+    }
+  });
+
   app.get("/api/user/free-card/status", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     try {
