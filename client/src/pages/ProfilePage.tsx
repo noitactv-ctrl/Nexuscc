@@ -481,9 +481,9 @@ function OrdersTab() {
   return (
     <div className="space-y-4">
       {!orders || orders.length === 0 ? (
-        <div className="text-center py-20 opacity-50">
-          <Package className="h-12 w-12 mx-auto mb-4" />
-          <h3 className="text-sm font-bold mb-2">No orders found</h3>
+        <div className="text-center py-20">
+          <Package className="h-12 w-12 mx-auto mb-4 text-white/40" />
+          <h3 className="text-sm font-bold mb-2 text-white/55">No orders found</h3>
           <Link href="/">
             <Button size="sm" className="rounded-xl bg-blue-400 font-semibold text-black hover:bg-blue-500">Browse Marketplace</Button>
           </Link>

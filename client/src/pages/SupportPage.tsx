@@ -114,6 +114,8 @@ function Footer() {
       <div className="flex items-center justify-center gap-5 text-xs font-semibold text-white/50 tracking-widest uppercase">
         <a
           href="https://t.me/+uh_mmVGlIZFjM2Ux"
+          aria-label="Join GorillaCC on Telegram"
+          data-testid="support-telegram-link"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center h-5 w-5 rounded-full bg-primary"

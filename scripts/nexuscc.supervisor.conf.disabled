@@ -1,0 +1,36 @@
+[program:postgres]
+command=/usr/lib/postgresql/15/bin/postgres -D /app/.pgdata -p 5432 -k /tmp
+user=postgres
+autostart=true
+autorestart=true
+priority=1
+stderr_logfile=/var/log/supervisor/postgres.err.log
+stdout_logfile=/var/log/supervisor/postgres.out.log
+
+[program:nexus_api]
+command=npx tsx server/server-api.ts
+directory=/app
+autostart=true
+autorestart=true
+priority=10
+environment=NODE_ENV="development",PORT="8001",DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/nexuscc",SESSION_SECRET="dev_session_secret_change_in_prod_9f3a2c",APP_ENCRYPTION_KEY="dev_app_encryption_key_min_32_chars_1234567890",PUBLIC_APP_URL="https://d370b948-bf5e-4bbe-a54a-db6d4b19d8bc.preview.emergentagent.com"
+stderr_logfile=/var/log/supervisor/nexus_api.err.log
+stdout_logfile=/var/log/supervisor/nexus_api.out.log
+stopsignal=TERM
+stopwaitsecs=15
+stopasgroup=true
+killasgroup=true
+
+[program:nexus_web]
+command=npx vite --host 0.0.0.0 --port 3000
+directory=/app
+autostart=true
+autorestart=true
+priority=20
+environment=NODE_ENV="development"
+stderr_logfile=/var/log/supervisor/nexus_web.err.log
+stdout_logfile=/var/log/supervisor/nexus_web.out.log
+stopsignal=TERM
+stopwaitsecs=15
+stopasgroup=true
+killasgroup=true

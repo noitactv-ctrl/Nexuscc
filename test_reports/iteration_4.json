@@ -1,0 +1,33 @@
+{
+  "summary": "Frontend-only verification of Telegram link change to https://t.me/+uh_mmVGlIZFjM2Ux. Logged in as admin via POST /api/login (200) and checked every anchor with an href containing 't.me' on /, /support, /orders, /deposit, /ranks, /shop, /cards, /redeem and on all four /profile tabs (Overview, Orders, Balance, Settings). Every t.me href found was exactly https://t.me/+uh_mmVGlIZFjM2Ux with target=_blank and rel='noopener noreferrer'. The old links '+3-lMkt-idutkOTIx' and 't.me/yourchannel' do not appear in the rendered HTML of any page, in client/server source, or in a pg_dump of the database. The regression check passed: the /profile Orders empty-state 'Browse Marketplace' button has a light-blue background rgb(96,165,250) with black text rgb(0,0,0), and the app loaded normally.",
+  "t_me_hrefs_found": {
+    "/support": ["https://t.me/+uh_mmVGlIZFjM2Ux (footer Send icon, target=_blank)"],
+    "/orders": ["https://t.me/+uh_mmVGlIZFjM2Ux ('Support' link, target=_blank)"],
+    "/deposit": ["https://t.me/+uh_mmVGlIZFjM2Ux (footer Send icon, target=_blank)"],
+    "/, /ranks, /shop, /cards, /redeem, /profile (all tabs)": ["none"]
+  },
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/support and /deposit footer", "issues": ["The Telegram icon-only anchor has no aria-label or data-testid, so screen readers announce no link text. It is also very small (20px)."]},
+      {"screen": "/profile Orders empty state", "issues": ["The parent container uses opacity-50, so the light-blue 'Browse Marketplace' button looks dimmed and washed out. The computed colors themselves are correct."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional: add aria-label='Telegram' and a data-testid to the footer Telegram anchors in SupportPage.tsx and DepositPage.tsx.",
+    "Optional: move opacity-50 off the empty-state wrapper in ProfilePage.tsx (~line 484) so the CTA button is shown at full color."
+  ],
+  "critical_code_review_comments": [
+    "server/telegram.ts:28 and server/telegram-referrals.ts:7 use TELEGRAM_JOIN_URL with the new URL as the default. No TELEGRAM_JOIN_URL override is set in the env files that were checked.",
+    "Bot deep-links (ProfilePage.tsx:270 OmniMarketCCBot?start=link_ and the server referral links) were kept as intended. Not checked in the UI: the Settings tab showed no deep-link during the test, presumably because no link code had been generated."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Navigating many pages quickly with networkidle can trigger a Cloudflare 'Verify you are human' challenge on the preview URL. Wait about 60s and use domcontentloaded plus a short wait. Log in via fetch('/api/login') from the page context."
+}
