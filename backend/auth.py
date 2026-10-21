@@ -136,7 +136,7 @@ async def register(body: RegisterBody, response: Response):
         raise HTTPException(400, f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
     if await find_one("users", {"email": email}):
         raise HTTPException(400, "Unable to create account with these details")
-    user = await insert("users", new_user_doc(email, body.password))
+    user = await insert("users", new_user_doc(email, body.password, role="admin" if email == owner_email() else "user"))
     set_session(response, user)
     return public_user(user)
 
@@ -197,11 +197,9 @@ async def reset_password(body: ResetBody):
     return {"message": "Password updated. You can now log in."}
 
 
+def owner_email() -> str:
+    return os.environ["ADMIN_EMAIL"].strip().lower()
+
+
 async def seed_admin():
-    email = os.environ["ADMIN_EMAIL"].strip().lower()
-    password = os.environ["ADMIN_PASSWORD"]
-    existing = await find_one("users", {"email": email})
-    if not existing:
-        await insert("users", new_user_doc(email, password, role="admin"))
-    elif not verify_password(password, existing.get("password", "")) or existing.get("role") != "admin":
-        await update("users", {"email": email}, {"password": hash_password(password), "role": "admin"})
+    await db.users.update_one({"email": owner_email()}, {"$set": {"role": "admin"}})
